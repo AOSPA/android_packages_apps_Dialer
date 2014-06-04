@@ -54,7 +54,7 @@
             android:layout_marginStart="@dimen/call_log_outer_margin"
             android:layout_marginEnd="@dimen/call_log_outer_margin"
             android:layout_gravity="bottom"
-            android:background="@color/call_log_divider"
+            android:background="#55ffffff"
             />
     </FrameLayout>
     <FrameLayout
