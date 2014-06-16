@@ -135,4 +135,10 @@
     <!-- Color of action bar text. Ensure this stays in sync with packages/Telephony
          phone_settings_actionbar_text_color-->
     <color name="actionbar_text_color">#FFFFFF</color>
+
+    <color name="call_log_divider">#55ffffff</color>
+
+    <color name="call_detail_photo_bg">#7F000000</color>
+
+    <color name="dialpad_fragment_spacer">#00000000</color>
 </resources>
