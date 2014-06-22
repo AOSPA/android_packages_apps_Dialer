@@ -136,9 +136,24 @@
          phone_settings_actionbar_text_color-->
     <color name="actionbar_text_color">#FFFFFF</color>
 
+    <!-- Colors for incoming and outgoing calls in the call statistics -->
+    <color name="call_stats_incoming">#33b5e5</color>
+    <color name="call_stats_outgoing">#99cc00</color>
+    <color name="call_stats_missed">#eb1313</color>
+    <color name="call_stats_bar_background">#88888888</color>
+
+    <!-- Colors for Theme Chooser to be compatible -->
+    <!-- Main -->
     <color name="call_log_divider">#55ffffff</color>
-
     <color name="call_detail_photo_bg">#7F000000</color>
-
     <color name="dialpad_fragment_spacer">#00000000</color>
+    <!-- Styles -->
+    <color name="call_log_primary_text_color">#000000</color>
+    <color name="call_log_primary_background_color">#000000</color>
+    <color name="call_log_secondary_text_color">#888888</color>
+    <color name="call_log_secondary_background_color">#333333</color>
+    <color name="call_log_header_color">#33b5e5</color>
+    <color name="call_log_voicemail_status_background_color">#262626</color>
+    <color name="call_log_voicemail_status_text_color">#888888</color>
+    <color name="call_log_voicemail_status_action_text_color">#33b5e5</color>
 </resources>
