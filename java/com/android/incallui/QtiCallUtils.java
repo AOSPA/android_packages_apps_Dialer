@@ -31,6 +31,8 @@ package com.android.incallui;
 
 import android.content.Context;
 import android.content.Intent;
+
+import android.content.pm.ActivityInfo;
 import android.os.IBinder;
 import android.os.RemoteException;
 import android.telephony.TelephonyManager;
@@ -40,6 +42,7 @@ import com.android.dialer.common.LogUtil;
 
 import java.lang.reflect.*;
 
+import org.codeaurora.ims.QtiCallConstants;
 import org.codeaurora.internal.IExtTelephony;
 import org.codeaurora.ims.utils.QtiImsExtUtils;
 
@@ -159,5 +162,21 @@ public class QtiCallUtils {
             LogUtil.e("QtiCallUtils.isCallDeflectSupported", "" + e);
         }
         return (value == 1);
+    }
+
+    /** This method converts the QtiCallConstants' Orientation modes to the ActivityInfo
+     * screen orientation.
+     */
+    public static int toScreenOrientation(int orientationMode) {
+        switch(orientationMode) {
+            case QtiCallConstants.ORIENTATION_MODE_LANDSCAPE:
+                return ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE;
+            case QtiCallConstants.ORIENTATION_MODE_PORTRAIT:
+                return ActivityInfo.SCREEN_ORIENTATION_PORTRAIT;
+            case QtiCallConstants.ORIENTATION_MODE_DYNAMIC:
+                return ActivityInfo.SCREEN_ORIENTATION_FULL_SENSOR;
+            default:
+                return ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED;
+        }
     }
 }

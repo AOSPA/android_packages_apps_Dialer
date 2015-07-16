@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2015 - 2017, The Linux Foundation. All rights reserved.
  * Not a Contribution.
  *
  * Copyright (C) 2014 The Android Open Source Project
@@ -23,6 +23,9 @@ import com.android.incallui.InCallPresenter.InCallStateListener;
 import com.android.incallui.InCallPresenter.IncomingCallListener;
 import com.android.incallui.call.DialerCall;
 import com.android.incallui.call.CallList;
+import com.google.common.base.Preconditions;
+import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.List;
 import java.util.Objects;
 
 /**
@@ -31,7 +34,18 @@ import java.util.Objects;
  */
 public class PrimaryCallTracker implements InCallStateListener, IncomingCallListener {
 
+    /**
+     * This interface will be implemented by classes that wish to listen to primary call changed
+     * updates.
+     */
+    public interface PrimaryCallChangeListener {
+        public void onPrimaryCallChanged(DialerCall call);
+    }
+
     private DialerCall mPrimaryCall;
+
+    private final List<PrimaryCallChangeListener> mListeners =
+            new CopyOnWriteArrayList<>();
 
     public PrimaryCallTracker() {
     }
@@ -41,6 +55,15 @@ public class PrimaryCallTracker implements InCallStateListener, IncomingCallList
             InCallPresenter.InCallState newState, DialerCall call) {
         // same logic should happen as with onStateChange()
         onStateChange(oldState, InCallPresenter.InCallState.INCOMING, CallList.getInstance());
+    }
+
+    public void addListener(PrimaryCallChangeListener listener) {
+        Preconditions.checkNotNull(listener);
+        mListeners.add(listener);
+    }
+
+    public void removeListener(PrimaryCallChangeListener listener) {
+        mListeners.remove(listener);
     }
 
     /**
@@ -70,6 +93,14 @@ public class PrimaryCallTracker implements InCallStateListener, IncomingCallList
 
         if (!Objects.equals(mPrimaryCall, primaryCall)) {
             mPrimaryCall = primaryCall;
+            notifyPrimaryCallChanged();
+        }
+    }
+
+    private void notifyPrimaryCallChanged() {
+        Preconditions.checkNotNull(mListeners);
+        for (PrimaryCallChangeListener listener : mListeners) {
+            listener.onPrimaryCallChanged(mPrimaryCall);
         }
     }
 

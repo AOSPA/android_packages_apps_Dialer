@@ -373,6 +373,8 @@ public class InCallPresenter implements CallList.Listener {
     addDetailsListener(CallSubstateNotifier.getInstance());
     CallList.getInstance().addListener(CallSubstateNotifier.getInstance());
     InCallZoomController.getInstance().setUp(mContext);
+    OrientationModeHandler.getInstance().setUp();
+    addDetailsListener(SessionModificationCauseNotifier.getInstance());
 
     Log.d(this, "Finished InCallPresenter.setUp");
   }
@@ -402,6 +404,8 @@ public class InCallPresenter implements CallList.Listener {
 
     BottomSheetHelper.getInstance().tearDown();
     InCallZoomController.getInstance().tearDown();
+    OrientationModeHandler.getInstance().tearDown();
+    removeDetailsListener(SessionModificationCauseNotifier.getInstance());
   }
 
   private void attemptFinishActivity() {
@@ -1552,15 +1556,16 @@ public class InCallPresenter implements CallList.Listener {
    * Configures the in-call UI activity so it can change orientations or not. Enables the
    * orientation event listener if allowOrientationChange is true, disables it if false.
    *
-   * @param allowOrientationChange {@code true} if the in-call UI can change between portrait and
-   *     landscape. {@code false} if the in-call UI should be locked in portrait.
+   * @param orientation {@link ActivityInfo#screenOrientation} Actual orientation value to set
    */
-  public void setInCallAllowsOrientationChange(boolean allowOrientationChange) {
+  public void setInCallAllowsOrientationChange(int orientation) {
     if (mInCallActivity == null) {
       Log.e(this, "InCallActivity is null. Can't set requested orientation.");
       return;
     }
-    mInCallActivity.setAllowOrientationChange(allowOrientationChange);
+    mInCallActivity.setRequestedOrientation(orientation);
+    mInCallActivity.enableInCallOrientationEventListener(
+        orientation == InCallOrientationEventListener.ACTIVITY_PREFERENCE_ALLOW_ROTATION);
   }
 
   /* returns TRUE if screen is turned ON else false */
