@@ -128,6 +128,7 @@ public class DialtactsActivity extends TransactionSafeActivity implements View.O
     private static final String KEY_SEARCH_QUERY = "search_query";
     private static final String KEY_FIRST_LAUNCH = "first_launch";
     private static final String KEY_IS_DIALPAD_SHOWN = "is_dialpad_shown";
+    private static final String ADD_PARTICIPANT_KEY = "add_participant";
 
     private static final String TAG_DIALPAD_FRAGMENT = "dialpad";
     private static final String TAG_REGULAR_SEARCH_FRAGMENT = "search";
@@ -1326,6 +1327,12 @@ public class DialtactsActivity extends TransactionSafeActivity implements View.O
         Intent intent = isVideoCall ?
                 IntentUtil.getVideoCallIntent(phoneNumber, getCallOrigin()) :
                 IntentUtil.getCallIntent(phoneNumber, getCallOrigin());
+
+        if (isVideoCall) {
+            intent.putExtra(ADD_PARTICIPANT_KEY,
+                    getIntent().getBooleanExtra(ADD_PARTICIPANT_KEY, false));
+        }
+
         DialerUtils.startActivityWithErrorToast(this, intent);
         mClearSearchOnPause = true;
     }
