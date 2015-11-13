@@ -50,6 +50,7 @@ import android.text.TextUtils;
 import android.text.TextWatcher;
 import android.util.AttributeSet;
 import android.util.Log;
+import android.view.HapticFeedbackConstants;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -67,7 +68,9 @@ import android.widget.PopupMenu;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 
+import com.android.contacts.common.CallUtil;
 import com.android.contacts.common.GeoUtil;
+import com.android.contacts.common.dialog.CallSubjectDialog;
 import com.android.contacts.common.util.PermissionsUtil;
 import com.android.contacts.common.util.PhoneNumberFormatter;
 import com.android.contacts.common.util.StopWatch;
@@ -80,7 +83,6 @@ import com.android.dialer.calllog.PhoneAccountUtils;
 import com.android.dialer.util.DialerUtils;
 import com.android.dialer.util.IntentUtil;
 import com.android.phone.common.CallLogAsync;
-import com.android.phone.common.HapticFeedback;
 import com.android.phone.common.animation.AnimUtils;
 import com.android.phone.common.dialpad.DialpadKeyButton;
 import com.android.phone.common.dialpad.DialpadView;
@@ -206,9 +208,6 @@ public class DialpadFragment extends Fragment
     // determines if we want to playback local DTMF tones.
     private boolean mDTMFToneEnabled;
 
-    // Vibration (haptic feedback) for dialer key presses.
-    private final HapticFeedback mHaptic = new HapticFeedback();
-
     /** Identifier for the "Add Call" intent extra. */
     private static final String ADD_CALL_MODE_KEY = "add_call_mode";
 
@@ -327,13 +326,6 @@ public class DialpadFragment extends Fragment
         mFirstLaunch = state == null;
 
         mCurrentCountryIso = GeoUtil.getCurrentCountryIso(getActivity());
-
-        try {
-            mHaptic.init(getActivity(),
-                         getResources().getBoolean(R.bool.config_enable_dialer_key_vibration));
-        } catch (Resources.NotFoundException nfe) {
-             Log.e(TAG, "Vibrate control bool missing.", nfe);
-        }
 
         mProhibitedPhoneNumberRegexp = getResources().getString(
                 R.string.config_prohibited_phone_number_regexp);
@@ -649,9 +641,6 @@ public class DialpadFragment extends Fragment
 
         stopWatch.lap("dtwd");
 
-        // Retrieve the haptic feedback setting.
-        mHaptic.checkSystemSetting();
-
         stopWatch.lap("hptc");
 
         mPressedDialpadKeys.clear();
@@ -785,7 +774,7 @@ public class DialpadFragment extends Fragment
                 break;
         }
 
-        mHaptic.vibrate();
+        getView().performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY);
         KeyEvent event = new KeyEvent(KeyEvent.ACTION_DOWN, keyCode);
         mDigits.onKeyDown(keyCode, event);
 
@@ -896,9 +885,12 @@ public class DialpadFragment extends Fragment
 
                 boolean enable = !isDigitsEmpty();
                 for (int i = 0; i < menu.size(); i++) {
-                    menu.getItem(i).setEnabled(enable);
+                    MenuItem item = menu.getItem(i);
+                    item.setEnabled(enable);
+                    if (item.getItemId() == R.id.menu_call_with_note) {
+                        item.setVisible(CallUtil.isCallWithSubjectSupported(getContext()));
+                    }
                 }
-
                 super.show();
             }
         };
@@ -911,7 +903,7 @@ public class DialpadFragment extends Fragment
     public void onClick(View view) {
         switch (view.getId()) {
             case R.id.dialpad_floating_action_button:
-                mHaptic.vibrate();
+                view.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY);
                 handleDialButtonPressed();
                 break;
             case R.id.deleteButton: {
@@ -1469,6 +1461,10 @@ public class DialpadFragment extends Fragment
                 return true;
             case R.id.menu_add_wait:
                 updateDialString(WAIT);
+                return true;
+            case R.id.menu_call_with_note:
+                CallSubjectDialog.start(getActivity(), mDigits.getText().toString());
+                hideAndClearDialpad(false);
                 return true;
             default:
                 return false;
