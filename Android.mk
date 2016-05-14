@@ -29,7 +29,9 @@ LOCAL_AAPT_FLAGS := \
     --extra-packages com.android.contacts.common \
     --extra-packages com.android.phone.common
 
-LOCAL_JAVA_LIBRARIES := telephony-common
+LOCAL_JAVA_LIBRARIES := telephony-common \
+                        ims-common
+
 LOCAL_STATIC_JAVA_LIBRARIES := \
     android-common \
     android-support-v13 \
@@ -49,7 +51,7 @@ LOCAL_PROGUARD_FLAG_FILES := proguard.flags $(incallui_dir)/proguard.flags
 
 # Uncomment the following line to build against the current SDK
 # This is required for building an unbundled app.
-LOCAL_SDK_VERSION := current
+#LOCAL_SDK_VERSION := current
 
 include $(BUILD_PACKAGE)
 

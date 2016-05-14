@@ -74,14 +74,14 @@
     <string name="action_menu_call_history_description" msgid="9018442816219748968">"Istoricul apelurilor"</string>
     <string name="action_menu_overflow_description" msgid="2303272250613084574">"Mai multe opţiuni"</string>
     <string name="action_menu_dialpad_button" msgid="1425910318049008136">"tastatură numerică"</string>
-    <string name="menu_copy" msgid="6108677035381940698">"Copiaţi"</string>
+    <string name="menu_copy" msgid="6108677035381940698">"Copiați"</string>
     <string name="menu_show_outgoing_only" msgid="1965570298133301970">"Numai apelurile efectuate"</string>
     <string name="menu_show_incoming_only" msgid="7534206815238877417">"Numai apelurile primite"</string>
     <string name="menu_show_missed_only" msgid="154473166059743996">"Numai apelurile nepreluate"</string>
     <string name="menu_show_voicemails_only" msgid="1898421289561435703">"Afişaţi numai mesajele vocale"</string>
     <string name="menu_show_all_calls" msgid="7560347482073345885">"Afişaţi toate apelurile"</string>
     <string name="add_2sec_pause" msgid="9214012315201040129">"Adăugați o pauză de 2 secunde"</string>
-    <string name="add_wait" msgid="3360818652790319634">"Adăugaţi interval de aşteptare"</string>
+    <string name="add_wait" msgid="3360818652790319634">"Adăugaţi interval de așteptare"</string>
     <string name="dialer_settings_label" msgid="4305043242594150479">"Setări"</string>
     <string name="menu_newContact" msgid="1209922412763274638">"Intrare nouă în agendă"</string>
     <string name="menu_allContacts" msgid="6948308384034051670">"Toată agenda"</string>
@@ -116,7 +116,7 @@
     <string name="callDetailsShortDurationFormat" msgid="3988146235579303592">"<xliff:g id="SECONDS">%s</xliff:g> (de) secunde"</string>
     <string name="callDetailsDurationFormat" msgid="6061406028764382234">"<xliff:g id="MINUTES">%s</xliff:g> min. <xliff:g id="SECONDS">%s</xliff:g> sec."</string>
     <string name="dialog_phone_call_prohibited_message" msgid="5730565540182492608">"Nu puteți apela acest număr"</string>
-    <string name="dialog_voicemail_not_ready_message" msgid="4384716252789515378">"Pentru a configura mesageria vocală, accesaţi Meniu &gt; Setări."</string>
+    <string name="dialog_voicemail_not_ready_message" msgid="4384716252789515378">"Pentru a configura mesageria vocală, accesați Meniu &gt; Setări."</string>
     <string name="dialog_voicemail_airplane_mode_message" msgid="530922773669546093">"Pentru a apela mesageria vocală, mai întâi dezactivați modul Avion."</string>
     <string name="contact_list_loading" msgid="5488620820563977329">"Se încarcă..."</string>
     <string name="imei" msgid="3045126336951684285">"IMEI"</string>
