@@ -139,7 +139,7 @@ public class GlowPadWrapper extends GlowPadView implements GlowPadView.OnTrigger
             mAnswerFragment.onAnswer(VideoProfile.STATE_RX_ENABLED, getContext());
             mTargetTriggered = true;
         } else if (resId == R.drawable.qti_ic_lockscreen_deflect) {
-            mAnswerFragment.onDeflect(getContext());
+            mAnswerFragment.onDeflectNumberSelect(getContext());
             mTargetTriggered = true;
         } else {
             // Code should never reach here.

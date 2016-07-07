@@ -61,6 +61,15 @@ public class QtiCallUtils {
     private static String LOG_TAG = "QtiCallUtils";
 
     /**
+     * Edit number variables for  deflect/call transfer feature.
+     */
+    public static final int ACTIVITY_REQUEST_ENTER_NUMBER = 1;
+    public static final String INTENT_EXTRA_DIALOG_TITLE = "Title";
+    public static final String INTENT_ACTION_DIALOG_DISMISS =
+            "com.qti.editnumber.INTENT_ACTION_DIALOG_DISMISS";
+    private static String mEditNumberCallId;
+
+    /**
      * Private constructor for QtiCallUtils as we don't want to instantiate this class
      */
     private QtiCallUtils() {
@@ -541,5 +550,16 @@ public class QtiCallUtils {
     public static boolean hasVoiceOrVideoCapabilities(Call call) {
         return hasVoiceCapabilities(call) || hasTransmitVideoCapabilities(call)
                 || hasReceiveVideoCapabilities(call);
+    }
+
+    public static String getDeflectOrTransferCallId() {
+        if (mEditNumberCallId != null) {
+            return mEditNumberCallId;
+        }
+        return null;
+    }
+
+    public static void setDeflectOrTransferCallId(String CallId) {
+        mEditNumberCallId = CallId;
     }
 }

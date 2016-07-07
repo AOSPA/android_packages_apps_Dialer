@@ -360,30 +360,23 @@ public class AnswerPresenter extends Presenter<AnswerPresenter.AnswerUi>
     /**
      * Deflect the incoming call.
      */
-    public void onDeflect(Context context) {
+    public void onDeflect(Context context, String deflectCallNumber) {
         if (mCallId == null) {
             return;
         }
-        Log.d(this, "onDeflect " + mCallId);
 
-        String deflectCallNumber = QtiImsExtUtils.getCallDeflectNumber(
-                                           context.getContentResolver());
-        /* If not set properly, inform user via toast */
-        if (deflectCallNumber == null) {
-            Log.w(this, "getCallDeflectNumber is null or Empty.");
-            QtiCallUtils.displayToast(context, R.string.qti_description_deflect_error);
-        } else {
-            int phoneId = 0;
-            try {
-                Log.d(this, "Sending deflect request with Phone id " + phoneId +
-                        " to " + deflectCallNumber);
-                QtiImsExtManager.getInstance().sendCallDeflectRequest(phoneId,
-                        deflectCallNumber, imsInterfaceListener);
-             } catch (QtiImsException e) {
-                 Log.e(this, "sendCallDeflectRequest exception " + e);
-                 QtiCallUtils.displayToast(getUi().getContext(),
-                         R.string.qti_description_deflect_service_error);
-             }
+        Log.d(this, "onDeflect mCallId:" + mCallId + "deflectCallNumber:" + deflectCallNumber);
+
+        int phoneId = 0;
+        try {
+            Log.d(this, "Sending deflect request with Phone id " + phoneId +
+                    " to " + deflectCallNumber);
+            QtiImsExtManager.getInstance().sendCallDeflectRequest(phoneId,
+                    deflectCallNumber, imsInterfaceListener);
+        } catch (QtiImsException e) {
+             Log.e(this, "sendCallDeflectRequest exception " + e);
+             QtiCallUtils.displayToast(getUi().getContext(),
+                     R.string.qti_description_deflect_service_error);
         }
     }
 
@@ -484,6 +477,12 @@ public class AnswerPresenter extends Presenter<AnswerPresenter.AnswerUi>
             showAnswerUi(false);
         } else {
             Log.d(this, "No incoming call present for sub = " + subId + " " + this);
+        }
+    }
+
+    public void setDeflectCallId () {
+        if (mCalls != null) {
+            QtiCallUtils.setDeflectOrTransferCallId(mCalls.getIncomingCall().getId());
         }
     }
 }
