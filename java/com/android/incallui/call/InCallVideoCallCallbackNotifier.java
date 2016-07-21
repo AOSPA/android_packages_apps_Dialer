@@ -35,6 +35,16 @@ public class InCallVideoCallCallbackNotifier {
    */
   private final Set<SurfaceChangeListener> mSurfaceChangeListeners =
       Collections.newSetFromMap(new ConcurrentHashMap<SurfaceChangeListener, Boolean>(8, 0.9f, 1));
+  private final Set<VideoEventListener> mVideoEventListeners = Collections.newSetFromMap(
+       new ConcurrentHashMap<VideoEventListener, Boolean>(8, 0.9f, 1));
+
+  /* Invalid call session event */
+  public static final int CALL_SESSION_INVALID_EVENT = -1;
+
+  /** Cache the call session event for cases where the call is in background and listeners
+   * are unregistered.
+   */
+  private int mCallSessionEvent = CALL_SESSION_INVALID_EVENT;
 
   /** Private constructor. Instance should only be acquired through getRunningInstance(). */
   private InCallVideoCallCallbackNotifier() {}
@@ -92,6 +102,55 @@ public class InCallVideoCallCallbackNotifier {
   }
 
   /**
+   * Inform listeners of a call session event.
+   *
+   * @param event The call session event.
+   */
+  public void callSessionEvent(int event) {
+    mCallSessionEvent = event;
+    for (VideoEventListener listener : mVideoEventListeners) {
+      listener.onCallSessionEvent(mCallSessionEvent);
+    }
+  }
+
+  /**
+   * Adds a new {@link VideoEventListener}.
+   *
+   * @param listener The listener.
+   */
+  public void addVideoEventListener(VideoEventListener listener) {
+    Objects.requireNonNull(listener);
+    mVideoEventListeners.add(listener);
+  }
+
+  /**
+   * Adds a new {@link VideoEventListener} and notifies the entity that registered
+   * if flag notify is true.
+   *
+   * @param listener The listener.
+   * @param notify true or false
+   */
+  public void addVideoEventListener(VideoEventListener listener, boolean notify) {
+    addVideoEventListener(listener);
+
+    // Notify registered listeners of cached call session event if it's a valid value
+    if (notify && mCallSessionEvent != CALL_SESSION_INVALID_EVENT) {
+       callSessionEvent(mCallSessionEvent);
+     }
+  }
+
+  /**
+   * Remove a {@link VideoEventListener}.
+   *
+   * @param listener The listener.
+   */
+  public void removeVideoEventListener(VideoEventListener listener) {
+    if (listener != null) {
+      mVideoEventListeners.remove(listener);
+    }
+  }
+
+  /**
    * Listener interface for any class that wants to be notified of changes to the video surfaces.
    */
   public interface SurfaceChangeListener {
@@ -112,5 +171,18 @@ public class InCallVideoCallCallbackNotifier {
      * @param height The new camera video height.
      */
     void onCameraDimensionsChange(DialerCall call, int width, int height);
+  }
+
+  /**
+   * Listener interface for any class that wants to be notified of video events, including pause
+   * and un-pause of peer video, video quality changes.
+   */
+  public interface VideoEventListener {
+    /**
+     * Called when call session event is raised.
+     *
+     * @param event The call session event.
+     */
+    public void onCallSessionEvent(int event);
   }
 }

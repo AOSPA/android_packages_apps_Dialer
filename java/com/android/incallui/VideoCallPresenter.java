@@ -24,6 +24,7 @@ import android.net.Uri;
 import android.os.Handler;
 import android.provider.Settings;
 import android.support.annotation.Nullable;
+import android.telecom.Connection.VideoProvider;
 import android.telecom.InCallService.VideoCall;
 import android.telecom.VideoProfile;
 import android.telecom.VideoProfile.CameraCapabilities;
@@ -43,6 +44,7 @@ import com.android.incallui.call.DialerCall.CameraDirection;
 import com.android.incallui.call.DialerCall.State;
 import com.android.incallui.call.InCallVideoCallCallbackNotifier;
 import com.android.incallui.call.InCallVideoCallCallbackNotifier.SurfaceChangeListener;
+import com.android.incallui.call.InCallVideoCallCallbackNotifier.VideoEventListener;
 import com.android.incallui.util.AccessibilityUtil;
 import com.android.incallui.video.protocol.VideoCallScreen;
 import com.android.incallui.video.protocol.VideoCallScreenDelegate;
@@ -84,7 +86,8 @@ public class VideoCallPresenter
         SurfaceChangeListener,
         InCallPresenter.InCallEventListener,
         VideoCallScreenDelegate,
-        InCallUiStateNotifierListener {
+        InCallUiStateNotifierListener,
+        VideoEventListener {
 
   private static boolean mIsVideoMode = false;
 
@@ -147,6 +150,14 @@ public class VideoCallPresenter
    * Cache the size set in the "local_preview_surface_size" settings db property
    */
   private Point mFixedPreviewSurfaceSize;
+
+  /**
+   * Determines if the incoming video is available. If the call session resume event has been
+   * received (i.e PLAYER_START has been received from lower layers), incoming video is
+   * available. If the call session pause event has been received (i.e PLAYER_STOP has been
+   * received from lower layers), incoming video is not available.
+   */
+  private static boolean mIsIncomingVideoAvailable = false;
 
   /**
    * Runnable which is posted to schedule automatically entering fullscreen mode. Will not auto
@@ -271,7 +282,7 @@ public class VideoCallPresenter
 
     return !isPaused
         && (isCallActive || isCallOutgoingPending)
-        && VideoProfile.isReceptionEnabled(videoState);
+        && VideoProfile.isReceptionEnabled(videoState) && mIsIncomingVideoAvailable;
   }
 
   /**
@@ -432,6 +443,8 @@ public class VideoCallPresenter
     onStateChange(inCallState, inCallState, CallList.getInstance());
     InCallUiStateNotifier.getInstance().addListener(this, true);
     isVideoCallScreenUiReady = true;
+    InCallVideoCallCallbackNotifier.getInstance().addVideoEventListener(this,
+        VideoProfile.isVideo(mCurrentVideoState));
   }
 
   /** Called when the user interface is no longer ready to be used. */
@@ -455,6 +468,7 @@ public class VideoCallPresenter
 
     InCallVideoCallCallbackNotifier.getInstance().removeSurfaceChangeListener(this);
     InCallUiStateNotifier.getInstance().removeListener(this);
+    InCallVideoCallCallbackNotifier.getInstance().removeVideoEventListener(this);
 
     // Ensure that the call's camera direction is updated (most likely to UNKNOWN). Normally this
     // happens after any call state changes but we're unregistering from InCallPresenter above so
@@ -1468,5 +1482,45 @@ public class VideoCallPresenter
           LOCAL_PREVIEW_SURFACE_SIZE_SETTING + " - " + ex);
       mFixedPreviewSurfaceSize = null;
     }
+  }
+
+  /**
+   * Called when call session event is raised.
+   *
+   * @param event The call session event.
+   */
+  @Override
+  public void onCallSessionEvent(int event) {
+    StringBuilder sb = new StringBuilder();
+    sb.append("call session event = ");
+
+    switch (event) {
+      case VideoProvider.SESSION_EVENT_RX_PAUSE:
+      case VideoProvider.SESSION_EVENT_RX_RESUME:
+        mIsIncomingVideoAvailable =
+            event == VideoProvider.SESSION_EVENT_RX_RESUME;
+        if (mPrimaryCall == null) {
+          return;
+        }
+        showVideoUi(
+          mPrimaryCall.getVideoState(),
+          mPrimaryCall.getState(),
+          mPrimaryCall.getVideoTech().getSessionModificationState(),
+          mPrimaryCall.isRemotelyHeld());
+        sb.append(mIsIncomingVideoAvailable ? "rx_resume" : "rx_pause");
+        break;
+      case VideoProvider.SESSION_EVENT_CAMERA_FAILURE:
+        sb.append("camera_failure");
+        break;
+      case VideoProvider.SESSION_EVENT_CAMERA_READY:
+        sb.append("camera_ready");
+        break;
+      default:
+        sb.append("unknown event = ");
+        sb.append(event);
+        break;
+    }
+    QtiCallUtils.displayToast(mContext, QtiCallUtils.getCallSessionEventResId(event));
+    LogUtil.i("VideoCallPresenter.onCallSessionEvent", sb.toString());
   }
 }

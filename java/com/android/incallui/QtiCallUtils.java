@@ -35,6 +35,7 @@ import android.content.pm.ActivityInfo;
 import android.os.IBinder;
 import android.os.RemoteException;
 import android.provider.Settings;
+import android.telecom.Connection.VideoProvider;
 import android.telecom.VideoProfile;
 import android.telephony.TelephonyManager;
 import android.widget.Toast;
@@ -310,5 +311,23 @@ public class QtiCallUtils {
      */
     public static void displayToast(Context context, String msg) {
       Toast.makeText(context, msg, Toast.LENGTH_SHORT).show();
+    }
+
+    /**
+     * Returns the call session resource id given the call session event
+     */
+    public static int getCallSessionEventResId(int event) {
+        switch (event) {
+            case VideoProvider.SESSION_EVENT_RX_PAUSE:
+                return R.string.player_stopped;
+            case VideoProvider.SESSION_EVENT_RX_RESUME:
+                return R.string.player_started;
+            case VideoProvider.SESSION_EVENT_CAMERA_FAILURE:
+                return R.string.camera_not_ready;
+            case VideoProvider.SESSION_EVENT_CAMERA_READY:
+                return R.string.camera_ready;
+            default:
+                return R.string.unknown_call_session_event;
+        }
     }
 }

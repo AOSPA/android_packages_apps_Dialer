@@ -1176,6 +1176,11 @@ public class DialerCall implements VideoTechListener {
   }
 
   @Override
+  public void onCallSessionEvent(int event) {
+    InCallVideoCallCallbackNotifier.getInstance().callSessionEvent(event);
+  }
+
+  @Override
   public void onVideoUpgradeRequestReceived() {
     LogUtil.enterBlock("DialerCall.onVideoUpgradeRequestReceived");
 
