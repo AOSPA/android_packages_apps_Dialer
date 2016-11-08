@@ -158,6 +158,13 @@
             android:contentDescription="@string/onscreenAddParticipant"
             android:visibility="gone" />
 
+        <!-- "Hide Me" -->
+        <ImageButton android:id="@+id/hideMe"
+            style="@style/InCallButton"
+            android:background="@drawable/btn_compound_video_off"
+            android:contentDescription="@string/qti_ims_hideMeText_unselected"
+            android:visibility="gone" />
+
         <!-- "Blind transfer" -->
         <ImageButton android:id="@+id/blindTransfer"
             style="@style/InCallButton"
