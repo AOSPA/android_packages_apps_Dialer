@@ -587,6 +587,8 @@ public class CallLogAdapter extends GroupingListAdapter
         // Stash away the Ids of the calls so that we can support deleting a row in the call log.
         views.callIds = getCallIds(c, count);
         views.isBusiness = mContactInfoHelper.isBusiness(info.sourceType);
+        views.isVideoCall = (c.getInt(CallLogQuery.FEATURES) & CallLog.Calls.FEATURES_VIDEO) ==
+                CallLog.Calls.FEATURES_VIDEO;
         views.numberType = (String) Phone.getTypeLabel(mContext.getResources(), details.numberType,
                 details.numberLabel);
         // Default case: an item in the call log.
