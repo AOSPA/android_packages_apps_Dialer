@@ -30,6 +30,7 @@
 package com.android.incallui;
 
 import android.app.AlertDialog;
+import android.graphics.Color;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.DialogInterface.OnCancelListener;
@@ -401,7 +402,7 @@ public class InCallLowBatteryListener implements CallList.Listener, InCallDetail
         });
 
         if (VideoUtils.isIncomingVideoCall(call)) {
-            alertDialog.setNegativeButton(R.string.low_battery_convert, new OnClickListener() {
+            alertDialog.setPositiveButton(R.string.low_battery_convert, new OnClickListener() {
                 @Override
                 public void onClick(DialogInterface dialog, int which) {
                      Log.d(this, "displayLowBatteryAlert answer as Voice Call");
@@ -411,7 +412,7 @@ public class InCallLowBatteryListener implements CallList.Listener, InCallDetail
             });
 
             alertDialog.setMessage(R.string.low_battery_msg);
-            alertDialog.setPositiveButton(R.string.low_battery_yes, new OnClickListener() {
+            alertDialog.setNegativeButton(R.string.low_battery_yes, new OnClickListener() {
                 @Override
                 public void onClick(DialogInterface dialog, int which) {
                      Log.d(this, "displayLowBatteryAlert answer as Video Call");
@@ -420,7 +421,7 @@ public class InCallLowBatteryListener implements CallList.Listener, InCallDetail
                 }
             });
         } else if (VideoUtils.isOutgoingVideoCall(call)) {
-            alertDialog.setNegativeButton(R.string.low_battery_convert, new OnClickListener() {
+            alertDialog.setPositiveButton(R.string.low_battery_convert, new OnClickListener() {
                 @Override
                 public void onClick(DialogInterface dialog, int which) {
                      Log.d(this, "displayLowBatteryAlert place Voice Call");
@@ -437,7 +438,7 @@ public class InCallLowBatteryListener implements CallList.Listener, InCallDetail
             });
 
             alertDialog.setMessage(R.string.low_battery_msg);
-            alertDialog.setPositiveButton(R.string.low_battery_yes, new OnClickListener() {
+            alertDialog.setNegativeButton(R.string.low_battery_yes, new OnClickListener() {
                 @Override
                 public void onClick(DialogInterface dialog, int which) {
                      Log.d(this, "displayLowBatteryAlert place Video Call");
@@ -453,8 +454,8 @@ public class InCallLowBatteryListener implements CallList.Listener, InCallDetail
             if (QtiCallUtils.hasVoiceCapabilities(call)) {
                 //active video call can be downgraded to voice
                 alertDialog.setMessage(R.string.low_battery_msg);
-                alertDialog.setPositiveButton(R.string.low_battery_yes, null);
-                alertDialog.setNegativeButton(R.string.low_battery_convert, new OnClickListener() {
+                alertDialog.setNegativeButton(R.string.low_battery_yes, null);
+                alertDialog.setPositiveButton(R.string.low_battery_convert, new OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
                         Log.d(this, "displayLowBatteryAlert downgrading to voice call");
@@ -465,8 +466,8 @@ public class InCallLowBatteryListener implements CallList.Listener, InCallDetail
                 /* video call doesn't have downgrade capabilities, so alert the user
                    with a hangup dialog*/
                 alertDialog.setMessage(R.string.low_battery_hangup_msg);
-                alertDialog.setNegativeButton(R.string.low_battery_no, null);
-                alertDialog.setPositiveButton(R.string.low_battery_yes, new OnClickListener() {
+                alertDialog.setPositiveButton(R.string.low_battery_no, null);
+                alertDialog.setNegativeButton(R.string.low_battery_yes, new OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
                         Log.d(this, "displayLowBatteryAlert hanging up the call: " + call);
@@ -495,6 +496,11 @@ public class InCallLowBatteryListener implements CallList.Listener, InCallDetail
         mAlert.setCanceledOnTouchOutside(false);
         mAlert.getWindow().addFlags(WindowManager.LayoutParams.FLAG_DIM_BEHIND);
         mAlert.show();
+        /*
+         * By default both the buttons will have same color. In case we want to have different color
+         * we need to set specifically.
+         */
+        mAlert.getButton(DialogInterface.BUTTON_NEGATIVE).setTextColor(Color.BLACK);
     }
 
     /*
