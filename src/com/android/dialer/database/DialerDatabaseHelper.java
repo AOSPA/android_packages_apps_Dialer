@@ -441,7 +441,6 @@ public class DialerDatabaseHelper extends SQLiteOpenHelper {
                 }
             }
         } catch (Exception e) {
-            e.printStackTrace();
         }
     }
 
