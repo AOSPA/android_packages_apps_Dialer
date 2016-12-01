@@ -32,4 +32,7 @@
     <!-- OEM Key strings -->
     <string name="oem_key_code_action"></string>
     <string name="oem_code"></string>
+
+    <!-- Call Settings -->
+    <string name="call_settings_lbl">Call Settings</string>
 </resources>
