@@ -16,10 +16,13 @@
 
 package com.android.incallui;
 
+import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.Dialog;
+import android.content.ActivityNotFoundException;
 import android.content.Context;
 import android.content.DialogInterface;
+import android.content.Intent;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
@@ -274,8 +277,32 @@ public abstract class AnswerFragment extends BaseFragment<AnswerPresenter, Answe
         getPresenter().onText();
     }
 
-    public void onDeflect(Context context) {
-        getPresenter().onDeflect(context);
+    public void onDeflectNumberSelect(Context context) {
+        getPresenter().setDeflectCallId();
+        Intent dialogIntent = new Intent("com.qti.editnumber.INTENT_ACTION_LAUNCH_DIALOG");
+        dialogIntent.putExtra(QtiCallUtils.INTENT_EXTRA_DIALOG_TITLE,
+                getResources().getString(R.string.qti_deflect_title));
+        try {
+            startActivityForResult(dialogIntent, QtiCallUtils.ACTIVITY_REQUEST_ENTER_NUMBER);
+        } catch (ActivityNotFoundException e) {
+            Log.e(this, "Unable to launch EditNumberUI Dialog");
+        }
+    }
+
+    @Override
+    public void onActivityResult(int requestCode, int resultCode, Intent data) {
+        String number = null;
+        if (data == null) {
+            Log.w(this, "Data is null from intent" );
+            return;
+        }
+
+        if ((requestCode == QtiCallUtils.ACTIVITY_REQUEST_ENTER_NUMBER) &&
+                (resultCode == Activity.RESULT_OK)) {
+            Bundle b = data.getExtras();
+            number = b.getString("Number");
+        }
+        getPresenter().onDeflect(getContext(), number);
     }
 
     /**

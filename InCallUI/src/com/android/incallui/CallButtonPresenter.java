@@ -425,22 +425,8 @@ public class CallButtonPresenter extends Presenter<CallButtonPresenter.CallButto
         getUi().setVideoPaused(pause);
     }
 
-    public void callTransferClicked(int type) {
-        String number = null;
+    public void callTransferClicked(int type, String number) {
         Context mContext = getUi().getContext();
-        if (type != QtiImsExtUtils.QTI_IMS_CONSULTATIVE_TRANSFER) {
-            /**
-             * Since there are no editor options available to provide a number during
-             * blind or assured transfer, for now, making use of the existing
-             * call deflection editor to provide the required number.
-             */
-            number = QtiImsExtUtils.getCallDeflectNumber(mContext.getContentResolver());
-            if (number == null) {
-                 QtiCallUtils.displayToast(mContext, R.string.qti_ims_transfer_num_error);
-                return;
-            }
-        }
-
         boolean status = mCall.sendCallTransferRequest(type, number);
         if (!status) {
             QtiCallUtils.displayToast(mContext, R.string.qti_ims_transfer_request_error);
@@ -668,6 +654,12 @@ public class CallButtonPresenter extends Presenter<CallButtonPresenter.CallButto
         CallButtonUi ui = getUi();
         if (ui != null) {
             ui.updateColors();
+        }
+    }
+
+    public void setCallTransferCallId() {
+        if (mCall != null) {
+            QtiCallUtils.setDeflectOrTransferCallId(mCall.getId());
         }
     }
 }

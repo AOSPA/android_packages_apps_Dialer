@@ -64,6 +64,7 @@ import com.android.incalluibind.ObjectFactory;
 import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
+import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -721,6 +722,13 @@ public class InCallPresenter implements CallList.Listener,
     @Override
     public void onDisconnect(Call call) {
         maybeShowErrorDialogOnDisconnect(call);
+
+        // Send broadcast to dismiss deflect dialog.
+        if (Objects.equals(call.getId(), QtiCallUtils.getDeflectOrTransferCallId())) {
+            Intent intent = new Intent(QtiCallUtils.INTENT_ACTION_DIALOG_DISMISS);
+            mInCallActivity.sendBroadcast(intent);
+            QtiCallUtils.setDeflectOrTransferCallId(null);
+        }
 
         // We need to do the run the same code as onCallListChange.
         onCallListChange(mCallList);
