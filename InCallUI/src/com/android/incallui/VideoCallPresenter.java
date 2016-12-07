@@ -1246,6 +1246,18 @@ public class VideoCallPresenter extends Presenter<VideoCallPresenter.VideoCallUi
         }
 
         mPreviewSurfaceState = PreviewSurfaceState.CAPABILITIES_RECEIVED;
+        Point previewDimensions = ui.getPreviewSize();
+
+        if (QtiImsExtUtils.isCarrierOneSupported() &&
+                QtiImsExtUtils.shallCheckSupportForHighVideoQuality(mContext) &&
+                previewDimensions != null &&
+                (previewDimensions.x != width || previewDimensions.y != height)) {
+            QtiCallUtils.displayToast(mContext, (mContext.getResources().getString(
+                    R.string.video_quality_changed) + mContext.getResources().getString(
+                    QtiCallUtils.getVideoQualityResourceId(
+                    QtiCallUtils.sizeToVideoQuality(width, height)))));
+        }
+
         changePreviewDimensions(width, height);
         ui.setPreviewRotation(mDeviceOrientation);
 

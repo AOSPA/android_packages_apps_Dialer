@@ -45,9 +45,11 @@ import android.content.pm.ActivityInfo;
 import android.telecom.InCallService.VideoCall;
 import android.telephony.SubscriptionManager;
 import android.telephony.TelephonyManager;
+import android.util.Size;
 
 import java.lang.reflect.*;
 import java.util.ArrayList;
+import java.util.HashMap;
 
 import org.codeaurora.internal.IExtTelephony;
 import org.codeaurora.ims.QtiCallConstants;
@@ -59,6 +61,9 @@ import org.codeaurora.ims.utils.QtiImsExtUtils;
 public class QtiCallUtils {
 
     private static String LOG_TAG = "QtiCallUtils";
+    private static int VIDEO_QUALITY_UNKNOWN = -1;
+    private static final HashMap<Size, Integer>
+            VIDEO_QUALITY_TABLE = new HashMap<Size, Integer>();
 
     /**
      * Edit number variables for  deflect/call transfer feature.
@@ -68,6 +73,17 @@ public class QtiCallUtils {
     public static final String INTENT_ACTION_DIALOG_DISMISS =
             "com.qti.editnumber.INTENT_ACTION_DIALOG_DISMISS";
     private static String mEditNumberCallId;
+
+    static {
+        VIDEO_QUALITY_TABLE.put(new Size(320,240), VideoProfile.QUALITY_LOW);
+        VIDEO_QUALITY_TABLE.put(new Size(240,320), VideoProfile.QUALITY_LOW);
+        VIDEO_QUALITY_TABLE.put(new Size(352,288), VideoProfile.QUALITY_LOW);
+        VIDEO_QUALITY_TABLE.put(new Size(288,352), VideoProfile.QUALITY_LOW);
+        VIDEO_QUALITY_TABLE.put(new Size(640,480), VideoProfile.QUALITY_MEDIUM);
+        VIDEO_QUALITY_TABLE.put(new Size(480,640), VideoProfile.QUALITY_MEDIUM);
+        VIDEO_QUALITY_TABLE.put(new Size(960,720), VideoProfile.QUALITY_HIGH);
+        VIDEO_QUALITY_TABLE.put(new Size(720,960), VideoProfile.QUALITY_HIGH);
+    }
 
     /**
      * Private constructor for QtiCallUtils as we don't want to instantiate this class
@@ -105,6 +121,14 @@ public class QtiCallUtils {
             default:
                 return R.string.video_quality_unknown;
         }
+    }
+
+    public static int sizeToVideoQuality(int width, int height) {
+        Size size = new Size(width, height);
+        if (VIDEO_QUALITY_TABLE.containsKey(size)) {
+            return VIDEO_QUALITY_TABLE.get(size);
+        }
+        return VIDEO_QUALITY_UNKNOWN;
     }
 
     /**
