@@ -23,6 +23,7 @@ import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Handler;
 import android.os.Looper;
+import android.os.SystemProperties;
 import android.provider.ContactsContract;
 import android.content.pm.ActivityInfo;
 import android.telecom.Connection;
@@ -72,7 +73,7 @@ public class VideoCallPresenter extends Presenter<VideoCallPresenter.VideoCallUi
         IncomingCallListener, InCallOrientationListener, InCallStateListener,
         InCallDetailsListener, SurfaceChangeListener, VideoEventListener,
         InCallPresenter.InCallEventListener, InCallUiStateNotifierListener,
-        CallList.CallUpdateListener {
+        CallList.CallUpdateListener, PictureModeHelper.Listener {
     public static final String TAG = "VideoCallPresenter";
 
     public static final boolean DEBUG = false;
@@ -85,7 +86,9 @@ public class VideoCallPresenter extends Presenter<VideoCallPresenter.VideoCallUi
     private Runnable mAutoFullscreenRunnable =  new Runnable() {
         @Override
         public void run() {
-            if (mAutoFullScreenPending && !InCallPresenter.getInstance().isDialpadVisible()) {
+            if (mAutoFullScreenPending && !InCallPresenter.getInstance().isDialpadVisible()
+                    && mIsVideoMode) {
+
                 Log.v(this, "Automatically entering fullscreen mode.");
                 InCallPresenter.getInstance().setFullScreen(true);
                 mAutoFullScreenPending = false;
@@ -216,12 +219,36 @@ public class VideoCallPresenter extends Presenter<VideoCallPresenter.VideoCallUi
     private static boolean mIsIncomingVideoAvailable = false;
 
     /**
+     * Property when set will disable PIP mode.
+     * Default value is 0 (disable). To enable, set to 1 (enable)
+     */
+    private static final String PROP_DISABLE_VIDEOCALL_PIP_MODE =
+            "persist.disable.pip.mode";
+
+    /**
+     * Property set to specify the camera preview size when the picture mode is selected as
+     * camera preview mode only. Format is widthxheight (e.g 320x240)
+     */
+    private static final String PROP_CAMERA_PREVIEW_SIZE =
+            "persist.camera.preview.size";
+
+    private static final String CAMERA_PREVIEW_SIZE_DELIM = "x";
+
+    /**
+     * Cache the aspect ratio of the preview window.
+     */
+    private float mPreviewAspectRatio = 1.0f;
+
+    private PictureModeHelper mPictureModeHelper;
+
+    /**
      * Initializes the presenter.
      *
      * @param context The current context.
      */
     public void init(Context context) {
         mContext = context;
+        mPictureModeHelper = new PictureModeHelper(mContext);
         mMinimumVideoDimension = mContext.getResources().getDimension(
                 R.dimen.video_preview_small_dimension);
         mHandler = new Handler(Looper.getMainLooper());
@@ -255,6 +282,7 @@ public class VideoCallPresenter extends Presenter<VideoCallPresenter.VideoCallUi
         // To get updates of video call details changes
         InCallPresenter.getInstance().addDetailsListener(this);
         InCallPresenter.getInstance().addInCallEventListener(this);
+        mPictureModeHelper.setUp(this);
 
         // Register for surface and video events from {@link InCallVideoCallListener}s.
         InCallVideoCallCallbackNotifier.getInstance().addSurfaceChangeListener(this);
@@ -283,6 +311,8 @@ public class VideoCallPresenter extends Presenter<VideoCallPresenter.VideoCallUi
             return;
         }
 
+        cancelAutoFullScreen();
+
         InCallPresenter.getInstance().removeListener(this);
         InCallPresenter.getInstance().removeDetailsListener(this);
         InCallPresenter.getInstance().removeIncomingCallListener(this);
@@ -295,6 +325,8 @@ public class VideoCallPresenter extends Presenter<VideoCallPresenter.VideoCallUi
         if(mPrimaryCall != null) {
             CallList.getInstance().removeCallUpdateListener(mPrimaryCall.getId(), this);
         }
+        mPictureModeHelper.tearDown(this);
+        cancelAutoFullScreen();
     }
 
     /**
@@ -330,9 +362,7 @@ public class VideoCallPresenter extends Presenter<VideoCallPresenter.VideoCallUi
             // whether PLAYER_START event has been received or not. Since we
             // start with showing incoming video by default for surface creation,
             // we need to make sure we hide it once surface is available.
-            boolean isConf = (mPrimaryCall != null ? mPrimaryCall.isConferenceCall() :
-                    false);
-            showVideoUi(mCurrentVideoState, mCurrentCallState, isConf);
+            showVideoUi(mCurrentVideoState, mCurrentCallState, isConfCall());
         }
     }
 
@@ -414,10 +444,16 @@ public class VideoCallPresenter extends Presenter<VideoCallPresenter.VideoCallUi
         switch (surfaceId) {
             case VideoCallFragment.SURFACE_DISPLAY:
                 boolean isFullscreen = InCallPresenter.getInstance().toggleFullscreenMode();
-                Log.d(this, "toggleFullScreen = " + isFullscreen);
+                Log.d(this, "toggleFullScreen = " + isFullscreen + "surfaceId =" + surfaceId);
                 break;
             case VideoCallFragment.SURFACE_PREVIEW:
-                InCallZoomController.getInstance().onPreviewSurfaceClicked(mVideoCall);
+                if (mPictureModeHelper.canShowPreviewVideoView() &&
+                        mPictureModeHelper.canShowIncomingVideoView()) {
+                    InCallZoomController.getInstance().onPreviewSurfaceClicked(mVideoCall);
+                } else {
+                    isFullscreen = InCallPresenter.getInstance().toggleFullscreenMode();
+                    Log.d(this, "toggleFullScreen = " + isFullscreen + "surfaceId =" + surfaceId);
+                }
                 break;
             default:
                 break;
@@ -454,7 +490,6 @@ public class VideoCallPresenter extends Presenter<VideoCallPresenter.VideoCallUi
             if (isVideoMode()) {
                 exitVideoMode();
             }
-
             cleanupSurfaces();
         }
 
@@ -514,6 +549,10 @@ public class VideoCallPresenter extends Presenter<VideoCallPresenter.VideoCallUi
         cancelAutoFullScreen();
     }
 
+    @Override
+    public void updatePrimaryCallState() {
+    }
+
     /**
      * Handles changes to the visibility of the secondary caller info bar.
      *
@@ -527,6 +566,11 @@ public class VideoCallPresenter extends Presenter<VideoCallPresenter.VideoCallUi
                 "onSecondaryCallerInfoVisibilityChanged : isVisible = " + isVisible + " height = "
                         + height);
         getUi().adjustPreviewLocation(isVisible /* shiftUp */, height);
+    }
+
+    @Override
+    public void onIncomingVideoAvailabilityChanged(boolean isAvailable) {
+        //NO OP
     }
 
     private void checkForVideoStateChange(Call call) {
@@ -551,7 +595,7 @@ public class VideoCallPresenter extends Presenter<VideoCallPresenter.VideoCallUi
         updateCameraSelection(call);
 
         if (isVideoCall) {
-            enterVideoMode(call);
+            adjustVideoMode(call);
         } else if (isVideoMode()) {
             exitVideoMode();
         }
@@ -613,7 +657,7 @@ public class VideoCallPresenter extends Presenter<VideoCallPresenter.VideoCallUi
 
             checkForOrientationAllowedChange(newPrimaryCall);
             updateCameraSelection(newPrimaryCall);
-            enterVideoMode(newPrimaryCall);
+            adjustVideoMode(newPrimaryCall);
         }
         checkForOrientationAllowedChange(newPrimaryCall);
     }
@@ -670,11 +714,11 @@ public class VideoCallPresenter extends Presenter<VideoCallPresenter.VideoCallUi
 
     private void checkForOrientationAllowedChange(Call call) {
         final int newMode = OrientationModeHandler.getInstance().getOrientation(call);
-        if (newMode != mActivityOrientationMode) {
+        if (newMode != mActivityOrientationMode && InCallPresenter.
+                getInstance().setInCallAllowsOrientationChange(newMode)) {
             Log.d(this, "checkForOrientationAllowedChange: currMode = " +
                     mActivityOrientationMode + " newMode = " + newMode);
             mActivityOrientationMode = newMode;
-            InCallPresenter.getInstance().setInCallAllowsOrientationChange(newMode);
         }
     }
 
@@ -694,7 +738,7 @@ public class VideoCallPresenter extends Presenter<VideoCallPresenter.VideoCallUi
      * Handles a change to the video call. Sets the surfaces on the previous call to null and sets
      * the surfaces on the new video call accordingly.
      *
-     * @param videoCall The new video call.
+     * @param call The new video call.
      */
     private void changeVideoCall(Call call) {
         final VideoCall videoCall = call.getTelecomCall().getVideoCall();
@@ -715,7 +759,7 @@ public class VideoCallPresenter extends Presenter<VideoCallPresenter.VideoCallUi
         }
 
         if (VideoUtils.isVideoCall(call) && hasChanged) {
-            enterVideoMode(call);
+            adjustVideoMode(call);
         }
     }
 
@@ -729,14 +773,16 @@ public class VideoCallPresenter extends Presenter<VideoCallPresenter.VideoCallUi
     }
 
     /**
-     * Enters video mode by showing the video surfaces and making other adjustments (eg. audio).
+     * Adjusts the current video mode by setting up the preview and display surfaces as necessary.
+     * Expected to be called whenever the video state associated with a call changes (e.g. a user
+     * turns their camera on or off) to ensure the correct surfaces are shown/hidden.
      * TODO(vt): Need to adjust size and orientation of preview surface here.
      */
-    private void enterVideoMode(Call call) {
+    private void adjustVideoMode(Call call) {
         VideoCall videoCall = call.getVideoCall();
         int newVideoState = call.getVideoState();
 
-        Log.d(this, "enterVideoMode videoCall= " + videoCall + " videoState: " + newVideoState);
+        Log.d(this, "adjustVideoMode videoCall= " + videoCall + " videoState: " + newVideoState);
         VideoCallUi ui = getUi();
         if (ui == null) {
             Log.e(this, "Error VideoCallUi is null so returning");
@@ -761,11 +807,15 @@ public class VideoCallPresenter extends Presenter<VideoCallPresenter.VideoCallUi
             videoCall.setDeviceOrientation(mDeviceOrientation);
             enableCamera(videoCall, isCameraRequired(newVideoState));
         }
+        int previousVideoState = mCurrentVideoState;
         mCurrentVideoState = newVideoState;
-
         mIsVideoMode = true;
 
-        maybeAutoEnterFullscreen(call);
+        // adjustVideoMode may be called if we are already in a 1-way video state.  In this case
+        // we do not want to trigger auto-fullscreen mode.
+        if (!VideoUtils.isVideoCall(previousVideoState) && VideoUtils.isVideoCall(newVideoState)) {
+            maybeAutoEnterFullscreen(call);
+        }
     }
 
     private void enableCamera(VideoCall videoCall, boolean isCameraRequired) {
@@ -823,9 +873,11 @@ public class VideoCallPresenter extends Presenter<VideoCallPresenter.VideoCallUi
 
         final boolean isDisplaySurfaceCreated = ui.isDisplayVideoSurfaceCreated();
         final boolean isVideoReceptionEnabled = VideoProfile.isReceptionEnabled(videoState);
-        boolean showIncomingVideo = showIncomingVideo(videoState, callState) ||
+        boolean showIncomingVideo = (showIncomingVideo(videoState, callState) &&
+                mPictureModeHelper.canShowIncomingVideoView()) ||
                 (!isDisplaySurfaceCreated && isVideoReceptionEnabled);
-        boolean showOutgoingVideo = showOutgoingVideo(videoState);
+        boolean showOutgoingVideo = showOutgoingVideo(videoState) &&
+                mPictureModeHelper.canShowPreviewVideoView();
 
         Log.v(this, "showVideoUi : showIncoming = " + showIncomingVideo + " showOutgoing = "
                 + showOutgoingVideo);
@@ -834,7 +886,13 @@ public class VideoCallPresenter extends Presenter<VideoCallPresenter.VideoCallUi
 
             boolean hidePreview = shallHidePreview(isConf, videoState);
             Log.v(this, "showVideoUi, hidePreview = " + hidePreview);
-            ui.showOutgoingVideoView(!hidePreview);
+            if (hidePreview) {
+                ui.showOutgoingVideoView(!hidePreview);
+            }
+
+            if (showOutgoingVideo) {
+                setPreviewSize(mDeviceOrientation, mPreviewAspectRatio);
+            }
 
             if (isVideoReceptionEnabled) {
                 loadProfilePhotoAsync();
@@ -842,9 +900,6 @@ public class VideoCallPresenter extends Presenter<VideoCallPresenter.VideoCallUi
         } else {
             ui.hideVideoUi();
         }
-
-        InCallPresenter.getInstance().enableScreenTimeout(
-                VideoProfile.isAudioOnly(videoState));
     }
 
     /**
@@ -1030,9 +1085,11 @@ public class VideoCallPresenter extends Presenter<VideoCallPresenter.VideoCallUi
             aspectRatio = (float) width / (float) height;
         }
 
+        mPreviewAspectRatio = aspectRatio;
+
         // Resize the textureview housing the preview video and rotate it appropriately based on
         // the device orientation
-        setPreviewSize(mDeviceOrientation, aspectRatio);
+        setPreviewSize(mDeviceOrientation, mPreviewAspectRatio);
     }
 
     /**
@@ -1050,10 +1107,10 @@ public class VideoCallPresenter extends Presenter<VideoCallPresenter.VideoCallUi
             case Connection.VideoProvider.SESSION_EVENT_RX_RESUME:
                 mIsIncomingVideoAvailable =
                     event == Connection.VideoProvider.SESSION_EVENT_RX_RESUME;
-                boolean isConf = (mPrimaryCall != null ? mPrimaryCall.isConferenceCall() :
-                        false);
-                showVideoUi(mCurrentVideoState, mCurrentCallState, isConf);
+                showVideoUi(mCurrentVideoState, mCurrentCallState, isConfCall());
                 sb.append(mIsIncomingVideoAvailable ? "rx_resume" : "rx_pause");
+                InCallPresenter.getInstance().
+                        notifyIncomingVideoAvailabilityChanged(mIsIncomingVideoAvailable);
                 break;
             case Connection.VideoProvider.SESSION_EVENT_CAMERA_FAILURE:
                 sb.append("camera_failure");
@@ -1106,6 +1163,9 @@ public class VideoCallPresenter extends Presenter<VideoCallPresenter.VideoCallUi
         changePreviewDimensions(previewDimensions.x, previewDimensions.y);
 
         ui.setPreviewRotation(mDeviceOrientation);
+        // Notify picture mode changed so that if camera preview is showing in non PIP
+        // mode, we can correctly resize the camera preview by swapping width and height.
+        showVideoUi(mCurrentVideoState, mCurrentCallState, isConfCall());
     }
 
     /**
@@ -1119,24 +1179,45 @@ public class VideoCallPresenter extends Presenter<VideoCallPresenter.VideoCallUi
      * @param aspectRatio The aspect ratio of the camera (width / height).
      */
     private void setPreviewSize(int orientation, float aspectRatio) {
+        Log.d(this, "setPreviewSize: orientation = " + orientation +
+                " aspectRatio = " + aspectRatio);
         VideoCallUi ui = getUi();
         if (ui == null) {
             return;
         }
 
-        int height;
-        int width;
+        float height = 0.0f;
+        float width = 0.0f;
+        final boolean isPipMode = mPictureModeHelper.isPipMode();
 
-        if (orientation == InCallOrientationEventListener.SCREEN_ORIENTATION_90 ||
-                orientation == InCallOrientationEventListener.SCREEN_ORIENTATION_270) {
-            width = (int) (mMinimumVideoDimension * aspectRatio);
-            height = (int) mMinimumVideoDimension;
+        if (isPipMode) {
+            width = mMinimumVideoDimension;
+            height = mMinimumVideoDimension;
         } else {
-            // Portrait or reverse portrait orientation.
-            width = (int) mMinimumVideoDimension;
-            height = (int) (mMinimumVideoDimension * aspectRatio);
+            Point size = getPreviewVideoSize();
+            // Swap width and height if landscape
+            final boolean isLayoutLandscape = mContext.getResources().getBoolean(
+                R.bool.is_layout_landscape);
+            width = isLayoutLandscape ? size.y : size.x;
+            height = isLayoutLandscape ? size.x : size.y;
         }
-        ui.setPreviewSize(width, height);
+
+        final boolean hasNoPreviewSizeInProp = ((SystemProperties.get(
+                PROP_CAMERA_PREVIEW_SIZE, "")).isEmpty());
+
+        // Do not apply aspect ratio if camera preview is set in the adb property -
+        // "persist.camera.preview.size". Aspect ratio is applied to full screen size for
+        // camera preview and for Pip mode
+        if (hasNoPreviewSizeInProp || isPipMode) {
+            if (orientation == InCallOrientationEventListener.SCREEN_ORIENTATION_90 ||
+                    orientation == InCallOrientationEventListener.SCREEN_ORIENTATION_270) {
+                width = (aspectRatio > 1.0) ? width * aspectRatio : width / aspectRatio;
+            } else {
+                // Portrait or reverse portrait orientation.
+                height = (aspectRatio > 1.0) ? height * aspectRatio : height / aspectRatio;
+            }
+        }
+        ui.setPreviewSize((int) width, (int) height);
     }
 
     /**
@@ -1156,6 +1237,12 @@ public class VideoCallPresenter extends Presenter<VideoCallPresenter.VideoCallUi
         Point size = ui.getScreenSize();
         Log.v(this, "setDisplayVideoSize: windowmgr width=" + size.x
                 + " windowmgr height=" + size.y);
+        size = resizeForAspectRatio(size, width, height);
+        ui.setDisplayVideoSize(size.x, size.y);
+    }
+
+    public static Point resizeForAspectRatio(Point inSize, int width, int height) {
+        Point size = new Point(inSize);
         if (size.y * width > size.x * height) {
             // current display height is too much. Correct it
             size.y = (int) (size.x * height / width);
@@ -1163,7 +1250,7 @@ public class VideoCallPresenter extends Presenter<VideoCallPresenter.VideoCallUi
             // current display width is too much. Correct it
             size.x = (int) (size.y * width / height);
         }
-        ui.setDisplayVideoSize(size.x, size.y);
+        return size;
     }
 
     /**
@@ -1188,6 +1275,8 @@ public class VideoCallPresenter extends Presenter<VideoCallPresenter.VideoCallUi
      * 2. Call is not active
      * 3. Call is not video call
      * 4. Already in fullscreen mode
+     * 5. The current video state is not bi-directional (if the remote party stops transmitting,
+     *    the user's contact photo would dominate in fullscreen mode).
      *
      * @param call The current call.
      */
@@ -1199,7 +1288,8 @@ public class VideoCallPresenter extends Presenter<VideoCallPresenter.VideoCallUi
         if (call == null || (
                 call != null && (call.getState() != Call.State.ACTIVE ||
                         !VideoUtils.isVideoCall(call)) ||
-                        InCallPresenter.getInstance().isFullscreen())) {
+                        InCallPresenter.getInstance().isFullscreen()) ||
+                        !VideoUtils.isBidirectionalVideoCall(call)) {
             // Ensure any previously scheduled attempt to enter fullscreen is cancelled.
             cancelAutoFullScreen();
             return;
@@ -1224,6 +1314,9 @@ public class VideoCallPresenter extends Presenter<VideoCallPresenter.VideoCallUi
         }
         Log.v(this, "cancelAutoFullScreen : cancelling pending");
         mAutoFullScreenPending = false;
+        if (mHandler != null) {
+            mHandler.removeCallbacks(mAutoFullscreenRunnable);
+        }
     }
 
     private static boolean isAudioRouteEnabled(int audioRoute, int audioRouteMask) {
@@ -1320,6 +1413,83 @@ public class VideoCallPresenter extends Presenter<VideoCallPresenter.VideoCallUi
     }
 
     /**
+     * The function is called to create and display picture mode alert dialog when user long
+     * presses on the video call screen
+     */
+     public boolean onLongClick() {
+        // Don't show the alert if either the adb property "persist.disable.pip.mode" is not set
+        // or if we are supposed to hide preview for conference calls
+        if ((SystemProperties.getInt(PROP_DISABLE_VIDEOCALL_PIP_MODE, 0) == 0) ||
+            shallHidePreview(isConfCall(), mCurrentVideoState)) {
+            return false;
+        }
+        mPictureModeHelper.create(mContext);
+        mPictureModeHelper.show();
+        return true;
+    }
+
+    /**
+     * Gets the preview video size either from the property - "persist.camera.preview.size" if it
+     * is set or return the full screen size
+     */
+    private Point getPreviewVideoSize() {
+        VideoCallUi ui = getUi();
+        if (ui == null) {
+            Log.e(this, "getPreviewVideoSize, VideoCallUi is null returning");
+            return null;
+        }
+
+        Point previewSize = getPreviewVideoSizeFromProp();
+
+        if (previewSize == null) {
+            previewSize = ui.getScreenSize();
+        }
+
+        return previewSize;
+    }
+
+    /**
+     * Gets the preview video size from the property - "persist.camera.preview.size"
+     * @return Point point - Size of the preview (width and height)
+     */
+    private static Point getPreviewVideoSizeFromProp() {
+        final String cameraPreviewSize = SystemProperties.get(
+                PROP_CAMERA_PREVIEW_SIZE, "");
+        if (!cameraPreviewSize.isEmpty()) {
+            final String[] sizeDimensions = cameraPreviewSize.split(CAMERA_PREVIEW_SIZE_DELIM);
+            final int width = Integer.parseInt(sizeDimensions[0]);
+            final int height = Integer.parseInt(sizeDimensions[1]);
+            return new Point(width, height);
+        }
+        return null;
+    }
+
+    /**
+     * Gets called when preview video selection changes
+     * @param boolean previewVideoSelection - New value for preview video selection
+     */
+    @Override
+    public void onPreviewVideoSelectionChanged() {
+        VideoCallUi ui = getUi();
+        if (ui == null) {
+            Log.e(this, "onPreviewVideoSelectionChanged, VideoCallUi is null returning");
+            return;
+        }
+
+        ui.showOutgoingVideoView(showOutgoingVideo(mCurrentVideoState) &&
+                mPictureModeHelper.canShowPreviewVideoView());
+    }
+
+    /**
+     * Gets called when incoming video selection changes
+     * @param boolean incomingVideoSelection - New value for incoming video selection
+     */
+    @Override
+    public void onIncomingVideoSelectionChanged() {
+        showVideoUi(mCurrentVideoState, mCurrentCallState, isConfCall());
+    }
+
+    /**
      * Starts an asynchronous load of the user's profile photo.
      */
     public void loadProfilePhotoAsync() {
@@ -1405,6 +1575,15 @@ public class VideoCallPresenter extends Presenter<VideoCallPresenter.VideoCallUi
     private boolean shallHidePreview(boolean isConf, int videoState) {
         return VideoProfile.isBidirectional(videoState) && isConf
                 && QtiImsExtUtils.shallHidePreviewInVtConference(mContext);
+    }
+
+    private boolean isConfCall() {
+        return mPrimaryCall != null ? mPrimaryCall.isConferenceCall() : false;
+    }
+
+    public boolean isCameraPreviewMode() {
+        return mPictureModeHelper.canShowPreviewVideoView() &&
+                !(mPictureModeHelper.canShowIncomingVideoView());
     }
 
     /**

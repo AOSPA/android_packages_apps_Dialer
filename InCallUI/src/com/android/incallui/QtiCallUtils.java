@@ -54,6 +54,7 @@ import java.util.ArrayList;
 
 import org.codeaurora.internal.IExtTelephony;
 import org.codeaurora.ims.QtiCallConstants;
+import org.codeaurora.ims.utils.QtiImsExtUtils;
 
 /**
  * This class contains Qti specific utiltity functions.
@@ -242,7 +243,18 @@ public class QtiCallUtils {
         if (context == null) {
             Log.w(context, "Context is null...");
         }
-        return context != null && context.getResources().getBoolean(R.bool.video_call_use_ext);
+        return context != null && QtiImsExtUtils.useExt(context);
+    }
+
+    /**
+     * Checks the boolean flag in config file to figure out if custom video ui is required or
+     * not
+     */
+    public static boolean useCustomVideoUi(Context context) {
+        if (context == null) {
+            Log.w(context, "Context is null...");
+        }
+        return context != null && QtiImsExtUtils.useCustomVideoUi(context);
     }
 
     /**
@@ -520,7 +532,7 @@ public class QtiCallUtils {
 
     /**
      * Returns true if local has the VT Receive and if remote capability has VT Transmit set i.e.
-     * Local can transmit and remote can receive
+     * Remote can transmit and local can receive
      */
     public static boolean hasReceiveVideoCapabilities(Call call) {
         return call != null &&

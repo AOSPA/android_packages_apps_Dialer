@@ -82,8 +82,6 @@ public class StatusBarNotifier implements InCallPresenter.InCallStateListener,
     private static final int NOTIFICATION_IN_CALL = 1;
     // Notification for incoming calls. This is interruptive and will show up as a HUN.
     private static final int NOTIFICATION_INCOMING_CALL = 2;
-    //If voice privacy is on this property will be added to the call associated with the connection.
-    private static final int CAPABILITY_VOICE_PRIVACY = 0x01000000;
 
     private static final long[] VIBRATE_PATTERN = new long[] {0, 1000, 1000};
 
@@ -339,9 +337,12 @@ public class StatusBarNotifier implements InCallPresenter.InCallStateListener,
 
         final boolean isVideoUpgradeRequest = call.getSessionModificationState()
                 == Call.SessionModificationState.RECEIVED_UPGRADE_TO_VIDEO_REQUEST;
+        final Call pendingAccountSelectionCall = CallList.getInstance()
+                .getWaitingForAccountCall();
         final int notificationType;
-        if (callState == Call.State.INCOMING || callState == Call.State.CALL_WAITING
-                || isVideoUpgradeRequest) {
+        if ((callState == Call.State.INCOMING || callState == Call.State.CALL_WAITING
+                || isVideoUpgradeRequest) && (!InCallPresenter.getInstance().isShowingInCallUi()
+                || pendingAccountSelectionCall != null)) {
             notificationType = NOTIFICATION_INCOMING_CALL;
         } else {
             notificationType = NOTIFICATION_IN_CALL;
@@ -388,8 +389,6 @@ public class StatusBarNotifier implements InCallPresenter.InCallStateListener,
         // Set up the main intent to send the user to the in-call screen
         final PendingIntent inCallPendingIntent = createLaunchPendingIntent();
         builder.setContentIntent(inCallPendingIntent);
-        final Call pendingAccountSelectionCall = CallList.getInstance()
-                .getWaitingForAccountCall();
 
         // Set the intent as a full screen intent as well if a call is incoming
         if (notificationType == NOTIFICATION_INCOMING_CALL
@@ -601,7 +600,7 @@ public class StatusBarNotifier implements InCallPresenter.InCallStateListener,
         // from the foreground call.  And if there's a ringing call,
         // display that regardless of the state of the other calls.
         int resId;
-        boolean supportsVoicePrivacy = call.can(CAPABILITY_VOICE_PRIVACY);
+        boolean supportsVoicePrivacy = call.hasProperty(Details.PROPERTY_HAS_CDMA_VOICE_PRIVACY);
         if (call.getState() == Call.State.ONHOLD) {
             if (supportsVoicePrivacy) {
                 resId = R.drawable.stat_sys_vp_phone_call_on_hold;

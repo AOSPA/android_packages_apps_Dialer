@@ -445,7 +445,7 @@ public class CallCardPresenter extends Presenter<CallCardPresenter.CallCardUi>
         return null;
     }
 
-    private void updatePrimaryCallState() {
+    public void updatePrimaryCallState() {
         if (getUi() != null && mPrimary != null) {
             boolean isWorkCall = mPrimary.hasProperty(PROPERTY_ENTERPRISE_CALL)
                     || (mPrimaryContactInfo == null ? false
@@ -1147,12 +1147,26 @@ public class CallCardPresenter extends Presenter<CallCardPresenter.CallCardUi>
         }
         ui.setCallCardVisible(!isFullscreenMode);
         ui.setSecondaryInfoVisible(!isFullscreenMode);
+        final int callState = (mPrimary != null) ? mPrimary.getState() : Call.State.INVALID;
+        ui.setEndCallButtonEnabled(!isFullscreenMode &&
+                shouldShowEndCallButton(mPrimary, callState),
+                callState != Call.State.INCOMING /* animate */);
+        ui.showVbButton(!isFullscreenMode);
         maybeShowManageConferenceCallButton();
     }
 
     @Override
     public void onSecondaryCallerInfoVisibilityChanged(boolean isVisible, int height) {
         // No-op - the Call Card is the origin of this event.
+    }
+
+    @Override
+    public void onIncomingVideoAvailabilityChanged(boolean isAvailable) {
+        Log.d(this, "onIncomingVideoAvailabilityChanged: available = " + isAvailable);
+        if (mPrimary == null) {
+            return;
+        }
+        updatePrimaryDisplayInfo();
     }
 
     private boolean isPrimaryCallActive() {
@@ -1285,5 +1299,6 @@ public class CallCardPresenter extends Presenter<CallCardPresenter.CallCardUi>
         void animateForNewOutgoingCall();
         void sendAccessibilityAnnouncement();
         void showNoteSentToast();
+        void showVbButton(boolean show);
     }
 }

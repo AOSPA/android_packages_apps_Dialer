@@ -16,11 +16,13 @@
 
 package com.android.incallui;
 
+import android.app.Activity;
 import android.graphics.Matrix;
 import android.graphics.Point;
 import android.graphics.SurfaceTexture;
 import android.os.Bundle;
 import android.view.Display;
+import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.Surface;
 import android.view.TextureView;
@@ -28,6 +30,8 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.view.ViewStub;
 import android.view.ViewTreeObserver;
+import android.view.Window;
+import android.view.WindowManager;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
 
@@ -115,7 +119,7 @@ public class VideoCallFragment extends BaseFragment<VideoCallPresenter,
      * changes.
      */
     private static class VideoCallSurface implements TextureView.SurfaceTextureListener,
-            View.OnClickListener, View.OnAttachStateChangeListener {
+            View.OnClickListener, View.OnAttachStateChangeListener, View.OnLongClickListener {
         private int mSurfaceId;
         private VideoCallPresenter mPresenter;
         private TextureView mTextureView;
@@ -174,6 +178,7 @@ public class VideoCallFragment extends BaseFragment<VideoCallPresenter,
             mTextureView = view;
             mTextureView.setSurfaceTextureListener(this);
             mTextureView.setOnClickListener(this);
+            mTextureView.setOnLongClickListener(this);
 
             final boolean areSameSurfaces =
                     Objects.equal(mSavedSurfaceTexture, mTextureView.getSurfaceTexture());
@@ -412,6 +417,18 @@ public class VideoCallFragment extends BaseFragment<VideoCallPresenter,
         }
 
         /**
+         * Handles a user long pressing on the surface, which is the trigger to show the
+         * picture mode pop up alert dialog
+         *
+         * @param View The view receiving the long press.
+         */
+        @Override
+        public boolean onLongClick(View v) {
+            Log.d(this, "onLongClick:");
+            return mPresenter.onLongClick();
+        }
+
+        /**
          * Returns the dimensions of the surface.
          *
          * @return The dimensions of the surface.
@@ -498,6 +515,7 @@ public class VideoCallFragment extends BaseFragment<VideoCallPresenter,
     public void onPause() {
         super.onPause();
         Log.d(this, "onPause:");
+        getPresenter().cancelAutoFullScreen();
     }
 
     @Override
@@ -548,6 +566,7 @@ public class VideoCallFragment extends BaseFragment<VideoCallPresenter,
      * Hides and shows the incoming video view and changes the outgoing video view's state based on
      * whether outgoing view is enabled or not.
      */
+    @Override
     public void showVideoViews(boolean previewPaused, boolean showIncoming) {
         inflateVideoUi(true);
 
@@ -561,12 +580,16 @@ public class VideoCallFragment extends BaseFragment<VideoCallPresenter,
         if (mPreviewPhoto != null) {
             mPreviewPhoto.setVisibility(!previewPaused ? View.VISIBLE : View.INVISIBLE);
         }
+
+        enableScreenTimeout(false);
     }
 
     /**
      * Hide all video views.
      */
+    @Override
     public void hideVideoUi() {
+        enableScreenTimeout(true);
         inflateVideoUi(false);
     }
 
@@ -690,9 +713,15 @@ public class VideoCallFragment extends BaseFragment<VideoCallPresenter,
             preview.setLayoutParams(params);
 
             if (mPreviewVideoContainer != null) {
-                ViewGroup.LayoutParams containerParams = mPreviewVideoContainer.getLayoutParams();
+                FrameLayout.LayoutParams containerParams = (FrameLayout.LayoutParams)
+                        mPreviewVideoContainer.getLayoutParams();
                 containerParams.width = width;
                 containerParams.height = height;
+                if (getPresenter().isCameraPreviewMode()) {
+                    containerParams.gravity = Gravity.CENTER;
+                } else {
+                    containerParams.gravity = Gravity.BOTTOM | Gravity.RIGHT;
+                }
                 mPreviewVideoContainer.setLayoutParams(containerParams);
             }
 
@@ -832,7 +861,12 @@ public class VideoCallFragment extends BaseFragment<VideoCallPresenter,
 
             Log.d(this, "inflateVideoCallViews: sVideoSurfacesInUse=" + sVideoSurfacesInUse);
             //If peer adjusted screen size is not available, set screen size to default display size
-            Point screenSize = sDisplaySize == null ? getScreenSize() : sDisplaySize;
+            Point screenSize = getScreenSize();
+            if (sDisplaySize != null) {
+                screenSize = VideoCallPresenter.resizeForAspectRatio(screenSize,
+                        sDisplaySize.x, sDisplaySize.y);
+            }
+
             setSurfaceSizeAndTranslation(displaySurface, screenSize);
 
             if (!sVideoSurfacesInUse) {
@@ -900,6 +934,25 @@ public class VideoCallFragment extends BaseFragment<VideoCallPresenter,
         // Incoming video calls will center the view
         if (mIsLayoutComplete) {
             centerDisplayView(textureView);
+        }
+    }
+
+    private void enableScreenTimeout(boolean enable) {
+        Log.v(this, "enableScreenTimeout: value=" + enable);
+        final Activity activity = getActivity();
+        if (activity == null) {
+            Log.e(this, "enableScreenTimeout: Activity is null.");
+            return;
+        }
+        final Window window = activity.getWindow();
+        if (window == null) {
+            Log.e(this, "enableScreenTimeout: window is null");
+            return;
+        }
+        if (enable) {
+            window.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+        } else {
+            window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
         }
     }
 }

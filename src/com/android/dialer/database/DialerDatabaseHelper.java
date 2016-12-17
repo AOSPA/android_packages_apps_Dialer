@@ -19,6 +19,7 @@ package com.android.dialer.database;
 import android.content.ContentValues;
 import android.content.Context;
 import android.content.SharedPreferences;
+import android.content.SharedPreferences.Editor;
 import android.database.Cursor;
 import android.database.DatabaseUtils;
 import android.database.sqlite.SQLiteDatabase;
@@ -50,6 +51,7 @@ import com.google.common.base.Objects;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
 
+import java.io.File;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -84,6 +86,8 @@ public class DialerDatabaseHelper extends SQLiteOpenHelper {
      * </pre>
      */
     public static final int DATABASE_VERSION = 9;
+    public static final int DATABASE_SHAREPREF_VERSION = 1;
+    public static final String DATABASE_SHAREPREF_KEY = "database_sharepref_key";
     public static final String DATABASE_NAME = "dialer.db";
 
     /**
@@ -458,6 +462,11 @@ public class DialerDatabaseHelper extends SQLiteOpenHelper {
         setupTables(db);
     }
 
+    @Override
+    public void onOpen(SQLiteDatabase db) {
+        upgradeSmartSearchDatabase(db);
+    }
+
     private void setupTables(SQLiteDatabase db) {
         dropTables(db);
         db.execSQL("CREATE TABLE " + Tables.SMARTDIAL_TABLE + " ("
@@ -511,6 +520,49 @@ public class DialerDatabaseHelper extends SQLiteOpenHelper {
         if (!mIsTestInstance) {
             resetSmartDialLastUpdatedTime();
         }
+    }
+
+    private boolean isNeedUpgradeForSmartSearch() {
+        String FILENAME = "upgradeSmartSearchTable";
+
+        Log.d(TAG, "Shared Preference Created with name:  " + FILENAME);
+        SharedPreferences pref = mContext.getSharedPreferences(FILENAME,
+                mContext.MODE_PRIVATE);
+        if (pref != null) {
+            int mSharePrefVersion = pref.getInt(DATABASE_SHAREPREF_KEY,0);
+            if(mSharePrefVersion < DATABASE_SHAREPREF_VERSION) {
+                Editor editor;
+                editor = pref.edit();
+                editor.putInt(DATABASE_SHAREPREF_KEY, DATABASE_SHAREPREF_VERSION);
+                editor.commit();
+                return true;
+            }
+            return false;
+        } else {
+            Log.d(TAG, "fail to get SharedPreferences !");
+            return false;
+        }
+    }
+
+    private void upgradeSmartSearchDatabase(SQLiteDatabase db) {
+        if (isNeedUpgradeForSmartSearch()) {
+            db.beginTransaction();
+            try {
+                upgradeDatabaseSmartSearch(db);
+                db.setTransactionSuccessful();
+            } catch (Throwable ex) {
+                Log.e(TAG, ex.getMessage(), ex);
+            } finally {
+                db.endTransaction();
+            }
+        }
+    }
+
+    private void upgradeDatabaseSmartSearch(SQLiteDatabase db) {
+        db.execSQL("ALTER TABLE " +  Tables.SMARTDIAL_TABLE + " ADD COLUMN " +
+                SmartDialDbColumns.ACCOUNT_TYPE + " TEXT;");
+        db.execSQL("ALTER TABLE " +  Tables.SMARTDIAL_TABLE + " ADD COLUMN " +
+                SmartDialDbColumns.ACCOUNT_NAME + " TEXT;");
     }
 
     public void dropTables(SQLiteDatabase db) {
@@ -890,10 +942,24 @@ public class DialerDatabaseHelper extends SQLiteOpenHelper {
                 insert.bindLong(12, updatedContactCursor.getInt(PhoneQuery.PHONE_IS_PRIMARY));
                 insert.bindLong(13, updatedContactCursor.getInt(PhoneQuery.PHONE_CARRIER_PRESENCE));
                 insert.bindLong(14, currentMillis);
-                insert.bindString(15, updatedContactCursor
-                        .getString(PhoneQuery.PHONE_ACCOUNT_TYPE));
-                insert.bindString(16, updatedContactCursor
-                        .getString(PhoneQuery.PHONE_ACCOUNT_NAME));
+
+                final String accountType = updatedContactCursor.getString(
+                        PhoneQuery.PHONE_ACCOUNT_TYPE);
+                if (accountType == null) {
+                    insert.bindString(15, mContext.getResources().getString(
+                            R.string.missing_account_type));
+                } else {
+                    insert.bindString(15, accountType);
+                }
+
+                final String accountName = updatedContactCursor.getString(
+                        PhoneQuery.PHONE_ACCOUNT_NAME);
+                if (accountName == null) {
+                    insert.bindString(16, mContext.getResources().getString(
+                            R.string.missing_account_name));
+                } else {
+                    insert.bindString(16, accountName);
+                }
                 insert.executeInsert();
                 final String contactPhoneNumber =
                         updatedContactCursor.getString(PhoneQuery.PHONE_NUMBER);
