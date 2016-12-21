@@ -258,7 +258,11 @@ public class CallCardPresenter extends Presenter<CallCardPresenter.CallCardUi>
 
         if (mInCallContactInteractions != null &&
                 (oldState == InCallState.INCOMING || newState == InCallState.INCOMING)) {
-            ui.showContactContext(newState != InCallState.INCOMING);
+            boolean showIncomingVideo = (primary != null) ? VideoCallPresenter.showIncomingVideo(
+                    primary.getVideoState(), primary.getState()) : false;
+            if (!showIncomingVideo) {
+                ui.showContactContext(newState != InCallState.INCOMING);
+            }
         }
 
         Log.d(this, "Primary call: " + primary);
@@ -660,6 +664,8 @@ public class CallCardPresenter extends Presenter<CallCardPresenter.CallCardUi>
     }
 
     private void updateContactInteractions() {
+        boolean showIncomingVideo = (mPrimary != null) ? VideoCallPresenter.showIncomingVideo(
+                mPrimary.getVideoState(), mPrimary.getState()) : false;
         if (mPrimary != null && mPrimaryContactInfo != null
                 && (mPrimaryContactInfo.locationAddress != null
                         || mPrimaryContactInfo.openingHours != null)) {
@@ -675,9 +681,13 @@ public class CallCardPresenter extends Presenter<CallCardPresenter.CallCardUi>
                     mDistanceHelper.calculateDistance(mPrimaryContactInfo.locationAddress),
                     mPrimaryContactInfo.openingHours);
             getUi().setContactContextContent(mInCallContactInteractions.getListAdapter());
-            getUi().showContactContext(mPrimary.getState() != State.INCOMING);
+            if (!showIncomingVideo) {
+                getUi().showContactContext(mPrimary.getState() != State.INCOMING);
+            }
         } else {
-            getUi().showContactContext(false);
+            if (!showIncomingVideo) {
+                getUi().showContactContext(false);
+            }
         }
     }
 
