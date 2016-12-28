@@ -81,6 +81,10 @@
     <!-- Modify call error cause -->
     <string name="modify_call_failed_due_to_low_battery">Modify call failed due to low battery.</string>
 
+    <string name="qti_ims_hideMeText_unselected">Hide Me</string>
+    <string name="qti_ims_hideMeText_selected">Show Me</string>
+    <string name="qti_ims_defaultImage_fallback">Using default image</string>
+
     <!-- Description of the call transfer related strings [CHAR LIMIT=NONE] -->
     <string name="qti_ims_transfer_num_error">Number not set. Provide the number via IMS settings and retry.</string>
     <string name="qti_ims_transfer_request_error">Call Transfer request had failed.</string>
