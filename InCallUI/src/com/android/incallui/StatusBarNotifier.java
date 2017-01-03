@@ -41,6 +41,7 @@ import android.support.annotation.Nullable;
 import android.os.SystemClock;
 import android.telecom.Call.Details;
 import android.telecom.PhoneAccount;
+import android.telecom.PhoneAccountHandle;
 import android.telecom.TelecomManager;
 import android.telecom.VideoProfile;
 import android.telephony.TelephonyManager;
@@ -50,6 +51,7 @@ import android.text.BidiFormatter;
 import android.text.TextDirectionHeuristics;
 import android.text.TextUtils;
 
+import com.android.contacts.common.compat.telecom.TelecomManagerCompat;
 import com.android.contacts.common.ContactsUtils;
 import com.android.contacts.common.ContactsUtils.UserType;
 import com.android.contacts.common.GeoUtil;
@@ -360,10 +362,17 @@ public class StatusBarNotifier implements InCallPresenter.InCallStateListener,
         //set the content
         boolean isMultiSimDevice = mTelephonyManager.isMultiSimEnabled();
         if (isMultiSimDevice) {
-            SubscriptionInfo info =
-                    SubscriptionManager.from(mContext).getActiveSubscriptionInfo(call.getSubId());
-            if (info != null) {
-                content += " (" + info.getDisplayName() + ")";
+            PhoneAccountHandle ph = call.getAccountHandle();
+            String accountLabel = null;
+            if (ph != null) {
+                PhoneAccount account = TelecomManagerCompat.getPhoneAccount(
+                        InCallPresenter.getInstance().getTelecomManager(), ph);
+                if (account != null && !TextUtils.isEmpty(account.getLabel())) {
+                    accountLabel = account.getLabel().toString();
+                }
+            }
+            if (!TextUtils.isEmpty(accountLabel)) {
+                content += " (" + accountLabel + ")";
             }
         }
 
