@@ -255,6 +255,18 @@ public class QtiCallUtils {
     }
 
     /**
+     * Checks the boolean flag in config file to figure out if transmitting static image
+     * in a video call is enabled or not
+     */
+    public static boolean shallTransmitStaticImage(Context context) {
+        if (context == null) {
+            Log.w(context, "Context is null...");
+        }
+        return context != null && QtiImsExtUtils.shallTransmitStaticImage(context);
+    }
+
+
+    /**
      * Checks the boolean flag in config file to figure out if it support preview before the accept
      * video call or not
      */

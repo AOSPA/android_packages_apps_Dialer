@@ -1376,6 +1376,17 @@ public class InCallPresenter implements CallList.Listener,
         }
     }
 
+   /**
+     * Called by the {@link CallButtonPresenter} to inform of a change in hide me selection.
+     *
+     * @param isEnabled {@code True} if entering hide me mode.
+     */
+    public void notifyStaticImageStateChanged(boolean isEnabled) {
+        for (InCallEventListener listener : mInCallEventListeners) {
+            listener.onSendStaticImageStateChanged(isEnabled);
+        }
+    }
+
     /**
      * Update  color of sim card icon
      */
@@ -2129,6 +2140,7 @@ public class InCallPresenter implements CallList.Listener,
         public void onSecondaryCallerInfoVisibilityChanged(boolean isVisible, int height);
         public void updatePrimaryCallState();
         public void onIncomingVideoAvailabilityChanged(boolean isAvailable);
+        public void onSendStaticImageStateChanged(boolean isEnabled);
     }
 
     public interface InCallUiListener {
