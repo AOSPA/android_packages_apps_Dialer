@@ -20,7 +20,9 @@ import android.content.Context;
 import android.content.res.Configuration;
 import android.view.OrientationEventListener;
 import android.hardware.SensorManager;
+import android.view.Display;
 import android.view.Surface;
+import android.view.WindowManager;
 import android.content.pm.ActivityInfo;
 
 /**
@@ -51,7 +53,7 @@ public class InCallOrientationEventListener extends OrientationEventListener {
      * within x degrees right or left of the screen orientation angles. If it's not within those
      * ranges, we return SCREEN_ORIENTATION_UNKNOWN and ignore it.
      */
-    private static int SCREEN_ORIENTATION_UNKNOWN = -1;
+    public static int SCREEN_ORIENTATION_UNKNOWN = -1;
 
     // Rotation threshold is 10 degrees. So if the rotation angle is within 10 degrees of any of
     // the above angles, we will notify orientation changed.
@@ -64,8 +66,11 @@ public class InCallOrientationEventListener extends OrientationEventListener {
     private static int sCurrentOrientation = SCREEN_ORIENTATION_0;
     private boolean mEnabled = false;
 
+    private static WindowManager sWindowManager = null;
+
     public InCallOrientationEventListener(Context context) {
         super(context);
+        sWindowManager = (WindowManager) context.getSystemService(Context.WINDOW_SERVICE);
     }
 
     /**
@@ -174,5 +179,33 @@ public class InCallOrientationEventListener extends OrientationEventListener {
 
     private static boolean isInRightRange(int value, int center, int threshold) {
         return isWithinRange(value, center, center + threshold);
+    }
+
+    /**
+     * Returns the current display orientation.
+     * return values 0, 90, 180 and 270
+     * -1 if unknown
+     */
+    public static int getCurrentUiOrientation() {
+        if (sWindowManager == null) return SCREEN_ORIENTATION_UNKNOWN;
+        Display display = sWindowManager.getDefaultDisplay();
+        if (display == null) return SCREEN_ORIENTATION_UNKNOWN;
+        int rotation = display.getRotation();
+        int orientation = SCREEN_ORIENTATION_UNKNOWN;
+        switch (rotation) {
+            case Surface.ROTATION_0:
+                orientation = SCREEN_ORIENTATION_0;
+                break;
+            case Surface.ROTATION_90:
+                orientation = SCREEN_ORIENTATION_90;
+                break;
+            case Surface.ROTATION_180:
+                orientation = SCREEN_ORIENTATION_180;
+                break;
+            case Surface.ROTATION_270:
+                orientation = SCREEN_ORIENTATION_270;
+                break;
+        }
+        return orientation;
     }
 }
