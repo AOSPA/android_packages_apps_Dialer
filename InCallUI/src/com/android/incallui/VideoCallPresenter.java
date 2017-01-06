@@ -284,6 +284,13 @@ public class VideoCallPresenter extends Presenter<VideoCallPresenter.VideoCallUi
             return;
         }
 
+        // Initialize current ui rotation
+        final int uiOrientation = InCallOrientationEventListener.getCurrentUiOrientation();
+        Log.d(this, "onUiReady: uiOrientation = " + uiOrientation);
+        if (uiOrientation != InCallOrientationEventListener.SCREEN_ORIENTATION_UNKNOWN) {
+            mDeviceOrientation = uiOrientation;
+        }
+
         // Register for call state changes last
         InCallPresenter.getInstance().addListener(this);
         InCallPresenter.getInstance().addDetailsListener(this);
@@ -1241,6 +1248,7 @@ public class VideoCallPresenter extends Presenter<VideoCallPresenter.VideoCallUi
 
         mPreviewSurfaceState = PreviewSurfaceState.CAPABILITIES_RECEIVED;
         changePreviewDimensions(width, height);
+        ui.setPreviewRotation(mDeviceOrientation);
 
         if (shallTransmitStaticImage()) {
             setPauseImage();
