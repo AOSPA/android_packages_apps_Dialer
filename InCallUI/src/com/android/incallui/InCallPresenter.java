@@ -1710,6 +1710,9 @@ public class InCallPresenter implements CallList.Listener,
             if (mExternalCallNotifier != null && mExternalCallList != null) {
                 mExternalCallList.removeExternalCallListener(mExternalCallNotifier);
             }
+            mExternalCallNotifier = null;
+            mExternalCallList = null;
+
             mStatusBarNotifier = null;
 
             InCallCsRedialHandler.getInstance().tearDown();
