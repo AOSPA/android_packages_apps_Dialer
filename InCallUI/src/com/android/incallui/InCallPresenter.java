@@ -745,11 +745,7 @@ public class InCallPresenter implements CallList.Listener,
         maybeShowErrorDialogOnDisconnect(call);
 
         // Send broadcast to dismiss deflect dialog.
-        if (Objects.equals(call.getId(), QtiCallUtils.getDeflectOrTransferCallId())) {
-            Intent intent = new Intent(QtiCallUtils.INTENT_ACTION_DIALOG_DISMISS);
-            mInCallActivity.sendBroadcast(intent);
-            QtiCallUtils.setDeflectOrTransferCallId(null);
-        }
+        dismissDeflectOrTransferDialog(call.getId());
 
         // We need to do the run the same code as onCallListChange.
         onCallListChange(mCallList);
@@ -771,6 +767,8 @@ public class InCallPresenter implements CallList.Listener,
         if (call == null) {
             return;
         }
+        // Send broadcast to dismiss deflect dialog.
+        dismissDeflectOrTransferDialog(call.getId());
 
         wakeUpScreen();
         call.setRequestedVideoState(videoState);
@@ -780,6 +778,19 @@ public class InCallPresenter implements CallList.Listener,
     public void onUpgradeToVideoFail(int error, Call call) {
         //NO-OP
     }
+
+    /**
+     * Sends broadcast to dismiss Deflection or ECT dialog
+     */
+    private void dismissDeflectOrTransferDialog(String callId) {
+        Log.d(this, "dismissDeflectOrTransferDialog() callId = " + callId);
+        if (Objects.equals(callId, QtiCallUtils.getDeflectOrTransferCallId())) {
+            Intent intent = new Intent(QtiCallUtils.INTENT_ACTION_DIALOG_DISMISS);
+            mInCallActivity.sendBroadcast(intent);
+            QtiCallUtils.setDeflectOrTransferCallId(null);
+        }
+    }
+
 
     /**
      * Given the call list, return the state in which the in-call screen should be.
