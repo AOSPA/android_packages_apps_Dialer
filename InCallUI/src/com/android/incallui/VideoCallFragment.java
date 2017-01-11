@@ -780,13 +780,6 @@ public class VideoCallFragment extends BaseFragment<VideoCallPresenter,
                 }
                 mPreviewVideoContainer.setLayoutParams(containerParams);
             }
-
-            // The width and height are interchanged outside of this method based on the current
-            // orientation, so we can transform using "width", which will be either the width or
-            // the height.
-            Matrix transform = new Matrix();
-            transform.setScale(-1, 1, width/2, 0);
-            preview.setTransform(transform);
         }
     }
 
@@ -813,7 +806,10 @@ public class VideoCallFragment extends BaseFragment<VideoCallPresenter,
                 return;
             }
 
-            preview.setRotation(orientation);
+            // Set transform matrix based on orientation
+            ViewGroup.LayoutParams params = preview.getLayoutParams();
+            setTransformMatrixForRotation(preview, orientation,
+                    params.width, params.height);
         }
     }
 
@@ -966,6 +962,56 @@ public class VideoCallFragment extends BaseFragment<VideoCallPresenter,
                 }
             });
         }
+    }
+
+    /**
+     * Sets the transform matrix to textureview based on orientation so that image
+     * is always up right.
+     */
+    private void setTransformMatrixForRotation(TextureView textureView, int rotation,
+            int width, int height) {
+
+        Matrix matrix = new Matrix();
+
+        if (rotation != InCallOrientationEventListener.SCREEN_ORIENTATION_0) {
+
+            float[] srcArray =  new float[] {
+                    0.f, 0.f, // top left
+                    width, 0.f, // top right
+                    0.f, height, // bottom left
+                    width, height, // bottom right
+            };
+
+            float[] destArray = srcArray;
+
+            // Rotate the image for landscape device orientations
+            if (rotation == InCallOrientationEventListener.SCREEN_ORIENTATION_90) {
+                destArray = new float[] {
+                        0.f, height, // top left
+                        0.f, 0.f, // top right
+                        width, height, // bottom left
+                        width, 0.f, // bottom right
+                };
+            } else if (rotation == InCallOrientationEventListener.SCREEN_ORIENTATION_270) {
+                destArray = new float[] {
+                        width, 0.f, // top left
+                        width, height, // top right
+                        0.f, 0.f, // bottom left
+                        0.f, height, // bottom right
+                };
+            } else if (rotation == InCallOrientationEventListener.SCREEN_ORIENTATION_180) {
+                // Flip the image vertically and horizontally for reverse portrait
+                destArray = new float[] {
+                        width, height, // top left
+                        0.f, height, // top right
+                        width, 0.f, // bottom left
+                        0.f, 0.f, // bottom right
+                };
+            }
+
+            matrix.setPolyToPoly(srcArray, 0, destArray, 0, 4);
+        }
+        textureView.setTransform(matrix);
     }
 
     /**
