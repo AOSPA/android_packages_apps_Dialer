@@ -339,6 +339,33 @@
     <string name="recentMissed_empty">"您没有任何未接电话。"</string>
     <!-- Text displayed when the list of voicemails is empty -->
     <string name="recentVoicemails_empty">"您未收到任何语音邮件。"</string>
+     <!-- Title for incoming 4G video call in call details screen [CHAR LIMIT=60] -->
+    <add-resource type="string" name="type_incoming_video_lte"/>
+    <string name="type_incoming_video_lte">"4G 视频通话来电"</string>
+     <!-- Title for missed 4G video call in call details screen [CHAR LIMIT=60] -->
+    <add-resource type="string" name="type_missed_video_lte"/>
+    <string name="type_missed_video_lte">"未接 4G 视频通话"</string>
+     <!-- Title for incoming 4G video call in call details screen [CHAR LIMIT=60] -->
+    <add-resource type="string" name="type_outgoing_video_lte"/>
+    <string name="type_outgoing_video_lte">"外拨 4G 视频通话"</string>
+    <!-- Title for incoming wifi voice call in call details screen [CHAR LIMIT=60] -->
+    <add-resource type="string" name="type_incoming_vowifi"/>
+    <string name="type_incoming_vowifi">"WLAN 语音通话来电"</string>
+     <!-- Title for incoming wifi video call in call details screen [CHAR LIMIT=60] -->
+     <add-resource type="string" name="type_incoming_video_wifi"/>
+    <string name="type_incoming_video_wifi">"WLAN 视频通话来电"</string>
+    <!-- Title for outgoing wifi voice call in call details screen [CHAR LIMIT=60] -->
+    <add-resource type="string" name="type_outgoing_vowifi"/>
+    <string name="type_outgoing_vowifi">"外拨 WLAN 语音通话"</string>
+     <!-- Title for outgoing wifi video call in call details screen [CHAR LIMIT=60] -->
+     <add-resource type="string" name="type_outgoing_video_wifi"/>
+    <string name="type_outgoing_video_wifi">"外拨 WLAN 视频通话"</string>
+    <!-- Title for missed wifi voice call in call details screen [CHAR LIMIT=60] -->
+    <add-resource type="string" name="type_missed_vowifi"/>
+    <string name="type_missed_vowifi">"未接 WLAN 语音通话"</string>
+     <!-- Title for missed wifi video call in call details screen [CHAR LIMIT=60] -->
+     <add-resource type="string" name="type_missed_video_wifi"/>
+    <string name="type_missed_video_wifi">"未接 WLAN 视频通话"</string>
 
     <string name="add_to_white_list">"加入白名单"</string>
     <string name="add_to_black_list">"加入黑名单"</string>
