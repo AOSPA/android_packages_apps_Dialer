@@ -342,6 +342,13 @@ public class InCallActivity extends TransactionSafeActivity implements FragmentD
         InCallPresenter.getInstance().updatePrimaryCallState();
     }
 
+    @Override
+    public void onMultiWindowModeChanged(boolean isInMultiWindowMode) {
+        super.onMultiWindowModeChanged(isInMultiWindowMode);
+        Log.i(this, "recreate()...");
+        recreate();
+    }
+
     // onPause is guaranteed to be called when the InCallActivity goes
     // in the background.
     @Override
