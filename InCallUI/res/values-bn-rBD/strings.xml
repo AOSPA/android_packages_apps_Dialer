@@ -156,7 +156,7 @@
     <string name="description_target_accept_upgrade_to_video_receive_request" msgid="2224978927364021080">"ভিডিও গ্রহণ করার অনুরোধ স্বীকার করুন"</string>
     <string name="description_target_decline_upgrade_to_video_receive_request" msgid="3151115394424918077">"ভিডিও গ্রহণ করার অনুরোধ প্রত্যাখ্যান করুন"</string>
     <string name="description_direction_up" msgid="1735018141439291766">"<xliff:g id="TARGET_DESCRIPTION">%s</xliff:g> এর জন্য উপরের দিকে স্লাইড করুন৷"</string>
-    <string name="description_direction_left" msgid="6811598791620851239">"<xliff:g id="TARGET_DESCRIPTION">%s</xliff:g> এর জন্য বাম দিকে স্লাইড করুন৷"</string>
+    <string name="description_direction_left" msgid="6811598791620851239">"<xliff:g id="TARGET_DESCRIPTION">%s</xliff:g> এর জন্য বাঁ দিকে স্লাইড করুন৷"</string>
     <string name="description_direction_right" msgid="5461971399586296023">"<xliff:g id="TARGET_DESCRIPTION">%s</xliff:g> এর জন্য ডান দিকে স্লাইড করুন৷"</string>
     <string name="description_direction_down" msgid="3331715227997561639">"<xliff:g id="TARGET_DESCRIPTION">%s</xliff:g> এর জন্য নীচের দিকে স্লাইড করুন৷"</string>
     <string name="voicemail_notification_vibrate_when_title" msgid="4595145399183729630">"কম্পন"</string>
@@ -168,18 +168,6 @@
     <string name="preference_category_ringtone" msgid="6246687516643676729">"রিংটোন ও কম্পন"</string>
     <string name="manageConferenceLabel" msgid="7237614418556336108">"কনফারেন্স কল পরিচালনা করুন"</string>
     <string name="emergency_call_dialog_number_for_display" msgid="7244995877625769187">"জরুরি নম্বর"</string>
-    <plurals name="duration_seconds" formatted="false" msgid="2544699588744957418">
-      <item quantity="one"><xliff:g id="COUNT">%d</xliff:g> সেকেন্ড</item>
-      <item quantity="other"><xliff:g id="COUNT">%d</xliff:g> সেকেন্ড</item>
-    </plurals>
-    <plurals name="duration_minutes" formatted="false" msgid="8379077285441507101">
-      <item quantity="one"><xliff:g id="COUNT">%d</xliff:g> মিনিট</item>
-      <item quantity="other"><xliff:g id="COUNT">%d</xliff:g> মিনিট</item>
-    </plurals>
-    <plurals name="duration_hours" formatted="false" msgid="7420759096931824344">
-      <item quantity="one"><xliff:g id="COUNT">%d</xliff:g> ঘণ্টা</item>
-      <item quantity="other"><xliff:g id="COUNT">%d</xliff:g> ঘণ্টা</item>
-    </plurals>
     <string name="profile_photo_description" msgid="7958198110870319358">"প্রোফাইল ফটো"</string>
     <string name="camera_off_description" msgid="4220023868645225790">"ক্যামেরা বন্ধ"</string>
     <string name="child_number" msgid="4469090994612105532">"<xliff:g id="CHILD_NUMBER">%s</xliff:g> এর মাধ্যমে"</string>
