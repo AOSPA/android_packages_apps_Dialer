@@ -253,7 +253,7 @@ public class ListsFragment extends Fragment
 
         mRemoveView = (RemoveView) parentView.findViewById(R.id.remove_view);
         mRemoveViewContent = parentView.findViewById(R.id.remove_view_content);
-
+        
         Trace.endSection();
         Trace.endSection();
         return parentView;
