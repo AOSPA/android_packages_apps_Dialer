@@ -43,6 +43,7 @@ public class DialerApplication extends Application {
         Trace.endSection();
         new BlockedNumbersAutoMigrator(PreferenceManager.getDefaultSharedPreferences(this),
                 new FilteredNumberAsyncQueryHandler(getContentResolver())).autoMigrate();
+        EnrichedCallHandler.init(this);
         Trace.endSection();
     }
 

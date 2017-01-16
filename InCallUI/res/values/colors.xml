@@ -122,4 +122,11 @@
 
     <!-- White background for dialer -->
     <color name="background_dialer_white">#ffffff</color>
+
+    <color name="colorPrimary">#3F51B5</color>
+    <color name="colorPrimaryDark">#303F9F</color>
+    <color name="colorAccent">#FF4081</color>
+    <color name="urgentCallBackground">#f40707</color>
+    <color name="normalCallBackground">#0ab5e0</color>
+    <color name="enrichDetailsBackground">#FFFFFF</color>
 </resources>

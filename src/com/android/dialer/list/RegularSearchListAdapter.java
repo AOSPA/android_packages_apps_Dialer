@@ -26,6 +26,7 @@ import com.android.contacts.common.compat.DirectoryCompat;
 import com.android.contacts.common.list.DirectoryPartition;
 import com.android.contacts.common.util.PhoneNumberHelper;
 import com.android.dialer.calllog.ContactInfo;
+import com.android.dialer.EnrichedCallHandler;
 import com.android.dialer.service.CachedNumberLookupService;
 import com.android.dialer.service.CachedNumberLookupService.CachedContactInfo;
 
@@ -106,11 +107,15 @@ public class RegularSearchListAdapter extends DialerPhoneNumberListAdapter {
 
     protected boolean isChanged(boolean showNumberShortcuts) {
         boolean changed = false;
+        changed |= setShortcutEnabled(SHORTCUT_MAKE_RICH_CALL,
+                EnrichedCallHandler.getInstance().isRcsFeatureEnabled()
+                && showNumberShortcuts);
         changed |= setShortcutEnabled(SHORTCUT_DIRECT_CALL,
                 showNumberShortcuts || mIsQuerySipAddress);
         changed |= setShortcutEnabled(SHORTCUT_SEND_SMS_MESSAGE, showNumberShortcuts);
-        changed |= setShortcutEnabled(SHORTCUT_MAKE_VIDEO_CALL,
-                showNumberShortcuts && CallUtil.isVideoEnabled(getContext()));
+        changed |= setShortcutEnabled(
+                SHORTCUT_MAKE_VIDEO_CALL, showNumberShortcuts
+                && CallUtil.isVideoEnabled(getContext()));
         return changed;
     }
 

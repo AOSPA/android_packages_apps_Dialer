@@ -75,6 +75,10 @@ public class RegularSearchFragment extends SearchFragment
         adapter.setDisplayPhotos(true);
         adapter.setUseCallableUri(usesCallableUri());
         adapter.setListener(this);
+        if (adapter.getEnrichedHelper() != null) {
+            adapter.getEnrichedHelper()
+                .setNumberPickerListener(getOnPhoneNumberPickerListener());
+        }
         return adapter;
     }
 

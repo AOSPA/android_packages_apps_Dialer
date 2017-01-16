@@ -591,6 +591,11 @@ public class VideoCallPresenter extends Presenter<VideoCallPresenter.VideoCallUi
     }
 
     @Override
+    public void onAnswerViewGrab(boolean isGrabbed) {
+        // No-op - required for RcsCallPresenter.
+    }
+
+    @Override
     public void onIncomingVideoAvailabilityChanged(boolean isAvailable) {
         //NO OP
     }
