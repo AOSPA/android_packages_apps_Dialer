@@ -287,6 +287,13 @@ public class QtiCallUtils {
         return context != null && QtiImsExtUtils.useCustomVideoUi(context);
     }
 
+    public static boolean shallShowStaticImageUi(Context context) {
+        if (context == null) {
+            Log.w(context, "Context is null...");
+        }
+        return context != null && QtiImsExtUtils.shallShowStaticImageUi(context);
+    }
+
     /**
      * Checks the boolean flag in config file to figure out if transmitting static image
      * in a video call is enabled or not
