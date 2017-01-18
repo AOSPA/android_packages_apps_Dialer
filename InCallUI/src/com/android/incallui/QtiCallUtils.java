@@ -605,4 +605,17 @@ public class QtiCallUtils {
     public static void setDeflectOrTransferCallId(String CallId) {
         mEditNumberCallId = CallId;
     }
+
+    /**
+     * Checks the boolean flag in config file to enable call deflect or ECT
+     * feature with static number in ims settings
+     */
+    public static boolean useStaticNumberForCallDeflectOrTranfer(Context context) {
+        if (context == null) {
+            Log.w(context, "Context is null...");
+            return false;
+        }
+        return context.getResources().getBoolean(
+                R.bool.config_ims_call_deflect_static_number_enable);
+    }
 }

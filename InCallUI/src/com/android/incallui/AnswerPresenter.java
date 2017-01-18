@@ -365,6 +365,16 @@ public class AnswerPresenter extends Presenter<AnswerPresenter.AnswerUi>
             return;
         }
 
+        if (QtiCallUtils.useStaticNumberForCallDeflectOrTranfer(context)) {
+            deflectCallNumber = QtiImsExtUtils.getCallDeflectNumber(
+                                        context.getContentResolver());
+            /* If not set properly, inform user via toast */
+            if (deflectCallNumber == null) {
+                Log.w(this, "getCallDeflectNumber is null or Empty.");
+                QtiCallUtils.displayToast(context, R.string.qti_description_deflect_error);
+                return;
+            }
+        }
         Log.d(this, "onDeflect mCallId:" + mCallId + "deflectCallNumber:" + deflectCallNumber);
 
         int phoneId = 0;
