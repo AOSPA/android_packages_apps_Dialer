@@ -52,6 +52,7 @@
     <dimen name="call_name_text_size">34dp</dimen>
     <dimen name="call_name_text_min_size">28sp</dimen>
     <dimen name="call_label_text_size">16sp</dimen>
+    <dimen name="call_label_text_min_size">6sp</dimen>
     <!-- Right padding for name and number fields in the call banner.
          This padding is used to ensure that ultra-long names or
          numbers won't overlap the elapsed time indication. -->
