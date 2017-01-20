@@ -520,7 +520,8 @@ public class VideoCallFragment extends BaseFragment<VideoCallPresenter,
      * @param displayVideo The video view to center.
      */
     private void centerDisplayView(View displayVideo) {
-        if (!mIsLandscape) {
+        boolean isFullScreen = InCallPresenter.getInstance().isFullscreen();
+        if (!mIsLandscape && !isFullScreen) {
             ViewGroup.LayoutParams p = displayVideo.getLayoutParams();
             int height = p.height;
 
