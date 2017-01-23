@@ -178,7 +178,9 @@
                 android:textDirection="ltr"
                 android:visibility="gone" />
 
-            <TextView android:id="@+id/phoneNumber"
+            <com.android.phone.common.widget.ResizingTextTextView
+                xmlns:ex="http://schemas.android.com/apk/res-auto"
+                android:id="@+id/phoneNumber"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
@@ -187,7 +189,9 @@
                 android:textAppearance="?android:attr/textAppearanceSmall"
                 android:textColor="@color/incall_call_banner_subtext_color"
                 android:textSize="@dimen/call_label_text_size"
-                android:singleLine="false"
+                android:singleLine="true"
+                android:ellipsize="end"
+                ex:resizing_text_min_size="@dimen/call_label_text_min_size"
                 android:visibility="gone" />
 
         </LinearLayout>

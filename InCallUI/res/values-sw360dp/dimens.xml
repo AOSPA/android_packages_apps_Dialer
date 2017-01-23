@@ -24,6 +24,7 @@
     <dimen name="call_name_text_size">45dp</dimen>
     <dimen name="call_name_text_min_size">34sp</dimen>
     <dimen name="call_label_text_size">18sp</dimen>
+    <dimen name="call_labe_text_min_size">8sp</dimen>
 
     <!-- The InCallUI dialpad will sometimes want digits sizes that are different from dialer. -->
     <dimen name="dialpad_key_number_margin_bottom">@dimen/dialpad_key_number_default_margin_bottom</dimen>
