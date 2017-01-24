@@ -27,9 +27,9 @@ public final class AppCompatConstants {
     public static final int CALLS_REJECTED_TYPE = 5;
     // Added to android.provider.CallLog.Calls in N+.
     public static final int CALLS_BLOCKED_TYPE = 6;
-    public static final int INCOMING_IMS_TYPE = 8;
-    public static final int OUTGOING_IMS_TYPE = 9;
-    public static final int MISSED_IMS_TYPE = 10;
+    public static final int INCOMING_IMS_TYPE = Calls.INCOMING_IMS_TYPE;
+    public static final int OUTGOING_IMS_TYPE = Calls.OUTGOING_IMS_TYPE;
+    public static final int MISSED_IMS_TYPE = Calls.MISSED_IMS_TYPE;
     public static final int INCOMING_WIFI_TYPE = Calls.INCOMING_WIFI_TYPE;
     public static final int OUTGOING_WIFI_TYPE = Calls.OUTGOING_WIFI_TYPE;
     public static final int MISSED_WIFI_TYPE = Calls.MISSED_WIFI_TYPE;
