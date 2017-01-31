@@ -614,6 +614,17 @@ public class VideoCallPresenter extends Presenter<VideoCallPresenter.VideoCallUi
             return;
         }
 
+        if (!QtiCallUtils.shallShowStaticImageUi(mContext) &&
+             QtiCallUtils.shallTransmitStaticImage(mContext) &&
+             mIsInBackground &&
+             shallTransmitStaticImage() &&
+             !VideoUtils.isTransmissionEnabled(call) &&
+             mVideoCall != null) {
+            /* Unset the pause image when Tx is disabled for eg. when background video call
+               that is transmitting static image is downgraded to Rx or to voice */
+            mVideoCall.setPauseImage(null);
+        }
+
         updateCameraSelection(call);
 
         if (isVideoCall) {
@@ -1073,7 +1084,12 @@ public class VideoCallPresenter extends Presenter<VideoCallPresenter.VideoCallUi
         Log.v(this, "showVideoUi : showIncoming = " + showIncomingVideo + " showOutgoing = "
                 + showOutgoingVideo + " shallTransmitStaticImage = " + shallTransmitStaticImage());
         if (showIncomingVideo || showOutgoingVideo) {
-            ui.showVideoViews(showOutgoingVideo && !shallTransmitStaticImage(), showIncomingVideo);
+            if (QtiCallUtils.shallShowStaticImageUi(mContext)) {
+                ui.showVideoViews(showOutgoingVideo && !shallTransmitStaticImage(),
+                        showIncomingVideo);
+            } else {
+                ui.showVideoViews(showOutgoingVideo, showIncomingVideo);
+            }
 
             boolean hidePreview = shallHidePreview(isConf, videoState);
             Log.v(this, "showVideoUi, hidePreview = " + hidePreview);
@@ -1083,7 +1099,9 @@ public class VideoCallPresenter extends Presenter<VideoCallPresenter.VideoCallUi
 
             if (showOutgoingVideo) {
                 setPreviewSize(mDeviceOrientation, mPreviewAspectRatio);
-                maybeLoadPreConfiguredImageAsync();
+                if (QtiCallUtils.shallShowStaticImageUi(mContext)) {
+                    maybeLoadPreConfiguredImageAsync();
+                }
             }
 
             if (isVideoReceptionEnabled && !shallTransmitStaticImage()) {
@@ -1157,9 +1175,18 @@ public class VideoCallPresenter extends Presenter<VideoCallPresenter.VideoCallUi
 
         mIsInBackground = !showing;
 
+        if (!QtiCallUtils.shallShowStaticImageUi(mContext)) {
+            sShallTransmitStaticImage = sUseDefaultImage = mIsInBackground;
+        }
+
         if (mPrimaryCall == null || !VideoUtils.isActiveVideoCall(mPrimaryCall)) {
             Log.w(this, "onUiShowing, received for non-active video call");
             return;
+        }
+
+        if (!QtiCallUtils.shallShowStaticImageUi(mContext) &&
+            VideoUtils.isTransmissionEnabled(mPrimaryCall)) {
+            setPauseImage();
         }
 
         if (showing) {
