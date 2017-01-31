@@ -38,6 +38,8 @@ import com.android.dialer.R;
 import com.android.dialer.compat.SettingsCompat;
 import com.android.phone.common.util.SettingsUtil;
 
+import org.codeaurora.ims.utils.QtiImsExtUtils;
+
 public class SoundSettingsFragment extends PreferenceFragment
         implements Preference.OnPreferenceChangeListener {
 
@@ -140,8 +142,16 @@ public class SoundSettingsFragment extends PreferenceFragment
             mVibrateWhenRinging.setChecked(shouldVibrateWhenRinging());
         }
 
+        if (QtiImsExtUtils.isCarrierOneSupported()) {
+            getPreferenceScreen().removePreference(mRingtonePreference);
+            mRingtonePreference = null;
+        }
+
+
         // Lookup the ringtone name asynchronously.
-        new Thread(mRingtoneLookupRunnable).start();
+        if (mRingtonePreference != null) {
+           new Thread(mRingtoneLookupRunnable).start();
+        }
     }
 
     /**
@@ -197,12 +207,14 @@ public class SoundSettingsFragment extends PreferenceFragment
      * Updates the summary text on the ringtone preference with the name of the ringtone.
      */
     private void updateRingtonePreferenceSummary() {
-        SettingsUtil.updateRingtoneName(
-                getActivity(),
-                mRingtoneLookupComplete,
-                RingtoneManager.TYPE_RINGTONE,
-                mRingtonePreference.getKey(),
-                MSG_UPDATE_RINGTONE_SUMMARY);
+        if (mRingtonePreference != null) {
+            SettingsUtil.updateRingtoneName(
+                    getActivity(),
+                    mRingtoneLookupComplete,
+                    RingtoneManager.TYPE_RINGTONE,
+                    mRingtonePreference.getKey(),
+                    MSG_UPDATE_RINGTONE_SUMMARY);
+       }
     }
 
     /**
