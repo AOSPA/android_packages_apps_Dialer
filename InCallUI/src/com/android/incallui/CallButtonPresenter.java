@@ -453,6 +453,13 @@ public class CallButtonPresenter extends Presenter<CallButtonPresenter.CallButto
 
     public void callTransferClicked(int type, String number) {
         Context mContext = getUi().getContext();
+        if (QtiCallUtils.useStaticNumberForCallDeflectOrTranfer(mContext)) {
+            number = QtiImsExtUtils.getCallDeflectNumber(mContext.getContentResolver());
+            if (number == null) {
+                QtiCallUtils.displayToast(mContext, R.string.qti_ims_transfer_num_error);
+                return;
+            }
+        }
         boolean status = mCall.sendCallTransferRequest(type, number);
         if (!status) {
             QtiCallUtils.displayToast(mContext, R.string.qti_ims_transfer_request_error);

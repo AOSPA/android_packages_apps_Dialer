@@ -327,14 +327,20 @@ public class CallButtonFragment
     }
 
     public void onCallTransferNumberSelect(Context context) {
-        getPresenter().setCallTransferCallId();
-        Intent dialogIntent = new Intent("com.qti.editnumber.INTENT_ACTION_LAUNCH_DIALOG");
-        dialogIntent.putExtra(QtiCallUtils.INTENT_EXTRA_DIALOG_TITLE,
-                getResources().getString(R.string.qti_call_transfer_title));
-        try {
-            startActivityForResult(dialogIntent, QtiCallUtils.ACTIVITY_REQUEST_ENTER_NUMBER);
-        } catch (ActivityNotFoundException e) {
-            Log.e(this, "Unable to launch EditNumberUI Dialog");
+        if (QtiCallUtils.useStaticNumberForCallDeflectOrTranfer(context)) {
+            if (mCallTransferType != INVALID_CALL_TRANSFER_TYPE) {
+                getPresenter().callTransferClicked(mCallTransferType, null);
+            }
+        } else {
+            getPresenter().setCallTransferCallId();
+            Intent dialogIntent = new Intent("com.qti.editnumber.INTENT_ACTION_LAUNCH_DIALOG");
+            dialogIntent.putExtra(QtiCallUtils.INTENT_EXTRA_DIALOG_TITLE,
+                    getResources().getString(R.string.qti_call_transfer_title));
+            try {
+                startActivityForResult(dialogIntent, QtiCallUtils.ACTIVITY_REQUEST_ENTER_NUMBER);
+            } catch (ActivityNotFoundException e) {
+                Log.e(this, "Unable to launch EditNumberUI Dialog");
+            }
         }
     }
 

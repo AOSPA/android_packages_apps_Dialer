@@ -278,14 +278,18 @@ public abstract class AnswerFragment extends BaseFragment<AnswerPresenter, Answe
     }
 
     public void onDeflectNumberSelect(Context context) {
-        getPresenter().setDeflectCallId();
-        Intent dialogIntent = new Intent("com.qti.editnumber.INTENT_ACTION_LAUNCH_DIALOG");
-        dialogIntent.putExtra(QtiCallUtils.INTENT_EXTRA_DIALOG_TITLE,
-                getResources().getString(R.string.qti_deflect_title));
-        try {
-            startActivityForResult(dialogIntent, QtiCallUtils.ACTIVITY_REQUEST_ENTER_NUMBER);
-        } catch (ActivityNotFoundException e) {
-            Log.e(this, "Unable to launch EditNumberUI Dialog");
+        if (QtiCallUtils.useStaticNumberForCallDeflectOrTranfer(context)) {
+            getPresenter().onDeflect(getContext(), null);
+        } else {
+            getPresenter().setDeflectCallId();
+            Intent dialogIntent = new Intent("com.qti.editnumber.INTENT_ACTION_LAUNCH_DIALOG");
+            dialogIntent.putExtra(QtiCallUtils.INTENT_EXTRA_DIALOG_TITLE,
+                    getResources().getString(R.string.qti_deflect_title));
+            try {
+                startActivityForResult(dialogIntent, QtiCallUtils.ACTIVITY_REQUEST_ENTER_NUMBER);
+            } catch (ActivityNotFoundException e) {
+                Log.e(this, "Unable to launch EditNumberUI Dialog");
+            }
         }
     }
 

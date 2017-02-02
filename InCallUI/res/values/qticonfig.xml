@@ -50,4 +50,6 @@
     <bool name="config_show_hd2">false</bool>
     <!-- Config to enalbe call record -->
     <bool name="enable_call_record">false</bool>
+    <!-- Config to enable call deflect or ECT with static number -->
+    <bool name="config_ims_call_deflect_static_number_enable">false</bool>
 </resources>
