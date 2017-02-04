@@ -16,8 +16,13 @@
 
 package com.android.incallui;
 
+import android.content.ContentResolver;
 import android.content.Context;
 import android.database.Cursor;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.graphics.drawable.BitmapDrawable;
+import android.graphics.drawable.Drawable;
 import android.graphics.Point;
 import android.net.Uri;
 import android.os.AsyncTask;
@@ -33,6 +38,7 @@ import android.telecom.VideoProfile.CameraCapabilities;
 import android.view.Surface;
 import android.widget.ImageView;
 
+import org.codeaurora.ims.QtiImsException;
 import org.codeaurora.ims.utils.QtiImsExtUtils;
 
 import com.android.contacts.common.ContactPhotoManager;
@@ -169,6 +175,10 @@ public class VideoCallPresenter extends Presenter<VideoCallPresenter.VideoCallUi
     private int mPreviewSurfaceState = PreviewSurfaceState.NONE;
 
     private static boolean mIsVideoMode = false;
+    // Holds TRUE if default image should be used as static image else holds FALSE
+    private static boolean sUseDefaultImage = false;
+    // Holds TRUE if static image needs to be transmitted instead of video preview stream
+    private static boolean sShallTransmitStaticImage = false;
 
     /**
      * Contact photo manager to retrieve cached contact photo information.
@@ -272,6 +282,13 @@ public class VideoCallPresenter extends Presenter<VideoCallPresenter.VideoCallUi
         // any accidental calls of video calling code.
         if (!CompatUtils.isVideoCompatible()) {
             return;
+        }
+
+        // Initialize current ui rotation
+        final int uiOrientation = InCallOrientationEventListener.getCurrentUiOrientation();
+        Log.d(this, "onUiReady: uiOrientation = " + uiOrientation);
+        if (uiOrientation != InCallOrientationEventListener.SCREEN_ORIENTATION_UNKNOWN) {
+            mDeviceOrientation = uiOrientation;
         }
 
         // Register for call state changes last
@@ -449,7 +466,10 @@ public class VideoCallPresenter extends Presenter<VideoCallPresenter.VideoCallUi
             case VideoCallFragment.SURFACE_PREVIEW:
                 if (mPictureModeHelper.canShowPreviewVideoView() &&
                         mPictureModeHelper.canShowIncomingVideoView()) {
-                    InCallZoomController.getInstance().onPreviewSurfaceClicked(mVideoCall);
+                    if (!shallTransmitStaticImage()) {
+                        // show zoom bar only when UE is showing video stream in preview
+                        InCallZoomController.getInstance().onPreviewSurfaceClicked(mVideoCall);
+                    }
                 } else {
                     isFullscreen = InCallPresenter.getInstance().toggleFullscreenMode();
                     Log.d(this, "toggleFullScreen = " + isFullscreen + "surfaceId =" + surfaceId);
@@ -490,6 +510,8 @@ public class VideoCallPresenter extends Presenter<VideoCallPresenter.VideoCallUi
             if (isVideoMode()) {
                 exitVideoMode();
             }
+            sShallTransmitStaticImage = false;
+            sUseDefaultImage = false;
             cleanupSurfaces();
         }
 
@@ -765,7 +787,8 @@ public class VideoCallPresenter extends Presenter<VideoCallPresenter.VideoCallUi
 
     private boolean isCameraRequired(int videoState) {
         return ((VideoProfile.isBidirectional(videoState) ||
-                VideoProfile.isTransmissionEnabled(videoState)) && !mIsInBackground);
+                VideoProfile.isTransmissionEnabled(videoState)) && !mIsInBackground &&
+                !shallTransmitStaticImage());
     }
 
     private boolean isCameraRequired() {
@@ -853,6 +876,175 @@ public class VideoCallPresenter extends Presenter<VideoCallPresenter.VideoCallUi
         mIsVideoMode = false;
     }
 
+    private boolean shallTransmitStaticImage() {
+        return sShallTransmitStaticImage;
+    }
+
+    private void setPreviewImage(Drawable previewDrawable) {
+        final VideoCallUi ui = getUi();
+        if (ui == null || previewDrawable == null) {
+            Log.e(this, "setPreviewImage: ui/previewDrawable is null");
+            return;
+        }
+
+        ImageView photoView = ui.getPreviewPhotoView();
+        if (photoView == null) {
+            Log.e(this, "setPreviewImage: previewView is null");
+            return;
+        }
+        photoView.setScaleType(ImageView.ScaleType.CENTER_CROP);
+        photoView.setImageDrawable(previewDrawable);
+    }
+
+    private void setPreviewImage(Bitmap previewBitmap) {
+        final VideoCallUi ui = getUi();
+        if (ui == null || previewBitmap == null) {
+            Log.e(this, "setPreviewImage: ui/previewBitmap is null");
+            return;
+        }
+
+        ImageView photoView = ui.getPreviewPhotoView();
+        if (photoView == null) {
+            Log.e(this, "setPreviewImage: previewView is null");
+            return;
+        }
+        photoView.setImageBitmap(previewBitmap);
+    }
+
+    private void setPauseImage() {
+        String uriStr = null;
+        Uri uri = null;
+
+        if (!QtiCallUtils.shallTransmitStaticImage(mContext) || mVideoCall == null) {
+            return;
+        }
+
+        if (shallTransmitStaticImage()) {
+            uriStr = sUseDefaultImage ? "" :
+                    QtiImsExtUtils.getStaticImageUriStr(mContext.getContentResolver());
+        }
+
+        uri = uriStr != null ? Uri.parse(uriStr) : null;
+        Log.d(this, "setPauseImage parsed uri = " + uri + " sUseDefaultImage = "
+                + sUseDefaultImage);
+        mVideoCall.setPauseImage(uri);
+    }
+
+    private Drawable getDefaultImage() {
+       return mContext.getResources().
+                    getDrawable(R.drawable.img_no_image_automirrored);
+    }
+
+    public void maybeLoadPreConfiguredImageAsync() {
+        Log.d(this, "maybeLoadPreConfiguredImageAsync: shallTransmitStaticImage = "
+                + shallTransmitStaticImage() + " sUseDefaultImage = " + sUseDefaultImage);
+
+        if (!shallTransmitStaticImage()) {
+            return;
+        }
+
+        if (sUseDefaultImage) {
+            /* no need to display toast message here since user would've been
+               already altered of default image usage */
+            setPreviewImage(getDefaultImage());
+            setPauseImage();
+            return;
+        }
+
+        final AsyncTask<Void, Void, Bitmap> task = new AsyncTask<Void, Void, Bitmap>() {
+            // Decode image in background.
+            @Override
+            protected Bitmap doInBackground(Void... params) {
+                try {
+                    return loadImage();
+                } catch (QtiImsException ex) {
+                    Log.e(this, "loadImage: ex = " + ex);
+                }
+                return null;
+            }
+
+            // Once complete, set bitmap/pause image.
+            @Override
+            protected void onPostExecute(Bitmap bitmap) {
+                sUseDefaultImage = bitmap == null;
+                if (sUseDefaultImage) {
+                    QtiCallUtils.displayToast(mContext, R.string.qti_ims_defaultImage_fallback);
+                    setPreviewImage(getDefaultImage());
+                } else {
+                    setPreviewImage(bitmap);
+                }
+                setPauseImage();
+            }
+        };
+        task.execute();
+    }
+
+    public void onReadStoragePermissionResponse(boolean isGranted) {
+        Log.d(this,"onReadStoragePermissionResponse: granted = " + isGranted);
+
+        // Use default image when permissions are not granted
+        sUseDefaultImage = !isGranted;
+        if (!isGranted) {
+            QtiCallUtils.displayToast(mContext, R.string.qti_ims_defaultImage_fallback);
+        }
+        showVideoUi(mCurrentVideoState, mCurrentCallState, isConfCall());
+    }
+
+    private Bitmap loadImage() throws QtiImsException {
+        final VideoCallUi ui = getUi();
+        if (ui == null) {
+            Log.w(this, "loadImage: ui is null");
+            return null;
+        }
+
+        Point previewDimensions = ui.getPreviewContainerSize();
+        if (previewDimensions == null) {
+            Log.w(this, "loadImage: previewDimensions is null");
+            return null;
+        }
+
+        Log.d(this, "loadImage: size: " + previewDimensions);
+        return QtiImsExtUtils.getStaticImage(mContext, previewDimensions.x,
+                previewDimensions.y);
+    }
+
+    /**
+     * Handles a change to the video call hide me selection
+     *
+     * @param shallTransmitStaticImage {@code true} if the app should show static image in preview,
+     * {@code false} otherwise.
+     */
+    @Override
+    public void onSendStaticImageStateChanged(boolean shallTransmitStaticImage) {
+
+        Log.d(this, "onSendStaticImageStateChanged: shallTransmitStaticImage: "
+                + shallTransmitStaticImage);
+
+        final VideoCallUi ui = getUi();
+        sShallTransmitStaticImage = shallTransmitStaticImage;
+
+        if (mPrimaryCall == null || !VideoUtils.isActiveVideoCall(mPrimaryCall)) {
+            Log.w(this, "onSendStaticImageStateChanged: received for non-active video call");
+            return;
+        }
+
+        if (mVideoCall == null || ui == null) {
+            Log.w(this, "onSendStaticImageStateChanged: VideoCall/VideoCallUi is null");
+            return;
+        }
+
+        enableCamera(mVideoCall, isCameraRequired(mCurrentVideoState));
+        if (shallTransmitStaticImage) {
+            // Handle showing static image in preview based on external storage permissions
+            ui.onRequestReadStoragePermission();
+        } else {
+            /* When not required to transmit static image, update video ui visibility
+               to reflect streaming video in preview */
+            showVideoUi(mCurrentVideoState, mCurrentCallState, isConfCall());
+            mVideoCall.setPauseImage(null);
+        }
+    }
+
     /**
      * Based on the current video state and call state, show or hide the incoming and
      * outgoing video surfaces.  The outgoing video surface is shown any time video is transmitting.
@@ -880,9 +1072,9 @@ public class VideoCallPresenter extends Presenter<VideoCallPresenter.VideoCallUi
                 mPictureModeHelper.canShowPreviewVideoView();
 
         Log.v(this, "showVideoUi : showIncoming = " + showIncomingVideo + " showOutgoing = "
-                + showOutgoingVideo);
+                + showOutgoingVideo + " shallTransmitStaticImage = " + shallTransmitStaticImage());
         if (showIncomingVideo || showOutgoingVideo) {
-            ui.showVideoViews(showOutgoingVideo, showIncomingVideo);
+            ui.showVideoViews(showOutgoingVideo && !shallTransmitStaticImage(), showIncomingVideo);
 
             boolean hidePreview = shallHidePreview(isConf, videoState);
             Log.v(this, "showVideoUi, hidePreview = " + hidePreview);
@@ -892,9 +1084,10 @@ public class VideoCallPresenter extends Presenter<VideoCallPresenter.VideoCallUi
 
             if (showOutgoingVideo) {
                 setPreviewSize(mDeviceOrientation, mPreviewAspectRatio);
+                maybeLoadPreConfiguredImageAsync();
             }
 
-            if (isVideoReceptionEnabled) {
+            if (isVideoReceptionEnabled && !shallTransmitStaticImage()) {
                 loadProfilePhotoAsync();
             }
         } else {
@@ -1055,6 +1248,11 @@ public class VideoCallPresenter extends Presenter<VideoCallPresenter.VideoCallUi
 
         mPreviewSurfaceState = PreviewSurfaceState.CAPABILITIES_RECEIVED;
         changePreviewDimensions(width, height);
+        ui.setPreviewRotation(mDeviceOrientation);
+
+        if (shallTransmitStaticImage()) {
+            setPauseImage();
+        }
 
         // Check if the preview surface is ready yet; if it is, set it on the {@code VideoCall}.
         // If it not yet ready, it will be set when when creation completes.
@@ -1607,6 +1805,8 @@ public class VideoCallPresenter extends Presenter<VideoCallPresenter.VideoCallUi
         void adjustPreviewLocation(boolean shiftUp, int offset);
         void setPreviewRotation(int orientation);
         void showOutgoingVideoView(boolean show);
+        void onRequestReadStoragePermission();
+        Point getPreviewContainerSize();
     }
 
     /**
