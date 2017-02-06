@@ -489,7 +489,10 @@ public class MSimCallLogFragment extends Fragment implements CallLogQueryHandler
             if (!menuVisible) {
                 updateOnTransition(false /* onEntry */);
             } else if (isResumed()) {
-                refreshData();
+                if (mRefreshDataRequired) {
+                    refreshData();
+                    mAdapter.onResume();
+                }
             }
         }
     }
