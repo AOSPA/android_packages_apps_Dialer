@@ -476,7 +476,7 @@ public class SmartDialNameMatcher {
         for (int i = 0; i < indexs.length; i = i + 2) {
             int start = indexs[i];
             int end = indexs[i + 1];
-            if (start >= 0 && end >= 0) {
+            if (start >= 0 && end >= 0 && start < builder.length() - 1 && end < builder.length()) {
                 matchList.add(new SmartDialMatchPosition(start, end + 1));
             } else {
                 Log.d(TAG, "Invalid index, start is:" + start + " end is:"
