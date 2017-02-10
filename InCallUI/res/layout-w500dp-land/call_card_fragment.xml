@@ -62,26 +62,6 @@
 
         </FrameLayout>
 
-        <!-- Progress spinner, useful for indicating pending operations such as upgrade to video. -->
-        <FrameLayout
-            android:id="@+id/progressSpinner"
-            android:background="#63000000"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:layout_centerHorizontal="true"
-            android:layout_centerVertical="true"
-            android:visibility="gone" >
-
-            <ProgressBar
-                android:id="@+id/progress_bar"
-                style="@android:style/Widget.Material.ProgressBar"
-                android:layout_gravity="left|center_vertical"
-                android:layout_width="48dp"
-                android:layout_height="48dp"
-                android:indeterminate="true" />
-
-        </FrameLayout>
-
         <fragment android:name="com.android.incallui.VideoCallFragment"
             android:layout_alignParentStart="true"
             android:layout_gravity="start|center_vertical"
@@ -142,6 +122,26 @@
         android:visibility="gone"
         android:soundEffectsEnabled="false"
         android:background="@drawable/vb_normal"/>
+
+    <!-- Progress spinner, useful for indicating pending operations such as upgrade to video. -->
+    <FrameLayout
+        android:id="@+id/progressSpinner"
+        android:background="#63000000"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_centerHorizontal="true"
+        android:layout_centerVertical="true"
+        android:layout_toEndOf="@id/primary_call_info_container"
+        android:visibility="gone" >
+
+        <ProgressBar
+            android:id="@+id/progress_bar"
+            style="@android:style/Widget.Material.ProgressBar"
+            android:layout_gravity="left|center_vertical"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:indeterminate="true" />
+    </FrameLayout>
 
     <!-- Secondary "Call info" block, for the background ("on hold") call. -->
     <include layout="@layout/secondary_call_info"
