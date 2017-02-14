@@ -87,7 +87,8 @@ public class DialerSettingsActivity extends AppCompatPreferenceActivity {
             target.add(quickResponseSettingsHeader);
         }
 
-        if (!QtiImsExtUtils.isCarrierOneSupported()) {
+        if (!(QtiImsExtUtils.isCarrierOneSupported()
+                    && QtiImsExtUtils.isCarrierOneCallSettingsAvailable(this))) {
             Header speedDialSettingsHeader = new Header();
             Intent speedDialSettingsIntent = new Intent(this, SpeedDialListActivity.class);
             speedDialSettingsIntent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
@@ -106,7 +107,8 @@ public class DialerSettingsActivity extends AppCompatPreferenceActivity {
         // "Call Settings" is not shown.
         boolean isPrimaryUser = isPrimaryUser();
 
-        if (QtiImsExtUtils.isCarrierOneSupported()) {
+        if (QtiImsExtUtils.isCarrierOneSupported()
+                    && QtiImsExtUtils.isCarrierOneCallSettingsAvailable(this)) {
             if (isPrimaryUser) {
                 Header callSettingsHeader =  new Header();
                 Intent callSettingsIntent = new Intent(ACTION_LAUNCH_CALL_SETTINGS);
