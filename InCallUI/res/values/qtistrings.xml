@@ -191,4 +191,27 @@
     <string name="video_call_picture_mode_incoming_video">Incoming Video</string>
     <string name="video_call_picture_mode_cancel_option">Cancel</string>
     <string name="video_call_picture_mode_save_option">Save</string>
+
+
+    <!-- Enrich call strings -->
+    <string name="notification_incoming_enrich_call_high_priority">Incoming urgent call</string>
+    <string name="notification_incoming_enrich_call_normal_priority">Incoming rich call</string>
+    <string name="notification_on_hold_enrich_call_high_priority">Urgent call on hold</string>
+    <string name="notification_on_hold_enrich_call_normal_priority">Rich call on hold</string>
+    <string name="notification_dialing_enrich_call_high_priority">Dialing urgent call</string>
+    <string name="notification_dialing_enrich_call_normal_priority">Dialing rich call</string>
+    <string name="notification_ongoing_enrich_call_high_priority">Ongoing urgent call</string>
+    <string name="notification_ongoing_enrich_call_normal_priority">Ongoing rich call</string>
+    <string name="normal_enrich_call">RICH CALL</string>
+    <string name="urgent_enrich_call">URGENT CALL</string>
+    <string name="rich_call_failed">Rich call failed</string>
+    <string name="urgent_call_failed">Urgent call failed</string>
+    <string name="can_not_launch_image_application">Can not find any application to show shared image</string>
+    <string name="can_not_launch_maps_application">Can not find any application to show maps location</string>
+    <string name="enrich_call_permission">Access Enriched call</string>
+    <string name="access_permission_message">Phone App requires access to photos,
+    media &amp; files on your device to enable Rich Calling. To continue, tap  \'YES\'
+    below &amp;  \'ALLOW\' on the next screen.</string>
+    <string name="yes">Yes</string>
+    <string name="no">No</string>
 </resources>

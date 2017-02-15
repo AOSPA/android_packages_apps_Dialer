@@ -28,6 +28,7 @@ import android.view.View;
 
 import com.android.contacts.common.list.ContactEntryListAdapter;
 import com.android.contacts.common.util.PermissionsUtil;
+import com.android.dialer.EnrichedCallHandler;
 import com.android.dialer.dialpad.SmartDialCursorLoader;
 import com.android.dialer.logging.Logger;
 import com.android.dialer.logging.ScreenEvent;
@@ -58,6 +59,10 @@ public class SmartDialSearchFragment extends SearchFragment
         // Set adapter's query string to restore previous instance state.
         adapter.setQueryString(getQueryString());
         adapter.setListener(this);
+        if (adapter.getEnrichedHelper() != null) {
+            adapter.getEnrichedHelper().setNumberPickerListener(getOnPhoneNumberPickerListener());
+        }
+        EnrichedCallHandler.getInstance().initializeRcsManager();
         return adapter;
     }
 

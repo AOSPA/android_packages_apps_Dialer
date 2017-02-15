@@ -68,6 +68,8 @@
      start requests, even if they happen immediately after the user
      presses home. -->
     <uses-permission android:name="android.permission.STOP_APP_SWITCHES" />
+    <!-- For enrich call -->
+    <uses-permission android:name="com.qualcomm.qti.internal.permission.ACCESS_ENRICHED_CALL" />
 
     <application
         android:name="DialerApplication"
@@ -77,6 +79,8 @@
         android:supportsRtl="true"
         android:backupAgent='com.android.dialer.DialerBackupAgent'
         android:usesCleartextTraffic="false">
+
+        <uses-library android:name="org.codeaurora.rcscommon" android:required="false" />
 
         <meta-data android:name="com.google.android.backup.api_key"
             android:value="AEdPqrEAAAAIBXgtCEKQ6W0PXVnW-ZVia2KmlV2AxsTw3GjAeQ" />

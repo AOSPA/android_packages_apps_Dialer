@@ -82,6 +82,12 @@
 
         </FrameLayout>
 
+        <fragment android:name="com.android.incallui.RcsCallFragment"
+            android:id="@+id/enrichcall_container"
+            android:layout_gravity="top|center_horizontal"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content" />
+
         <fragment android:name="com.android.incallui.VideoCallFragment"
             android:layout_alignParentStart="true"
             android:layout_gravity="start|center_vertical"
