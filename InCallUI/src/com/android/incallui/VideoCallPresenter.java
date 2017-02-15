@@ -303,7 +303,6 @@ public class VideoCallPresenter extends Presenter<VideoCallPresenter.VideoCallUi
 
         // Register for surface and video events from {@link InCallVideoCallListener}s.
         InCallVideoCallCallbackNotifier.getInstance().addSurfaceChangeListener(this);
-        InCallUiStateNotifier.getInstance().addListener(this);
         mCurrentVideoState = VideoProfile.STATE_AUDIO_ONLY;
         mCurrentCallState = Call.State.INVALID;
 
@@ -312,6 +311,7 @@ public class VideoCallPresenter extends Presenter<VideoCallPresenter.VideoCallUi
         onStateChange(inCallState, inCallState, CallList.getInstance());
         InCallVideoCallCallbackNotifier.getInstance().addVideoEventListener(this,
                 VideoUtils.isVideoCall(mCurrentVideoState));
+        InCallUiStateNotifier.getInstance().addListener(this, true );
     }
 
     /**
