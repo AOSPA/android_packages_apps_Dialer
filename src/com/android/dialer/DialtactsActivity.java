@@ -900,7 +900,9 @@ public class DialtactsActivity extends TransactionSafeActivity implements View.O
         mListsFragment.sendScreenViewForCurrentPosition();
 
         updateSearchFragmentPosition();
-        mFloatingActionButton.setImageResource(R.drawable.fab_ic_dial);
+        if (mListsFragment.getCurrentTabIndex() != ListsFragment.TAB_INDEX_ALL_CONTACTS) {
+            mFloatingActionButton.setImageResource(R.drawable.fab_ic_dial);
+        }
 
         mFloatingActionButtonController.align(getFabAlignment(), animate);
         if (animate) {
