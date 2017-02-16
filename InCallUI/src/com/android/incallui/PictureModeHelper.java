@@ -57,6 +57,7 @@ public class PictureModeHelper extends AlertDialog implements InCallDetailsListe
         InCallStateListener, CallList.Listener {
 
     private AlertDialog mAlertDialog;
+    private boolean mIsVideoCallBidirectional;
 
     /**
      * Indicates whether we should display camera preview video view
@@ -216,12 +217,13 @@ public class PictureModeHelper extends AlertDialog implements InCallDetailsListe
 
     /**
      * This method enables or disables the checkbox passed in based on whether the flag enable
-     * is set to true or false. Also toggle the checkbox being clickable.
+     * is set to true or false. Enable the checkbox only if the call is in the Bidirectional
+     * mode.
      * @param CheckBox checkBox - the check Box to enable/disable
      * @param boolean enable - Flag to enable/disable checkbox (true/false)
      */
     private void enable(CheckBox checkBox, boolean enable) {
-        checkBox.setEnabled(enable);
+        checkBox.setEnabled(enable && mIsVideoCallBidirectional);
         checkBox.setClickable(enable);
     }
 
@@ -271,6 +273,9 @@ public class PictureModeHelper extends AlertDialog implements InCallDetailsListe
         if (!VideoUtils.isVideoCall(call) && mAlertDialog != null) {
             mAlertDialog.dismiss();
         }
+        mIsVideoCallBidirectional = VideoUtils.isBidirectionalVideoCall(call);
+        Log.d(this, "onDetailsChanged :: Setting mIsVideoCallBidirectional to "
+                    + mIsVideoCallBidirectional);
     }
 
     /**
