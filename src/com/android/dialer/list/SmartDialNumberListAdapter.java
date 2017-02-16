@@ -26,6 +26,7 @@ import android.util.Log;
 
 import com.android.contacts.common.CallUtil;
 import com.android.contacts.common.list.ContactListItemView;
+import com.android.dialer.EnrichedCallHandler;
 import com.android.dialer.dialpad.SmartDialCursorLoader;
 import com.android.dialer.dialpad.SmartDialNameMatcher;
 import com.android.dialer.dialpad.SmartDialPrefix;
@@ -117,6 +118,8 @@ public class SmartDialNumberListAdapter extends DialerPhoneNumberListAdapter {
     public void setQueryString(String queryString) {
         final boolean showNumberShortcuts = !TextUtils.isEmpty(getFormattedQueryString());
         boolean changed = false;
+        changed |= setShortcutEnabled(SHORTCUT_MAKE_RICH_CALL,
+                EnrichedCallHandler.getInstance().isRcsFeatureEnabled() && showNumberShortcuts);
         changed |= setShortcutEnabled(SHORTCUT_CREATE_NEW_CONTACT, showNumberShortcuts);
         changed |= setShortcutEnabled(SHORTCUT_ADD_TO_EXISTING_CONTACT, showNumberShortcuts);
         changed |= setShortcutEnabled(SHORTCUT_SEND_SMS_MESSAGE, showNumberShortcuts);

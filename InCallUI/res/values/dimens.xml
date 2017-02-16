@@ -151,4 +151,28 @@
     <dimen name="business_contact_context_detail_font_size">12sp</dimen>
 
     <dimen name="contact_context_small_photo_size">40dp</dimen>
+
+    <!-- RCS dimensions. -->
+    <dimen name="enrich_miniview_layout_height">126.6dp</dimen>
+    <dimen name="enrich_miniview_layout_width">306.6dp</dimen>
+    <dimen name="enrich_detail_margin">0dp</dimen>
+    <dimen name="enrich_min_width">306.6dp</dimen>
+    <dimen name="call_type_font_size">18dp</dimen>
+    <dimen name="notes_font_size">15dp</dimen>
+    <dimen name="max_height_for_picture">60dp</dimen>
+    <dimen name="card_corner_radius">5dp</dimen>
+    <dimen name="call_type_text_height">33dp</dimen>
+    <dimen name="notes_text_height">40dp</dimen>
+    <dimen name="call_type_padding_left">60dp</dimen>
+    <dimen name="picture_layout_padding">3.3dp</dimen>
+    <dimen name="button_margin_top">13dp</dimen>
+    <dimen name="button_margin_left">-22dp</dimen>
+    <dimen name="enrich_details_margin_left">17dp</dimen>
+    <integer name="expand_duration">375</integer>
+    <integer name="collapse_duration">300</integer>
+    <dimen name="button_layout_width">64dp</dimen>
+    <dimen name="button_layout_height">64dp</dimen>
+    <dimen name="main_layout_margin_top">17dp</dimen>
+    <dimen name="mini_view_picture_height">50dp</dimen>
+    <dimen name="expanded_view_picture_height">143.3dp</dimen>
 </resources>

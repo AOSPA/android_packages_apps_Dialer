@@ -35,4 +35,14 @@
 
     <!-- Call Settings -->
     <string name="call_settings_lbl">Call Settings</string>
+
+    <!-- RCS feature strings -->
+    <string name="type_incoming_rcs">Incoming Rich Call</string>
+    <string name="type_outgoing_rcs">Outgoing Rich Call</string>
+    <string name="type_missed_rcs">Missed Rich Call</string>
+    <string name="type_declined_rcs">Declined Rich Call</string>
+    <string name="rcs_service_unavailable">Rich call service is currently
+            unavailable, dialing voice call</string>
+    <!-- Rich call feature integration call log details -->
+    <string name="call_log_action_rich_call">Make Rich Call</string>
 </resources>
