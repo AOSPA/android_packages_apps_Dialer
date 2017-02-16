@@ -100,6 +100,14 @@ public class InCallUiStateNotifier implements DisplayManager.DisplayListener {
         mInCallUiStateNotifierListeners.add(listener);
     }
 
+    public void addListener(InCallUiStateNotifierListener listener, boolean notifyNow) {
+        Preconditions.checkNotNull(listener);
+        if (notifyNow) {
+           listener.onUiShowing(isUiShowing());
+        }
+        mInCallUiStateNotifierListeners.add(listener);
+    }
+
     /**
      * Remove a {@link InCallUiStateNotifierListener}.
      *
