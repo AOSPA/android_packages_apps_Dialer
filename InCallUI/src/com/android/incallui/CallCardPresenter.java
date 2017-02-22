@@ -60,6 +60,8 @@ import com.android.incalluibind.ObjectFactory;
 
 import java.lang.ref.WeakReference;
 
+import org.codeaurora.ims.utils.QtiImsExtUtils;
+
 import static com.android.contacts.common.compat.CallSdkCompat.Details.PROPERTY_ENTERPRISE_CALL;
 /**
  * Presenter for the Call Card Fragment.
@@ -956,9 +958,13 @@ public class CallCardPresenter extends Presenter<CallCardPresenter.CallCardUi>
             return;
         }
 
-        final boolean notUpdateSecondary = mSecondary.getState() == Call.State.ACTIVE
-                && !mSecondary.can(android.telecom.Call.Details.CAPABILITY_SUPPORT_HOLD)
-                && !mSecondary.can(android.telecom.Call.Details.CAPABILITY_HOLD);
+        boolean notUpdateSecondary = false;
+        if (QtiImsExtUtils.isCarrierConfigEnabled(mContext,
+                "hide_held_call_when_end_conf_call")) {
+            notUpdateSecondary = mSecondary.getState() == Call.State.ACTIVE
+                    && !mSecondary.can(android.telecom.Call.Details.CAPABILITY_SUPPORT_HOLD)
+                    && !mSecondary.can(android.telecom.Call.Details.CAPABILITY_HOLD);
+        }
         Log.d(TAG, "notUpdateSecondary:" + notUpdateSecondary);
         if (mSecondary.isConferenceCall()) {
             ui.setSecondary(
