@@ -123,12 +123,19 @@
 
             </FrameLayout>
 
+            <fragment android:name="com.android.incallui.RcsCallFragment"
+                android:id="@+id/enrichcall_container"
+                android:layout_gravity="top|center_horizontal"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_below="@id/primary_call_info_container" />
+
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="vertical"
                 android:layout_centerHorizontal="true"
-                android:layout_below="@id/primary_call_info_container">
+                android:layout_below="@id/enrichcall_container">
 
                 <include layout="@layout/manage_conference_call_button"
                     android:layout_width="match_parent"

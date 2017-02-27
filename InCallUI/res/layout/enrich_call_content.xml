@@ -1,0 +1,127 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+ Copyright (c) 2016, The Linux Foundation. All rights reserved.
+
+ Redistribution and use in source and binary forms, with or without
+ modification, are permitted provided that the following conditions are
+ met:
+     * Redistributions of source code must retain the above copyright
+       notice, this list of conditions and the following disclaimer.
+     * Redistributions in binary form must reproduce the above
+       copyright notice, this list of conditions and the following
+       disclaimer in the documentation and/or other materials provided
+       with the distribution.
+     * Neither the name of The Linux Foundation nor the names of its
+       contributors may be used to endorse or promote products derived
+       from this software without specific prior written permission.
+
+ THIS SOFTWARE IS PROVIDED "AS IS" AND ANY EXPRESS OR IMPLIED
+ WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
+ MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NON-INFRINGEMENT
+ ARE DISCLAIMED.  IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS
+ BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR
+ BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+ WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
+ OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
+ IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ -->
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:visibility="gone"
+    android:gravity="center">
+
+    <LinearLayout
+        android:id="@+id/enrich_main"
+        android:layout_width="@dimen/enrich_min_width"
+        android:layout_height="wrap_content"
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="@dimen/main_layout_margin_top"
+        android:orientation="vertical">
+
+        <TextView
+            android:id="@+id/call_type"
+            android:layout_width="match_parent"
+            android:layout_height="@dimen/call_type_text_height"
+            android:background="@drawable/normal_call_bg"
+            android:gravity="center_vertical"
+            android:paddingLeft="@dimen/call_type_padding_left"
+            android:textColor="@android:color/white"
+            android:textSize="@dimen/call_type_font_size" />
+
+
+        <LinearLayout
+            android:id="@+id/enrich_details"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="@drawable/enrich_details_bg"
+            android:orientation="vertical">
+
+            <TextView
+                android:id="@+id/notes"
+                android:layout_width="match_parent"
+                android:layout_height="@dimen/notes_text_height"
+                android:ellipsize="end"
+                android:gravity="center_vertical"
+                android:maxLines="1"
+                android:paddingLeft="5dp"
+                android:textColor="@android:color/black"
+                android:textSize="@dimen/notes_font_size" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal" >
+
+                <ImageView
+                    android:id="@+id/picture"
+                    android:layout_width="0dp"
+                    android:layout_height="@dimen/mini_view_picture_height"
+                    android:layout_weight="1"
+                    android:paddingLeft="@dimen/picture_layout_padding"
+                    android:layout_marginTop="@dimen/picture_layout_padding"
+                    android:layout_marginBottom="@dimen/picture_layout_padding"
+                    android:scaleType="centerCrop"/>
+
+                <Space
+                    android:layout_width="@dimen/picture_layout_padding"
+                    android:layout_height="wrap_content" />
+
+                <ImageView
+                    android:id="@+id/map"
+                    android:layout_width="0dp"
+                    android:layout_height="@dimen/mini_view_picture_height"
+                    android:layout_weight="1"
+                    android:paddingRight="@dimen/picture_layout_padding"
+                    android:layout_marginTop="@dimen/picture_layout_padding"
+                    android:layout_marginBottom="@dimen/picture_layout_padding"
+                    android:scaleType="centerCrop" />
+            </LinearLayout>
+        </LinearLayout>
+    </LinearLayout>
+
+    <RelativeLayout
+        android:layout_width="@dimen/button_layout_width"
+        android:layout_height="@dimen/button_layout_height"
+        android:layout_alignLeft="@+id/enrich_main"
+        android:layout_marginLeft="@dimen/button_margin_left">
+
+        <ImageView
+            android:id="@+id/ring_anim"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerInParent="true"
+            android:src="@drawable/ring" />
+
+
+        <ImageView
+            android:id="@+id/expand_collapse"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerInParent="true"
+            android:src="@drawable/ic_rcs_collpase" />
+    </RelativeLayout>
+</RelativeLayout>
+

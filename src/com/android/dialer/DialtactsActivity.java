@@ -51,6 +51,7 @@ import android.view.View.OnDragListener;
 import android.view.ViewTreeObserver;
 import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
+import android.view.inputmethod.EditorInfo;
 import android.widget.AbsListView.OnScrollListener;
 import android.widget.EditText;
 import android.widget.ImageButton;
@@ -72,6 +73,7 @@ import com.android.dialer.dialpad.DialpadFragment;
 import com.android.dialer.dialpad.SmartDialNameMatcher;
 import com.android.dialer.dialpad.SmartDialPrefix;
 import com.android.dialer.interactions.PhoneNumberInteraction;
+import com.android.dialer.list.DialerPhoneNumberListAdapter;
 import com.android.dialer.list.DragDropController;
 import com.android.dialer.list.ListsFragment;
 import com.android.dialer.list.OnDragDropListener;
@@ -263,6 +265,8 @@ public class DialtactsActivity extends TransactionSafeActivity implements View.O
      */
     private String mVoiceSearchQuery;
 
+    private EnrichedCallHandler mEnrichedCallHandler = null;
+
     protected class OptionsPopupMenu extends PopupMenu {
         public OptionsPopupMenu(Context context, View anchor) {
             super(context, anchor, Gravity.END);
@@ -367,6 +371,23 @@ public class DialtactsActivity extends TransactionSafeActivity implements View.O
     };
 
     /**
+     * Make changes to rich call button when the search view has focus
+     */
+    private final View.OnClickListener mSearchViewClickListener =
+            new View.OnClickListener() {
+        @Override
+        public void onClick(View v) {
+            if (mEnrichedCallHandler.isRcsFeatureEnabled()) {
+                EnrichedCallHandler.DialtactsActivityListener listener =
+                        getSearchListAdapterHelper();
+                if (listener != null) {
+                    listener.onShowDialpadFragment();
+                }
+            }
+        }
+    };
+
+    /**
      * Handles the user closing the soft keyboard.
      */
     private final View.OnKeyListener mSearchEditTextLayoutListener = new View.OnKeyListener() {
@@ -380,10 +401,21 @@ public class DialtactsActivity extends TransactionSafeActivity implements View.O
                     // If the search term is not empty, show the dialpad fab.
                     showFabInSearchUi();
                 }
+                onHideDialpadFragment();
             }
             return false;
         }
     };
+
+    private void onHideDialpadFragment() {
+        if (mEnrichedCallHandler.isRcsFeatureEnabled()) {
+            EnrichedCallHandler.DialtactsActivityListener listener =
+                    getSearchListAdapterHelper();
+            if (listener != null) {
+                listener.onHideDialpadFragment();
+            }
+        }
+    }
 
     @Override
     public boolean dispatchTouchEvent(MotionEvent ev) {
@@ -419,8 +451,19 @@ public class DialtactsActivity extends TransactionSafeActivity implements View.O
         searchEditTextLayout.setPreImeKeyListener(mSearchEditTextLayoutListener);
 
         mActionBarController = new ActionBarController(this, searchEditTextLayout);
-
+        mEnrichedCallHandler = EnrichedCallHandler.getInstance();
         mSearchView = (EditText) searchEditTextLayout.findViewById(R.id.search_view);
+        mSearchView.setOnClickListener(mSearchViewClickListener);
+        mSearchView.setOnEditorActionListener(new TextView.OnEditorActionListener() {
+
+            @Override
+            public boolean onEditorAction(TextView v, int actionId, KeyEvent event) {
+                if (actionId == EditorInfo.IME_ACTION_DONE) {
+                    onHideDialpadFragment();
+                }
+                return false;
+            }
+        });
         mSearchView.addTextChangedListener(mPhoneSearchQueryTextListener);
         mVoiceSearchButton = searchEditTextLayout.findViewById(R.id.voice_search_button);
         searchEditTextLayout.findViewById(R.id.search_magnifying_glass)
@@ -817,6 +860,14 @@ public class DialtactsActivity extends TransactionSafeActivity implements View.O
      * @see #onDialpadShown
      */
     private void showDialpadFragment(boolean animate) {
+        if (mEnrichedCallHandler.isRcsFeatureEnabled()) {
+            EnrichedCallHandler.DialtactsActivityListener listener =
+                    getSearchListAdapterHelper();
+            if (listener != null) {
+                listener.onShowDialpadFragment();
+            }
+        }
+
         if (mIsDialpadShown || mStateSaved) {
             return;
         }
@@ -878,6 +929,9 @@ public class DialtactsActivity extends TransactionSafeActivity implements View.O
      * @see #commitDialpadFragmentHide
      */
     public void hideDialpadFragment(boolean animate, boolean clearDialpad) {
+        if (mIsDialpadShown) {
+            onHideDialpadFragment();
+        }
         if (mDialpadFragment == null || mDialpadFragment.getView() == null) {
             return;
         }
@@ -1310,9 +1364,36 @@ public class DialtactsActivity extends TransactionSafeActivity implements View.O
         return false;
     }
 
+    private EnrichedCallHandler.DialtactsActivityListener
+            getSearchListAdapterHelper() {
+        DialerPhoneNumberListAdapter adapter = null;
+        if (mSmartDialSearchFragment != null
+                && mSmartDialSearchFragment.isVisible()) {
+            adapter = (DialerPhoneNumberListAdapter)
+                    mSmartDialSearchFragment.getAdapter();
+        } else if (mRegularSearchFragment != null
+                && mRegularSearchFragment.isVisible()) {
+            adapter = (DialerPhoneNumberListAdapter)
+                    mRegularSearchFragment.getAdapter();
+        }
+        if (adapter != null) {
+            return (EnrichedCallHandler.DialtactsActivityListener)
+                    adapter.getEnrichedHelper();
+        }
+        return null;
+    }
+
     @Override
     public void onListFragmentScrollStateChange(int scrollState) {
         if (scrollState == OnScrollListener.SCROLL_STATE_TOUCH_SCROLL) {
+            if (mEnrichedCallHandler.isRcsFeatureEnabled()
+                    && mSearchView.hasFocus()) {
+                EnrichedCallHandler.DialtactsActivityListener listener =
+                        getSearchListAdapterHelper();
+                if (listener != null) {
+                    listener.onListFragmentScrollStateChange();
+                }
+            }
             hideDialpadFragment(true, false);
             DialerUtils.hideInputMethod(mParentLayout);
         }

@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+Copyright (c) 2016, The Linux Foundation. All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are
+met:
+    * Redistributions of source code must retain the above copyright
+      notice, this list of conditions and the following disclaimer.
+    * Redistributions in binary form must reproduce the above
+      copyright notice, this list of conditions and the following
+      disclaimer in the documentation and/or other materials provided
+      with the distribution.
+    * Neither the name of The Linux Foundation nor the names of its
+      contributors may be used to endorse or promote products derived
+      from this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED "AS IS" AND ANY EXPRESS OR IMPLIED
+WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
+MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NON-INFRINGEMENT
+ARE DISCLAIMED.  IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS
+BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR
+BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
+OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
+IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+-->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:custom="http://schemas.android.com/apk/res/com.android.dialer"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_weight="1.0"
+    android:baselineAligned="false"
+    android:gravity="center_vertical"
+    android:orientation="horizontal" >
+    <FrameLayout
+        android:id="@+id/rich_call_search_group"
+        android:layout_width="@dimen/enriched_rich_call_search_group_width"
+        android:layout_weight="1"
+        android:layout_height="wrap_content">
+        <ProgressBar
+            android:id="@+id/richfetchserachprogressBar"
+            android:layout_width="@dimen/call_log_action_icon_dimen"
+            android:layout_height="@dimen/call_log_action_icon_dimen"
+            android:visibility="gone"
+            android:layout_marginLeft="@dimen/enriched_progressbar_margin_left"
+            android:layout_marginTop="@dimen/enriched_progressbar_margin_top"
+            android:indeterminate="true" />
+        <com.android.contacts.common.list.ContactListItemView
+            android:id="@+id/shortcut_rich_call"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            custom:list_item_gap_between_image_and_text="@dimen/enriched_list_item_gap_between_image_and_text"
+            custom:list_item_padding_right="@dimen/enriched_list_item_padding_right"/>
+    </FrameLayout>
+</LinearLayout>

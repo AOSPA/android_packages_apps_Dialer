@@ -178,4 +178,16 @@
     <dimen name="list_all_calls">200dp</dimen>
     <dimen name="empty_list_message_text_size_for_Marshmallow">16dp</dimen>
     <dimen name="call_log_spinner_text_size">16sp</dimen>
+
+        <!-- Enriched call integration dimensions -->
+    <dimen name="enriched_progressbar_margin_left">24dp</dimen>
+    <dimen name="enriched_progressbar_margin_top">14dp</dimen>
+    <dimen name="enriched_list_item_gap_between_image_and_text">14dp</dimen>
+    <dimen name="enriched_list_item_padding_right">2dp</dimen>
+    <dimen name="enriched_video_list_item_gap_between_image_and_text">1dp</dimen>
+    <dimen name="enriched_video_list_item_padding_left">0dp</dimen>
+    <dimen name="enriched_video_list_item_padding_right">5dp</dimen>
+    <dimen name="enriched_rich_call_search_group_width">0dp</dimen>
+    <dimen name="enriched_shortcut_video_call_width">0dp</dimen>
+
 </resources>
