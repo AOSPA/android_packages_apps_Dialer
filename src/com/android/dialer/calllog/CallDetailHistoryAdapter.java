@@ -121,13 +121,13 @@ public class CallDetailHistoryAdapter extends BaseAdapter {
         callTypeIconView.clear();
         callTypeIconView.add(callType);
         /**
-         * Ims icon(VoLTE/VoWifi) or CarrierOne video icon will be shown if carrierOne is supported
+         * Ims icon(VoLTE/VoWiFi/ViLTE/ViWiFi) will be shown if carrierOne is supported
          * otherwise, default video icon will be shown if it is a video call.
          */
         if (QtiImsExtUtils.isCarrierOneSupported()) {
-             callTypeIconView.addImsOrVideoIcon(callType, isVideoCall);
+            callTypeIconView.addImsIcon(callType, isVideoCall);
         } else {
-             callTypeIconView.setShowVideo(isVideoCall);
+            callTypeIconView.setShowVideo(isVideoCall);
         }
         callTypeTextView.setText(mCallTypeHelper.getCallTypeText(callType, isVideoCall));
         // Set the date.
