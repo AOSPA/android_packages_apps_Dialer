@@ -44,6 +44,7 @@ import com.android.contacts.common.util.PermissionsUtil;
 import com.android.contacts.common.util.ViewUtil;
 import com.android.dialer.R;
 import com.android.dialer.dialpad.DialpadFragment.ErrorDialogFragment;
+import com.android.dialer.EnrichedCallHandler;
 import com.android.dialer.util.DialerUtils;
 import com.android.dialer.util.IntentUtil;
 import com.android.dialer.widget.EmptyContentView;
@@ -54,7 +55,8 @@ public class SearchFragment extends PhoneNumberPickerFragment {
 
     private OnListFragmentScrolledListener mActivityScrollListener;
     private View.OnTouchListener mActivityOnTouchListener;
-
+    private boolean mIsRcsFeatureEnabled = EnrichedCallHandler
+            .getInstance().isRcsFeatureEnabled();
     /*
      * Stores the untouched user-entered string that is used to populate the add to contacts
      * intent.
@@ -157,6 +159,12 @@ public class SearchFragment extends PhoneNumberPickerFragment {
         }
 
         updatePosition(false /* animate */);
+        if (mIsRcsFeatureEnabled) {
+            DialerPhoneNumberListAdapter adapter = (DialerPhoneNumberListAdapter) getAdapter();
+            if (adapter.getEnrichedHelper() != null) {
+                setActionListeners(adapter.getEnrichedHelper());
+            }
+        }
     }
 
     @Override
@@ -199,6 +207,10 @@ public class SearchFragment extends PhoneNumberPickerFragment {
         mAddToContactNumber = addToContactNumber;
     }
 
+    public String getAddToContactNumber(){
+        return mAddToContactNumber;
+    }
+
     /**
      * Return true if phone number is prohibited by a value -
      * (R.string.config_prohibited_phone_number_regexp) in the config files. False otherwise.
@@ -234,6 +246,32 @@ public class SearchFragment extends PhoneNumberPickerFragment {
         return adapter;
     }
 
+    private void setActionListeners(EnrichedSearchAdapterHelper helper) {
+        helper.setEnrichedSearchActionHelper(
+                new EnrichedSearchAdapterHelper.EnrichedSearchActionHelper(){
+
+            @Override
+            public void processDialIntent(int position, long id) {
+                SearchFragment.super.onItemClick(position, id);
+            }
+
+            @Override
+            public boolean checkForProhibitedPhoneNumber(String number) {
+                return SearchFragment.this.checkForProhibitedPhoneNumber(number);
+            }
+
+            @Override
+            public String getQueryString() {
+                String number = SearchFragment.this.getAddToContactNumber();
+                if (number == null) {
+                    number = SearchFragment.this.getQueryString();
+                }
+                return number;
+            }
+        });
+    }
+
+
     @Override
     protected void onItemClick(int position, long id) {
         final DialerPhoneNumberListAdapter adapter = (DialerPhoneNumberListAdapter) getAdapter();
@@ -246,7 +284,15 @@ public class SearchFragment extends PhoneNumberPickerFragment {
 
         switch (shortcutType) {
             case DialerPhoneNumberListAdapter.SHORTCUT_INVALID:
-                super.onItemClick(position, id);
+                if (mIsRcsFeatureEnabled) {
+                    ContactListItemView v = (ContactListItemView)getListView()
+                            .getChildAt(position + 1);
+                    if(v != null) {
+                        v.getQuickContact().onClick(null);
+                    }
+                } else {
+                    super.onItemClick(position, id);
+                }
                 break;
             case DialerPhoneNumberListAdapter.SHORTCUT_DIRECT_CALL:
                 number = adapter.getQueryString();

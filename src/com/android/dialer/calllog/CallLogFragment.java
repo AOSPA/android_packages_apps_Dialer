@@ -444,7 +444,10 @@ public class CallLogFragment extends Fragment implements CallLogQueryHandler.Lis
             if (!menuVisible) {
                 updateOnTransition();
             } else if (isResumed()) {
-                refreshData();
+                if (mRefreshDataRequired) {
+                    refreshData();
+                    mAdapter.onResume();
+                }
             }
         }
     }

@@ -39,7 +39,8 @@ LOCAL_RESOURCE_DIR := $(addprefix $(LOCAL_PATH)/, $(res_dirs)) \
 
 LOCAL_JAVA_LIBRARIES := telephony-common \
                         telephony-ext \
-                        ims-common
+                        ims-common \
+                        rcscommon
 
 LOCAL_AAPT_FLAGS := \
     --auto-add-overlay \
