@@ -196,6 +196,10 @@ public class InCallActivity extends TransactionSafeActivity implements FragmentD
                 | WindowManager.LayoutParams.FLAG_IGNORE_CHEEK_PRESSES;
 
         getWindow().addFlags(flags);
+
+        // Enable Sustained Performance Mode
+        getWindow().setSustainedPerformanceMode(true);
+
         boolean isDsdaEnabled = CallList.getInstance().isDsdaEnabled();
         if (isDsdaEnabled) {
             requestWindowFeature(Window.FEATURE_ACTION_BAR);
