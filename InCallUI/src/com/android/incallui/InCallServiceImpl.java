@@ -90,6 +90,7 @@ public class InCallServiceImpl extends InCallService {
 
         InCallPresenter.getInstance().onServiceUnbind();
         tearDown();
+        StatusBarNotifier.clearAllCallNotifications(getApplicationContext());
 
         return false;
     }
