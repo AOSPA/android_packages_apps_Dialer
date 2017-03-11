@@ -69,6 +69,7 @@ public class NotificationBroadcastReceiver extends BroadcastReceiver {
             InCallPresenter.getInstance().hangUpOngoingCall(context);
         } else if (action.equals(ACTION_ACCEPT_VIDEO_UPGRADE_REQUEST)) {
             InCallPresenter.getInstance().acceptUpgradeRequest(context);
+            InCallPresenter.getInstance().bringToForeground(false);
         } else if (action.equals(ACTION_DECLINE_VIDEO_UPGRADE_REQUEST)) {
             InCallPresenter.getInstance().declineUpgradeRequest(context);
         } else if (action.equals(ACTION_PULL_EXTERNAL_CALL)) {
