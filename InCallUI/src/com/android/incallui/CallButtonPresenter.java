@@ -355,9 +355,11 @@ public class CallButtonPresenter extends Presenter<CallButtonPresenter.CallButto
         int currUnpausedVideoState = VideoUtils.getUnPausedVideoState(currVideoState);
         currUnpausedVideoState |= VideoProfile.STATE_BIDIRECTIONAL;
 
-        VideoProfile videoProfile = new VideoProfile(currUnpausedVideoState);
-        videoCall.sendSessionModifyRequest(videoProfile);
-        mCall.setSessionModificationState(Call.SessionModificationState.WAITING_FOR_RESPONSE);
+        if (!InCallLowBatteryListener.getInstance().onChangeToVideoCall(mCall)) {
+            VideoProfile videoProfile = new VideoProfile(currUnpausedVideoState);
+            videoCall.sendSessionModifyRequest(videoProfile);
+            mCall.setSessionModificationState(Call.SessionModificationState.WAITING_FOR_RESPONSE);
+        }
 
         if (QtiCallUtils.useCustomVideoUi(context)) {
             InCallAudioManager.getInstance().onModifyCallClicked(mCall,
