@@ -134,6 +134,20 @@ public class QtiCallUtils {
     }
 
     /**
+     * Displays the message as a long Toast on the UI
+     */
+    public static void displayLongToast(Context context, String msg) {
+        Toast.makeText(context, msg, Toast.LENGTH_LONG).show();
+    }
+
+    /**
+     * Displays the string corresponding to the resourceId as a long Toast on the UI
+     */
+    public static void displayLongToast(Context context, int resourceId) {
+        displayLongToast(context, context.getResources().getString(resourceId));
+    }
+
+    /**
      * The function is called when Modify Call button gets pressed. The function creates and
      * displays modify call options.
      */

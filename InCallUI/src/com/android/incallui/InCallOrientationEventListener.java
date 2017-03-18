@@ -108,6 +108,12 @@ public class InCallOrientationEventListener extends OrientationEventListener {
             return;
         }
 
+        // Start with current UI orientation.
+        sCurrentOrientation = getCurrentUiOrientation();
+        if (sCurrentOrientation == SCREEN_ORIENTATION_UNKNOWN) {
+            sCurrentOrientation = SCREEN_ORIENTATION_0;
+        }
+
         super.enable();
         mEnabled = true;
         if (notify) {
