@@ -213,9 +213,7 @@ public class InCallFragment extends Fragment
   @Override
   public void setPrimary(@NonNull PrimaryInfo primaryInfo) {
     LogUtil.i("InCallFragment.setPrimary", primaryInfo.toString());
-    if (adapter == null) {
-      initAdapter(primaryInfo.multimediaData);
-    }
+    setAdapterMedia(primaryInfo.multimediaData);
     contactGridManager.setPrimary(primaryInfo);
 
     if (primaryInfo.shouldShowLocation) {
@@ -241,9 +239,13 @@ public class InCallFragment extends Fragment
     }
   }
 
-  private void initAdapter(MultimediaData multimediaData) {
-    adapter = new InCallPagerAdapter(getChildFragmentManager(), multimediaData);
-    pager.setAdapter(adapter);
+  private void setAdapterMedia(MultimediaData multimediaData) {
+    if (adapter == null) {
+      adapter = new InCallPagerAdapter(getChildFragmentManager(), multimediaData);
+      pager.setAdapter(adapter);
+    } else {
+      adapter.setAttachments(multimediaData);
+    }
 
     if (adapter.getCount() > 1) {
       tabLayout.setVisibility(pager.getVisibility());
@@ -479,23 +481,39 @@ public class InCallFragment extends Fragment
 
   @Override
   public boolean isShowingLocationUi() {
-    Fragment fragment = getChildFragmentManager().findFragmentById(R.id.incall_location_holder);
+    Fragment fragment = getLocationFragment();
     return fragment != null && fragment.isVisible();
   }
 
   @Override
   public void showLocationUi(@Nullable Fragment locationUi) {
-    boolean isShowing = isShowingLocationUi();
-    if (!isShowing && locationUi != null) {
+    boolean isVisible = isShowingLocationUi();
+    if (locationUi != null && !isVisible) {
       // Show the location fragment.
       getChildFragmentManager()
           .beginTransaction()
           .replace(R.id.incall_location_holder, locationUi)
           .commitAllowingStateLoss();
-    } else if (isShowing && locationUi == null) {
+    } else if (locationUi == null && isVisible) {
       // Hide the location fragment
-      Fragment fragment = getChildFragmentManager().findFragmentById(R.id.incall_location_holder);
-      getChildFragmentManager().beginTransaction().remove(fragment).commitAllowingStateLoss();
+      getChildFragmentManager()
+          .beginTransaction()
+          .remove(getLocationFragment())
+          .commitAllowingStateLoss();
     }
+  }
+
+  @Override
+  public void onMultiWindowModeChanged(boolean isInMultiWindowMode) {
+    super.onMultiWindowModeChanged(isInMultiWindowMode);
+    if (isInMultiWindowMode == isShowingLocationUi()) {
+      LogUtil.i("InCallFragment.onMultiWindowModeChanged", "hide = " + isInMultiWindowMode);
+      // Need to show or hide location
+      showLocationUi(isInMultiWindowMode ? null : getLocationFragment());
+    }
+  }
+
+  private Fragment getLocationFragment() {
+    return getChildFragmentManager().findFragmentById(R.id.incall_location_holder);
   }
 }
