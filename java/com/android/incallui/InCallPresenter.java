@@ -1205,6 +1205,17 @@ public class InCallPresenter implements CallList.Listener {
     Log.d(this, "startOrFinishUi: " + mInCallState + " -> " + newState);
 
     // TODO: Consider a proper state machine implementation
+    // If the call is auto answered bring up the InCallActivity
+    boolean isAutoAnswer = false;
+
+    if ((mCallList.getDisconnectedCall() == null) &&
+            (mCallList.getDisconnectingCall() == null)) {
+        isAutoAnswer = (mInCallState == InCallState.INCOMING) &&
+                           (newState == InCallState.INCALL) &&
+                           (mInCallActivity == null);
+    }
+
+    Log.d(this, "startOrFinishUi: " + isAutoAnswer);
 
     // If the state isn't changing we have already done any starting/stopping of activities in
     // a previous pass...so lets cut out early
@@ -1298,7 +1309,7 @@ public class InCallPresenter implements CallList.Listener {
       mInCallActivity.dismissPendingDialogs();
     }
 
-    if (showCallUi || showAccountPicker) {
+    if (showCallUi || showAccountPicker || isAutoAnswer) {
       Log.i(this, "Start in call UI");
       showInCall(false /* showDialpad */, !showAccountPicker /* newOutgoingCall */);
     } else if (startIncomingCallSequence) {
