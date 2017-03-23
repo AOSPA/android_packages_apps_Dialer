@@ -644,20 +644,33 @@ public class StatusBarNotifier
     // different calls.  So if both lines are in use, display info
     // from the foreground call.  And if there's a ringing call,
     // display that regardless of the state of the other calls.
+    int resId;
+    boolean supportsVoicePrivacy = call.hasProperty(Details.PROPERTY_HAS_CDMA_VOICE_PRIVACY);
+    android.util.Log.i("TAG","Dialer ==== > supportsVoicePrivacy : "+supportsVoicePrivacy);
     if (call.getState() == DialerCall.State.ONHOLD) {
-      return R.drawable.ic_phone_paused_white_24dp;
+        if (supportsVoicePrivacy) {
+            resId = R.drawable.stat_sys_vp_phone_call_on_hold;
+        } else {
+            resId = R.drawable.ic_phone_paused_white_24dp;
+        }
     } else if (call.getVideoTech().getSessionModificationState()
         == SessionModificationState.RECEIVED_UPGRADE_TO_VIDEO_REQUEST) {
-      return R.drawable.quantum_ic_videocam_white_24;
+        resId = R.drawable.quantum_ic_videocam_white_24;
     } else if (call.hasProperty(PROPERTY_HIGH_DEF_AUDIO)
         && MotorolaUtils.shouldShowHdIconInNotification(mContext)) {
-      // Normally when a call is ongoing the status bar displays an icon of a phone with animated
-      // lines. This is a helpful hint for users so they know how to get back to the call.
-      // For Sprint HD calls, we replace this icon with an icon of a phone with a HD badge.
-      // This is a carrier requirement.
-      return R.drawable.ic_hd_call;
+        // Normally when a call is ongoing the status bar displays an icon of a phone with animated
+        // lines. This is a helpful hint for users so they know how to get back to the call.
+        // For Sprint HD calls, we replace this icon with an icon of a phone with a HD badge.
+        // This is a carrier requirement.
+        resId = R.drawable.ic_hd_call;
+    } else {
+        if (supportsVoicePrivacy) {
+            resId = R.drawable.stat_sys_vp_phone_call;
+        } else {
+            resId = R.anim.on_going_call;
+        }
     }
-    return R.anim.on_going_call;
+    return resId;
   }
 
   /** Returns the message to use with the notification. */
