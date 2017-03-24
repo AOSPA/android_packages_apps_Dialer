@@ -538,8 +538,8 @@ public class CallButtonPresenter extends Presenter<CallButtonPresenter.CallButto
         final boolean showMute = call.can(android.telecom.Call.Details.CAPABILITY_MUTE);
         int callTransferCapabilities = call.isEmergencyCall()? 0 : call.getTransferCapabilities();
         boolean showAddParticipant = call.can(CAPABILITY_ADD_PARTICIPANT);
-        if (ui.getContext().getResources().getBoolean(
-            R.bool.add_participant_only_in_conference)) {
+        if (QtiImsExtUtils.isCarrierConfigEnabled(getUi().getContext(),
+                "add_participant_only_in_conference")) {
             showAddParticipant = showAddParticipant&&(call.isConferenceCall());
         }
 
