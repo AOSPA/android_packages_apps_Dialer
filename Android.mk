@@ -1,8 +1,6 @@
 # Local modifications:
-# * b/36287059 Dagger classes have been manually crafted.
 # * b/31757757 Precompiled proto classes have been included.
 # * b/36215428 dialer/oem/res/values-mcc3* have been pruned
-# * b/36383971 StubCallLocationModule modified to return null.
 # * removed com.google.android.backup.api_key. This should be added to
 #      the manifest in the top level directory.
 # * removed com.google.android.geo.API_KEY key. This should be added to
@@ -31,10 +29,6 @@ SRC_DIRS := \
 
 # Exclude files incompatible with AOSP.
 EXCLUDE_FILES := \
-	$(BASE_DIR)/dialer/debug/bindings/impl/DebugBindings.java \
-	$(BASE_DIR)/dialer/debug/bindings/stub/DebugBindings.java \
-	$(BASE_DIR)/dialer/debug/impl/DebugConnection.java \
-	$(BASE_DIR)/dialer/debug/impl/DebugConnectionService.java \
 	$(BASE_DIR)/incallui/calllocation/impl/AuthException.java \
 	$(BASE_DIR)/incallui/calllocation/impl/CallLocationImpl.java \
 	$(BASE_DIR)/incallui/calllocation/impl/CallLocationModule.java \
@@ -145,6 +139,11 @@ LOCAL_FULL_LIBS_MANIFEST_FILES := \
 	$(addprefix $(LOCAL_PATH)/, $(DIALER_MANIFEST_FILES))
 LOCAL_SRC_FILES := $(call all-java-files-under, $(SRC_DIRS))
 LOCAL_SRC_FILES := $(filter-out $(EXCLUDE_FILES),$(LOCAL_SRC_FILES))
+# Include protocol buffers and use the nano compiler.
+LOCAL_SRC_FILES += $(call all-proto-files-under, $(SRC_DIRS))
+LOCAL_PROTOC_OPTIMIZE_TYPE := nano
+LOCAL_PROTOC_FLAGS := --proto_path=$(LOCAL_PATH)
+LOCAL_PROTO_JAVA_OUTPUT_PARAMS := enum_style=java
 LOCAL_RESOURCE_DIR := \
 	$(addprefix $(LOCAL_PATH)/, $(RES_DIRS)) \
 	$(support_library_root_dir)/design/res \
