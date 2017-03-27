@@ -292,10 +292,13 @@ public class ContactInfoHelper {
                 }
                 String combName = "";
                 for (String num : nums) {
-                    ContactInfo singleCi = lookupContactFromUri(getContactInfoLookupUri(num),
-                            isSip);
+                    ContactInfo singleCi = null;
+                    if (!TextUtils.isEmpty(num)) {
+                        singleCi = lookupContactFromUri(
+                                getContactInfoLookupUri(num), isSip);
+                    }
                     // If contact does not exist, need to avoid changing static empty-contact.
-                    if (singleCi == ContactInfo.EMPTY) {
+                    if (singleCi == null || singleCi == ContactInfo.EMPTY) {
                         singleCi = new ContactInfo();
                     }
                     if (TextUtils.isEmpty(singleCi.name)) {
