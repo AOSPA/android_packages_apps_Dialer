@@ -395,7 +395,7 @@ public class Call {
     private int mRequestedVideoState = VideoProfile.STATE_AUDIO_ONLY;
 
     private InCallVideoCallCallback mVideoCallCallback;
-    private boolean mIsVideoCallCallbackRegistered;
+    private VideoCall mRegisteredVideoCall;
     private String mChildNumber;
     private String mLastForwardedNumber;
     private String mCallSubject;
@@ -489,7 +489,7 @@ public class Call {
                 mVideoCallCallback = new InCallVideoCallCallback(this);
             }
             mTelecomCall.getVideoCall().registerCallback(mVideoCallCallback);
-            mIsVideoCallCallbackRegistered = true;
+            mRegisteredVideoCall = mTelecomCall.getVideoCall();
         }
 
         mChildCallIds.clear();
@@ -845,7 +845,7 @@ public class Call {
      *      callback on the {@link VideoCall}.
      */
     public VideoCall getVideoCall() {
-        return mTelecomCall == null || !mIsVideoCallCallbackRegistered ? null
+        return mTelecomCall == null || (mRegisteredVideoCall != mTelecomCall.getVideoCall()) ? null
                 : mTelecomCall.getVideoCall();
     }
 
