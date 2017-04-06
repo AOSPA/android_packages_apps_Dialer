@@ -16,5 +16,15 @@
 
 package com.android.dialer.enrichedcall;
 
-/** Holds state information and data about video share sessions. */
-public interface VideoShareSession {}
+import android.support.annotation.NonNull;
+import com.android.incallui.videotech.VideoTech;
+import com.android.incallui.videotech.VideoTech.VideoTechListener;
+
+/** Interface for creating new RCS video tech instances. */
+public interface RcsVideoShareFactory {
+
+  VideoTech newRcsVideoShare(
+      @NonNull EnrichedCallManager enrichedCallManager,
+      @NonNull VideoTechListener videoTechListener,
+      @NonNull String number);
+}

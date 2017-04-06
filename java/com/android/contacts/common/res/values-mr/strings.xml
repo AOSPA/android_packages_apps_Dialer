@@ -46,7 +46,7 @@
     <string name="sms_mobile" msgid="8883045857887736518">"मोबाईलवर मजकूर पाठवा"</string>
     <string name="sms_work" msgid="4158595439553450966">"कार्यस्थानी मजकूर पाठवा"</string>
     <string name="sms_fax_work" msgid="5483726627718055248">"कार्य फॅक्सवर मजकूर पाठवा"</string>
-    <string name="sms_fax_home" msgid="9219265155770746077">"निवासस्थान फॅक्सवर मजकूर पाठवा"</string>
+    <string name="sms_fax_home" msgid="9219265155770746077">"घर फॅक्सवर मजकूर पाठवा"</string>
     <string name="sms_pager" msgid="4901085068525193933">"पेजरवर मजकूर पाठवा"</string>
     <string name="sms_other" msgid="1742702947993285933">"मजकूर"</string>
     <string name="sms_callback" msgid="5833483630377538308">"कॉलबॅक वर मजकूर पाठवा"</string>
@@ -213,7 +213,6 @@
     <string name="display_options_view_given_name_first" msgid="2308026973021171020">"नाव प्रथम"</string>
     <string name="display_options_view_family_name_first" msgid="987430497292428242">"आडनाव प्रथम"</string>
     <string name="default_editor_account" msgid="1826578934497338822">"नवीन संपर्कांसाठी डीफॉल्ट खाते"</string>
-    <string name="sync_contact_metadata_title" msgid="6586379532092486928">"संपर्क मेटाडेटा संकालित करा [डॉगफूड]"</string>
     <string name="sync_contact_metadata_dialog_title" msgid="7839882899954930421">"संपर्क मेटाडेटा संकालित करा"</string>
     <string name="setting_about" msgid="5253319937596745755">"संपर्कांबद्दल"</string>
     <string name="activity_title_settings" msgid="2398428034981372932">"सेटिंग्ज"</string>
