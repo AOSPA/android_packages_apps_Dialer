@@ -1,4 +1,6 @@
 /*
+ * Copyright (c) 2017, The Linux Foundation. All rights reserved
+ * Not a Contribution.
  * Copyright (C) 2011 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -29,6 +31,7 @@ import android.database.Cursor;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
+import android.preference.PreferenceManager;
 import android.provider.CallLog;
 import android.provider.CallLog.Calls;
 import android.provider.ContactsContract;
@@ -38,9 +41,15 @@ import android.support.v13.app.FragmentCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.telephony.SubscriptionInfo;
+import android.telephony.SubscriptionManager;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.AdapterView;
+import android.widget.AdapterView.OnItemSelectedListener;
+import android.widget.ArrayAdapter;
+import android.widget.Spinner;
 import com.android.dialer.app.Bindings;
 import com.android.dialer.app.R;
 import com.android.dialer.app.calllog.calllogcache.CallLogCache;
@@ -63,7 +72,7 @@ import com.android.dialer.util.PermissionsUtil;
  * Displays a list of call log entries. To filter for a particular kind of call (all, missed or
  * voicemails), specify it in the constructor.
  */
-public class CallLogFragment extends Fragment
+public class MSimCallLogFragment extends Fragment
     implements CallLogQueryHandler.Listener,
         CallLogAdapter.CallFetcher,
         OnEmptyViewActionButtonClickedListener,
@@ -82,6 +91,10 @@ public class CallLogFragment extends Fragment
   private static final int NO_DATE_LIMIT = 0;
 
   private static final int READ_CALL_LOG_PERMISSION_REQUEST_CODE = 1;
+
+  private static final int CALL = 1;
+
+  private static final int INVALID_SIM_SLOT_INDEX = -1;
 
   private static final int EVENT_UPDATE_DISPLAY = 1;
 
@@ -120,7 +133,7 @@ public class CallLogFragment extends Fragment
   // the date filter are included.  If zero, no date-based filtering occurs.
   private long mDateLimit = NO_DATE_LIMIT;
   /*
-   * True if this instance of the CallLogFragment shown in the CallLogActivity.
+   * True if this instance of the MSimCallLogFragment shown in the CallLogActivity.
    */
   private boolean mIsCallLogActivity = false;
   private final Handler mDisplayUpdateHandler =
@@ -140,20 +153,28 @@ public class CallLogFragment extends Fragment
   protected CallLogModalAlertManager mModalAlertManager;
   private ViewGroup mModalAlertView;
 
-  public CallLogFragment() {
+  // The Spinners to filter call log
+  private Spinner mFilterSlotSpinnerView;
+  private Spinner mFilterStatusSpinnerView;
+  // Key for the call log sub saved in the default preference
+  private static final String PREFERENCE_KEY_CALLLOG_SLOT = "call_log_slot";
+  // Default to all slots
+  private int mCallSlotFilter = INVALID_SIM_SLOT_INDEX;
+
+  public MSimCallLogFragment() {
     this(CallLogQueryHandler.CALL_TYPE_ALL, NO_LOG_LIMIT);
   }
 
-  public CallLogFragment(int filterType) {
+  public MSimCallLogFragment(int filterType) {
     this(filterType, NO_LOG_LIMIT);
   }
 
-  public CallLogFragment(int filterType, boolean isCallLogActivity) {
+  public MSimCallLogFragment(int filterType, boolean isCallLogActivity) {
     this(filterType, NO_LOG_LIMIT);
     mIsCallLogActivity = isCallLogActivity;
   }
 
-  public CallLogFragment(int filterType, int logLimit) {
+  public MSimCallLogFragment(int filterType, int logLimit) {
     this(filterType, logLimit, NO_DATE_LIMIT);
   }
 
@@ -164,7 +185,7 @@ public class CallLogFragment extends Fragment
    * @param filterType type of calls to include.
    * @param dateLimit limits results to calls occurring on or after the specified date.
    */
-  public CallLogFragment(int filterType, long dateLimit) {
+  public MSimCallLogFragment(int filterType, long dateLimit) {
     this(filterType, NO_LOG_LIMIT, dateLimit);
   }
 
@@ -176,19 +197,18 @@ public class CallLogFragment extends Fragment
    * @param logLimit limits the number of results to return.
    * @param dateLimit limits results to calls occurring on or after the specified date.
    */
-  public CallLogFragment(int filterType, int logLimit, long dateLimit) {
-    mCallTypeFilter = filterType;
+  public MSimCallLogFragment(int filterType, int logLimit, long dateLimit) {
     mLogLimit = logLimit;
     mDateLimit = dateLimit;
   }
 
   @Override
   public void onCreate(Bundle state) {
-    LogUtil.d("CallLogFragment.onCreate", toString());
+    LogUtil.d("MSimCallLogFragment.onCreate", toString());
     super.onCreate(state);
     mRefreshDataRequired = true;
     if (state != null) {
-      mCallTypeFilter = state.getInt(KEY_FILTER_TYPE, mCallTypeFilter);
+      mCallTypeFilter = state.getInt(KEY_FILTER_TYPE, getSelectedSlotId());
       mLogLimit = state.getInt(KEY_LOG_LIMIT, mLogLimit);
       mDateLimit = state.getLong(KEY_DATE_LIMIT, mDateLimit);
       mIsCallLogActivity = state.getBoolean(KEY_IS_CALL_LOG_ACTIVITY, mIsCallLogActivity);
@@ -233,7 +253,7 @@ public class CallLogFragment extends Fragment
           mRecyclerView.getPaddingStart(),
           0,
           mRecyclerView.getPaddingEnd(),
-          getResources().getDimensionPixelSize(R.dimen.floating_action_button_list_bottom_padding));
+          mRecyclerView.getPaddingBottom());
       mEmptyListView.setVisibility(View.GONE);
     } else {
       mRecyclerView.setPaddingRelative(
@@ -280,7 +300,7 @@ public class CallLogFragment extends Fragment
 
   @Override
   public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedState) {
-    View view = inflater.inflate(R.layout.call_log_fragment, container, false);
+    View view = inflater.inflate(R.layout.msim_call_log_fragment, container, false);
     setupView(view);
     return view;
   }
@@ -296,9 +316,12 @@ public class CallLogFragment extends Fragment
     mModalAlertView = (ViewGroup) view.findViewById(R.id.modal_message_container);
     mModalAlertManager =
         new CallLogModalAlertManager(LayoutInflater.from(getContext()), mModalAlertView, this);
+    mFilterSlotSpinnerView = (Spinner) view.findViewById(R.id.filter_sub_spinner);
+    mFilterStatusSpinnerView = (Spinner) view.findViewById(R.id.filter_status_spinner);
   }
 
   protected void setupData() {
+    updateFilterSpinnerViews();
     int activityType =
         mIsCallLogActivity
             ? CallLogAdapter.ACTIVITY_TYPE_CALL_LOG
@@ -346,7 +369,7 @@ public class CallLogFragment extends Fragment
 
   @Override
   public void onResume() {
-    LogUtil.d("CallLogFragment.onResume", toString());
+    LogUtil.d("MSimCallLogFragment.onResume", toString());
     super.onResume();
     final boolean hasReadCallLogPermission =
         PermissionsUtil.hasPermission(getActivity(), READ_CALL_LOG);
@@ -373,7 +396,7 @@ public class CallLogFragment extends Fragment
 
   @Override
   public void onPause() {
-    LogUtil.d("CallLogFragment.onPause", toString());
+    LogUtil.d("MSimCallLogFragment.onPause", toString());
     cancelDisplayUpdate();
     mAdapter.onPause();
     super.onPause();
@@ -390,7 +413,7 @@ public class CallLogFragment extends Fragment
 
   @Override
   public void onDestroy() {
-    LogUtil.d("CallLogFragment.onDestroy", toString());
+    LogUtil.d("MSimCallLogFragment.onDestroy", toString());
     mAdapter.changeCursor(null);
 
     getActivity().getContentResolver().unregisterContentObserver(mCallLogObserver);
@@ -413,7 +436,20 @@ public class CallLogFragment extends Fragment
 
   @Override
   public void fetchCalls() {
-    mCallLogQueryHandler.fetchCalls(mCallTypeFilter, mDateLimit);
+    if (mFilterSlotSpinnerView.isEnabled()) {
+      if (mCallSlotFilter != INVALID_SIM_SLOT_INDEX) {
+        SubscriptionInfo subInfo = SubscriptionManager.from(getActivity())
+            .getActiveSubscriptionInfoForSimSlotIndex(mCallSlotFilter);
+        if (subInfo != null) {
+          mCallLogQueryHandler.fetchCalls(mCallTypeFilter, mDateLimit,
+              subInfo.getIccId());
+        }
+      } else {
+        mCallLogQueryHandler.fetchCalls(mCallTypeFilter, mDateLimit);
+      }
+    } else {
+      mCallLogQueryHandler.fetchCalls(mCallTypeFilter, mDateLimit);
+    }
     if (!mIsCallLogActivity) {
       ((ListsFragment) getParentFragment()).updateTabUnreadCounts();
     }
@@ -444,7 +480,7 @@ public class CallLogFragment extends Fragment
         break;
       default:
         throw new IllegalArgumentException(
-            "Unexpected filter type in CallLogFragment: " + filterType);
+            "Unexpected filter type in MSimCallLogFragment: " + filterType);
     }
     mEmptyListView.setDescription(messageId);
     if (mIsCallLogActivity) {
@@ -567,7 +603,7 @@ public class CallLogFragment extends Fragment
   @Override
   public void onShowModalAlert(boolean show) {
     LogUtil.d(
-        "CallLogFragment.onShowModalAlert",
+        "MSimCallLogFragment.onShowModalAlert",
         "show: %b, fragment: %s, isVisible: %b",
         show,
         this,
@@ -607,4 +643,98 @@ public class CallLogFragment extends Fragment
       mRefreshDataRequired = true;
     }
   }
+
+  private OnItemSelectedListener mSlotSelectedListener = new OnItemSelectedListener() {
+    @Override
+    public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+      LogUtil.d("Slot selected, position: " + position, toString());
+      int slot = position - 1;
+      if (slot != mCallSlotFilter) {
+        mCallSlotFilter = slot;
+        setSelectedSlotId(slot);
+        fetchCalls();
+      }
+    }
+
+    @Override
+    public void onNothingSelected(AdapterView<?> parent) {
+      // Do nothing.
+    }
+  };
+
+  private OnItemSelectedListener mStatusSelectedListener = new OnItemSelectedListener() {
+    @Override
+    public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+      LogUtil.d("Status selected, position: " + position, toString());
+      int type = ((SpinnerContent)parent.getItemAtPosition(position)).value;
+      if (type != mCallTypeFilter) {
+        mCallTypeFilter = type;
+        fetchCalls();
+      }
+    }
+
+    @Override
+    public void onNothingSelected(AdapterView<?> parent) {
+      // Do nothing.
+    }
+  };
+
+  /**
+   * Initialize the filter views content.
+   */
+  private void updateFilterSpinnerViews() {
+    if (mFilterSlotSpinnerView == null
+        || mFilterStatusSpinnerView == null) {
+      LogUtil.d("The filter spinner view is null!", toString());
+      return;
+    }
+
+    // Update the sub filter's content.
+    final SubscriptionManager subscriptionManager = SubscriptionManager.from(getActivity());
+    if (subscriptionManager.getActiveSubscriptionInfoCount() < 2) {
+      mFilterSlotSpinnerView.setVisibility(View.GONE);
+    }else{
+      ArrayAdapter<SpinnerContent> filterSlotAdapter = new ArrayAdapter<SpinnerContent>(
+          getActivity(), R.layout.msim_call_log_spinner_item,
+          SpinnerContent.setupSlotFilterContent(getActivity()));
+      if (filterSlotAdapter.getCount() <= 1) {
+        mFilterSlotSpinnerView.setVisibility(View.GONE);
+      } else{
+        mCallSlotFilter = getSelectedSlotId();
+        mFilterSlotSpinnerView.setAdapter(filterSlotAdapter);
+        mFilterSlotSpinnerView.setOnItemSelectedListener(mSlotSelectedListener);
+        SpinnerContent.setSpinnerContentValue(mFilterSlotSpinnerView, mCallSlotFilter);
+      }
+    }
+    // Update the status filter's content.
+    ArrayAdapter<SpinnerContent> filterStatusAdapter = new ArrayAdapter<SpinnerContent>(
+        getActivity(), R.layout.msim_call_log_spinner_item,
+        SpinnerContent.setupStatusFilterContent(getActivity(), false));
+    mFilterStatusSpinnerView.setAdapter(filterStatusAdapter);
+    mFilterStatusSpinnerView.setOnItemSelectedListener(mStatusSelectedListener);
+    SpinnerContent.setSpinnerContentValue(mFilterStatusSpinnerView, mCallTypeFilter);
+  }
+
+  /**
+   * @return the saved selected subscription.
+   */
+  private int getSelectedSlotId() {
+    // Get the saved selected sub, and the default value is display all.
+    return PreferenceManager.getDefaultSharedPreferences(getActivity()).getInt(
+        PREFERENCE_KEY_CALLLOG_SLOT, INVALID_SIM_SLOT_INDEX);
+  }
+
+  /**
+   * Save the selected subscription to preference.
+   */
+  private void setSelectedSlotId(int slotId) {
+    // Save the selected sub to the default preference.
+    PreferenceManager.getDefaultSharedPreferences(getActivity()).edit()
+        .putInt(PREFERENCE_KEY_CALLLOG_SLOT, slotId).commit();
+  }
+
+  public void setFilterType(int callType) {
+    mCallTypeFilter = callType;
+  }
+
 }

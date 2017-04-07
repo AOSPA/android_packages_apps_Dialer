@@ -1,4 +1,6 @@
 /*
+ * Copyright (c) 2017, The Linux Foundation. All rights reserved
+ * Not a Contribution.
  * Copyright (C) 2014 The CyanogenMod Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -17,12 +19,13 @@ package com.android.dialer.app.calllog;
 
 import android.content.Context;
 import android.provider.CallLog;
-import android.telephony.TelephonyManager;
+import android.telecom.PhoneAccountHandle;
 import android.text.TextUtils;
 import android.util.Log;
 import android.widget.Spinner;
 
-import com.android.contacts.common.MoreContactUtils;
+import com.android.dialer.calllogutils.PhoneAccountUtils;
+import com.android.dialer.database.CallLogQueryHandler;
 import com.android.dialer.R;
 
 import java.util.ArrayList;
@@ -38,6 +41,7 @@ public class SpinnerContent {
     public final String label;
 
     // The index for call type spinner.
+    private static final int INVALID_SIM_SLOT_INDEX = -1;
     private static final int INDEX_CALL_TYPE_ALL = 0;
     private static final int INDEX_CALL_TYPE_INCOMING = 1;
     private static final int INDEX_CALL_TYPE_OUTGOING = 2;
@@ -68,20 +72,21 @@ public class SpinnerContent {
     /**
      * @return the spinner contents for the different sims (all, sim0, sim1 etc)
      */
-    public static List<SpinnerContent> setupSubFilterContent(Context context) {
-        TelephonyManager telephonyManager =
-                (TelephonyManager) context.getSystemService(Context.TELEPHONY_SERVICE);
-        int count = telephonyManager.getPhoneCount();
+    public static List<SpinnerContent> setupSlotFilterContent(Context context) {
+        List<PhoneAccountHandle> counts = PhoneAccountUtils.getSubscriptionPhoneAccounts(context);
+        if (counts == null) return null;
         // Update the filter sub content.
-        ArrayList<SpinnerContent> values = new ArrayList<SpinnerContent>(count + 1);
-        values.add(new SpinnerContent(CallLogQueryHandler.CALL_SUB_ALL,
+        ArrayList<SpinnerContent> values = new ArrayList<SpinnerContent>(counts.size() + 1);
+        values.add(new SpinnerContent(INVALID_SIM_SLOT_INDEX,
                 context.getString(R.string.call_log_show_all_slots)));
-        for (int i = 0; i < count; i++) {
+        int index = 0;
+        for (PhoneAccountHandle acountHandle : counts) {
             String subDisplayName = PhoneAccountUtils.getAccountLabel(context,
-                    MoreContactUtils.getAccount(i));
+                    acountHandle);
             if (!TextUtils.isEmpty(subDisplayName)) {
-                values.add(new SpinnerContent(i, subDisplayName));
+                values.add(new SpinnerContent(index, subDisplayName));
             }
+            ++index;
         }
         return values;
     }
