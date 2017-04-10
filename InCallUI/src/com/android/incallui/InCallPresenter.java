@@ -1039,7 +1039,7 @@ public class InCallPresenter implements CallList.Listener,
         }
 
         Call call = mCallList.getVideoUpgradeRequestCall();
-        if (call != null) {
+        if (call != null && !InCallLowBatteryListener.getInstance().onChangeToVideoCall(call)) {
             VideoProfile videoProfile = new VideoProfile(videoState);
             call.getVideoCall().sendSessionModifyResponse(videoProfile);
             call.setSessionModificationState(Call.SessionModificationState.NO_REQUEST);
