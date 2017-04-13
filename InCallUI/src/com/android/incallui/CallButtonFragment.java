@@ -400,10 +400,13 @@ public class CallButtonFragment
             boolean isChecked = button.isChecked();
             if (isChecked) Log.d(this, "updateColors: button:" + button + " is in checked state");
             button.setChecked(false);
+            boolean isSelected = button.isSelected();
+            button.setSelected(false);
             final LayerDrawable layers = (LayerDrawable) button.getBackground();
             final RippleDrawable btnCompoundDrawable = compoundBackgroundDrawable(themeColors);
             layers.setDrawableByLayerId(R.id.compoundBackgroundItem, btnCompoundDrawable);
             button.setChecked(isChecked);
+            button.setSelected(isSelected);
             button.requestLayout();
         }
 

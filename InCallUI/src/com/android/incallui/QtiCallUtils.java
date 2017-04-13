@@ -73,6 +73,7 @@ public class QtiCallUtils {
     public static final String INTENT_ACTION_DIALOG_DISMISS =
             "com.qti.editnumber.INTENT_ACTION_DIALOG_DISMISS";
     private static String mEditNumberCallId;
+    private static int mRequestedVideoState = -1;
 
     static {
         VIDEO_QUALITY_TABLE.put(new Size(320,240), VideoProfile.QUALITY_LOW);
@@ -229,6 +230,7 @@ public class QtiCallUtils {
                 final int selCallType = itemToCallType.get(item);
                 Log.v(this, "Videocall: ModifyCall: upgrade/downgrade to "
                         + callTypeToString(selCallType));
+                mRequestedVideoState = selCallType;
                 VideoProfile videoProfile = new VideoProfile(selCallType);
                 changeToVideoClicked(call, videoProfile, context);
                 dialog.dismiss();
@@ -239,6 +241,10 @@ public class QtiCallUtils {
         builder.setSingleChoiceItems(items.toArray(new CharSequence[0]), index, listener);
         alert = builder.create();
         alert.show();
+    }
+
+    public static int getRequestedVideoState() {
+        return mRequestedVideoState;
     }
 
     public static void changeToVideoCall(Call call, VideoProfile videoProfile, Context context) {
