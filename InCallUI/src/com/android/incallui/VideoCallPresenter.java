@@ -893,6 +893,14 @@ public class VideoCallPresenter extends Presenter<VideoCallPresenter.VideoCallUi
         enableCamera(mVideoCall, false);
         InCallPresenter.getInstance().setFullScreen(false);
 
+        if (mPrimaryCall != null && mVideoCall != null &&
+                QtiCallUtils.shallTransmitStaticImage(mContext) &&
+                !QtiCallUtils.shallShowStaticImageUi(mContext) &&
+                VideoUtils.isTransmissionEnabled(mPrimaryCall)) {
+            Log.v(this, "exitVideoMode: setPauseImage(null)");
+            mVideoCall.setPauseImage(null);
+        }
+
         mIsVideoMode = false;
     }
 
@@ -1192,12 +1200,15 @@ public class VideoCallPresenter extends Presenter<VideoCallPresenter.VideoCallUi
         }
 
         if (!VideoUtils.isVideoCall(mPrimaryCall)) {
-            Log.w(this, "onUiShowing, received for non-active video call");
+            Log.w(this, "onUiShowing, received for non video call");
             return;
         }
 
         if (!QtiCallUtils.shallShowStaticImageUi(mContext) &&
-            VideoUtils.isTransmissionEnabled(mPrimaryCall)) {
+                VideoUtils.isTransmissionEnabled(mPrimaryCall) &&
+                (showing || VideoUtils.isActiveVideoCall(mPrimaryCall))) {
+            // Set pause image only for ACTIVE calls going to background.
+            // While coming to foreground, unset pause image for all calls.
             setPauseImage();
         }
 
