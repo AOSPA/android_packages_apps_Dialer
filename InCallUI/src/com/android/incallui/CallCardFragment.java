@@ -44,6 +44,7 @@ import android.content.ContentResolver;
 import android.media.AudioManager;
 import android.provider.Settings;
 import android.telecom.DisconnectCause;
+import android.telecom.VideoProfile;
 import android.telephony.PhoneNumberUtils;
 import android.telephony.SubscriptionManager;
 import android.text.TextUtils;
@@ -1140,6 +1141,20 @@ public class CallCardFragment extends BaseFragment<CallCardPresenter, CallCardPr
         return bitmap;
     }
 
+    private boolean isDowngrading(int videoState) {
+        boolean isDowngrade = false;
+        if ((videoState == VideoProfile.STATE_BIDIRECTIONAL
+                    && QtiCallUtils.getRequestedVideoState()
+                    != VideoProfile.STATE_BIDIRECTIONAL)
+                || ((videoState == VideoProfile.STATE_TX_ENABLED
+                        || videoState == VideoProfile.STATE_RX_ENABLED)
+                    && QtiCallUtils.getRequestedVideoState()
+                    == VideoProfile.STATE_AUDIO_ONLY)) {
+            isDowngrade = true;
+        }
+        return isDowngrade;
+    }
+
     /**
      * Gets the call state label based on the state of the call or cause of disconnect.
      *
@@ -1179,7 +1194,12 @@ public class CallCardFragment extends BaseFragment<CallCardPresenter, CallCardPr
                     isAutoDismissing = true;
                 } else if (sessionModificationState
                         == Call.SessionModificationState.WAITING_FOR_RESPONSE) {
-                    callStateLabel = context.getString(R.string.card_title_video_call_requesting);
+                    if (isDowngrading(videoState)) {
+                        callStateLabel = context.getString(R.string.card_title_video_call);
+                    } else {
+                        callStateLabel = context.getString(
+                                R.string.card_title_video_call_requesting);
+                    }
                 } else if (sessionModificationState
                         == Call.SessionModificationState.RECEIVED_UPGRADE_TO_VIDEO_REQUEST) {
                     callStateLabel = context.getString(R.string.card_title_video_call_requesting);

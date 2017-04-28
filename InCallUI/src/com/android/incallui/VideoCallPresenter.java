@@ -625,6 +625,11 @@ public class VideoCallPresenter extends Presenter<VideoCallPresenter.VideoCallUi
             mVideoCall.setPauseImage(null);
         }
 
+        // Wakes up the screen,if its off, when user upgrades to VT call.
+        if (mCurrentVideoState == VideoProfile.STATE_AUDIO_ONLY && isVideoCall) {
+            InCallPresenter.getInstance().wakeUpScreen();
+        }
+
         updateCameraSelection(call);
 
         if (isVideoCall) {
@@ -1181,7 +1186,7 @@ public class VideoCallPresenter extends Presenter<VideoCallPresenter.VideoCallUi
             sShallTransmitStaticImage = sUseDefaultImage = mIsInBackground;
         }
 
-        if (mPrimaryCall == null || !VideoUtils.isActiveVideoCall(mPrimaryCall)) {
+        if (!VideoUtils.isVideoCall(mPrimaryCall)) {
             Log.w(this, "onUiShowing, received for non-active video call");
             return;
         }
