@@ -551,7 +551,7 @@ public class StatusBarNotifier
   @VisibleForTesting
   @Nullable
   String getContentTitle(ContactCacheEntry contactInfo, DialerCall call) {
-    if (call.isConferenceCall() && !call.hasProperty(Details.PROPERTY_GENERIC_CONFERENCE)) {
+    if (call.isConferenceCall() || call.hasProperty(Details.PROPERTY_GENERIC_CONFERENCE)) {
       return mContext.getResources().getString(R.string.conference_call_name);
     }
 
