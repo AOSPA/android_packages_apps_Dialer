@@ -404,6 +404,7 @@ public class CallButtonPresenter extends Presenter<CallButtonPresenter.CallButto
             mCall.getVideoSettings().setCameraDir(cameraDir);
             videoCall.setCamera(cameraId);
             videoCall.requestCameraCapabilities();
+            InCallZoomController.getInstance().onCameraEnabled(cameraId);
         }
     }
 
