@@ -17,6 +17,7 @@
 package com.android.incallui.call;
 
 import android.content.Context;
+import android.graphics.drawable.Drawable;
 import android.hardware.camera2.CameraCharacteristics;
 import android.net.Uri;
 import android.os.Build.VERSION;
@@ -128,6 +129,7 @@ public class DialerCall implements VideoTechListener {
   private boolean isInUserWhiteList;
   private boolean isInGlobalSpamList;
   private boolean didShowCameraPermission;
+  private Drawable callProviderIcon;
   private String callProviderLabel;
   private String callbackNumber;
   private int mCameraDirection = CameraDirection.CAMERA_DIRECTION_UNKNOWN;
@@ -1000,6 +1002,21 @@ public class DialerCall implements VideoTechListener {
       }
     }
     return callProviderLabel;
+  }
+
+  /** Return the Drawable Icon to represent the call provider */
+  public Drawable getCallProviderIcon() {
+    if (callProviderIcon == null) {
+      PhoneAccount account = getPhoneAccount();
+      if (account != null && account.getIcon() != null) {
+        List<PhoneAccountHandle> accounts =
+            mContext.getSystemService(TelecomManager.class).getCallCapablePhoneAccounts();
+        if (accounts != null && accounts.size() > 1) {
+          callProviderIcon = account.getIcon().loadDrawable(mContext);
+        }
+      }
+    }
+    return callProviderIcon;
   }
 
   private PhoneAccount getPhoneAccount() {

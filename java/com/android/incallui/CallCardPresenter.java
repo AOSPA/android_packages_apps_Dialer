@@ -429,6 +429,13 @@ public class CallCardPresenter
         || mInCallScreen.isManageConferenceVisible() != shouldShowManageConference();
   }
 
+  private String getPrimaryInfoLocation(ContactCacheEntry contactInfo) {
+    if (contactInfo != null) {
+      return contactInfo.location;
+    }
+    return "";
+  }
+
   private void updatePrimaryCallState() {
     if (getUi() != null && mPrimary != null) {
       boolean isWorkCall =
@@ -444,6 +451,8 @@ public class CallCardPresenter
 
       boolean isBusiness = mPrimaryContactInfo != null && mPrimaryContactInfo.isBusiness;
 
+      String primaryLocation = getPrimaryInfoLocation(mPrimaryContactInfo);
+
       // Check for video state change and update the visibility of the contact photo.  The contact
       // photo is hidden when the incoming video surface is shown.
       // The contact photo visibility can also change in setPrimary().
@@ -456,7 +465,9 @@ public class CallCardPresenter
                   mPrimary.isVideoCall(),
                   mPrimary.getVideoTech().getSessionModificationState(),
                   mPrimary.getDisconnectCause(),
-                  getConnectionLabel(),
+                  (getConnectionLabel() + "  " + (isPrimaryCallActive() ?
+                      (isOutgoingEmergencyCall(mPrimary) ?
+                      mPrimary.getNumber() : primaryLocation) : "")),
                   getCallStateIcon(),
                   getGatewayNumber(),
                   shouldShowCallSubject(mPrimary) ? mPrimary.getCallSubject() : null,
@@ -950,7 +961,7 @@ public class CallCardPresenter
       }
     }
 
-    return null;
+    return mPrimary.getCallProviderIcon();
   }
 
   private boolean hasOutgoingGatewayCall() {

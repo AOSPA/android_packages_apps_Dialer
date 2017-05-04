@@ -18,6 +18,7 @@ package com.android.dialer.calllogutils;
 
 import android.content.Context;
 import android.content.res.Resources;
+import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.provider.CallLog;
 import android.provider.CallLog.Calls;
@@ -52,6 +53,8 @@ public class PhoneCallDetails {
    * <p>There might be multiple types if this represents a set of entries grouped together.
    */
   public int[] callTypes;
+
+  public Drawable accountIcon;
 
   // The date of the call, in milliseconds since the epoch.
   public long date;

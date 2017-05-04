@@ -20,6 +20,7 @@ import android.app.Activity;
 import android.content.ContentUris;
 import android.content.DialogInterface;
 import android.content.res.Resources;
+import android.graphics.drawable.Drawable;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.AsyncTask;
@@ -850,6 +851,7 @@ public class CallLogAdapter extends GroupingListAdapter
     views.displayNumber = details.displayNumber;
     views.accountHandle = accountHandle;
     details.accountHandle = accountHandle;
+    details.accountIcon = PhoneAccountUtils.getAccountIcon(mActivity, accountHandle);
 
     if (!TextUtils.isEmpty(info.name) || !TextUtils.isEmpty(info.nameAlternative)) {
       details.contactUri = info.lookupUri;

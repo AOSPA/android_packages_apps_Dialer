@@ -61,6 +61,7 @@ import android.text.TextUtils;
 import android.text.style.ForegroundColorSpan;
 import com.android.contacts.common.ContactsUtils;
 import com.android.contacts.common.ContactsUtils.UserType;
+import com.android.contacts.common.GeoUtil;
 import com.android.contacts.common.lettertiles.LetterTileDrawable;
 import com.android.contacts.common.preference.ContactsPreferences;
 import com.android.contacts.common.util.BitmapUtil;
@@ -251,9 +252,16 @@ public class StatusBarNotifier
 
   @RequiresPermission(Manifest.permission.READ_PHONE_STATE)
   private void showNotification(final CallList callList, final DialerCall call) {
-    final boolean isIncoming =
-        (call.getState() == DialerCall.State.INCOMING
-            || call.getState() == DialerCall.State.CALL_WAITING);
+    final boolean isGeocoderLocationNeeded =
+        (call.getState() == DialerCall.State.INCOMING ||
+        call.getState() == DialerCall.State.CALL_WAITING ||
+        call.getState() == DialerCall.State.DIALING ||
+        call.getState() == DialerCall.State.CONNECTING ||
+        call.getState() == DialerCall.State.SELECT_PHONE_ACCOUNT);
+    LogUtil.i(
+        "StatusBarNotifier.buildAndSendNotification",
+        "showNotification isGeocoderLocationNeeded = " + isGeocoderLocationNeeded);
+
     setStatusBarCallListener(new StatusBarCallListener(call));
 
     // we make a call to the contact info cache to query for supplemental data to what the
@@ -263,7 +271,7 @@ public class StatusBarNotifier
     // call into the contacts provider for more data.
     mContactInfoCache.findInfo(
         call,
-        isIncoming,
+        isGeocoderLocationNeeded,
         new ContactInfoCacheCallback() {
           @Override
           @RequiresPermission(Manifest.permission.READ_PHONE_STATE)
@@ -569,16 +577,20 @@ public class StatusBarNotifier
       return mContext.getResources().getString(R.string.conference_call_name);
     }
 
-    String preferredName =
-        ContactDisplayUtils.getPreferredDisplayName(
-            contactInfo.namePrimary, contactInfo.nameAlternative, mContactsPreferences);
-    if (TextUtils.isEmpty(preferredName)) {
-      return TextUtils.isEmpty(contactInfo.number)
+    if (TextUtils.isEmpty(contactInfo.namePrimary)) {
+      String contactNumberDisplayed = TextUtils.isEmpty(contactInfo.number)
+          ? ""
+          : contactInfo.number.toString();
+      String location_info = GeoUtil.getGeocodedLocationFor(mContext, contactNumberDisplayed);
+      if (!TextUtils.isEmpty(location_info)){
+        contactNumberDisplayed =  contactNumberDisplayed + " (" + location_info + ")";
+      }
+      return TextUtils.isEmpty(contactNumberDisplayed)
           ? null
           : BidiFormatter.getInstance()
-              .unicodeWrap(contactInfo.number, TextDirectionHeuristics.LTR);
+              .unicodeWrap(contactNumberDisplayed, TextDirectionHeuristics.LTR);
     }
-    return preferredName;
+    return contactInfo.namePrimary;
   }
 
   private void addPersonReference(

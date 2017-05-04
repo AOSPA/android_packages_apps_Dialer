@@ -19,6 +19,7 @@ package com.android.dialer.app.calllog;
 import android.content.Context;
 import android.view.View;
 import android.widget.TextView;
+import android.widget.ImageView;
 import com.android.dialer.app.R;
 import com.android.dialer.calllogutils.CallTypeIconsView;
 
@@ -31,6 +32,7 @@ public final class PhoneCallDetailsViews {
   public final TextView callLocationAndDate;
   public final TextView voicemailTranscriptionView;
   public final TextView callAccountLabel;
+  public final ImageView callAccountIcon;
 
   private PhoneCallDetailsViews(
       TextView nameView,
@@ -38,12 +40,14 @@ public final class PhoneCallDetailsViews {
       CallTypeIconsView callTypeIcons,
       TextView callLocationAndDate,
       TextView voicemailTranscriptionView,
+      ImageView callAccountIcon,
       TextView callAccountLabel) {
     this.nameView = nameView;
     this.callTypeView = callTypeView;
     this.callTypeIcons = callTypeIcons;
     this.callLocationAndDate = callLocationAndDate;
     this.voicemailTranscriptionView = voicemailTranscriptionView;
+    this.callAccountIcon = callAccountIcon;
     this.callAccountLabel = callAccountLabel;
   }
 
@@ -61,6 +65,7 @@ public final class PhoneCallDetailsViews {
         (CallTypeIconsView) view.findViewById(R.id.call_type_icons),
         (TextView) view.findViewById(R.id.call_location_and_date),
         (TextView) view.findViewById(R.id.voicemail_transcription),
+        (ImageView) view.findViewById(R.id.call_account_icon),
         (TextView) view.findViewById(R.id.call_account_label));
   }
 
@@ -71,6 +76,7 @@ public final class PhoneCallDetailsViews {
         new CallTypeIconsView(context),
         new TextView(context),
         new TextView(context),
+        new ImageView(context),
         new TextView(context));
   }
 }
