@@ -20,6 +20,7 @@ import android.app.Activity;
 import android.content.Context;
 import android.graphics.Point;
 import android.os.Handler;
+import android.provider.Settings;
 import android.support.annotation.Nullable;
 import android.telecom.InCallService.VideoCall;
 import android.telecom.VideoProfile;
@@ -120,6 +121,17 @@ public class VideoCallPresenter
   private boolean mAutoFullScreenPending = false;
   /** Whether if the call is remotely held. */
   private boolean mIsRemotelyHeld = false;
+
+  /**
+   * Property set to specify the size of the preview surface provided by the user/operator
+   */
+  private static final String LOCAL_PREVIEW_SURFACE_SIZE_SETTING = "local_preview_surface_size";
+
+  /**
+   * Cache the size set in the "local_preview_surface_size" settings db property
+   */
+  private Point mFixedPreviewSurfaceSize;
+
   /**
    * Runnable which is posted to schedule automatically entering fullscreen mode. Will not auto
    * enter fullscreen mode if the dialpad is visible (doing so would make it impossible to exit the
@@ -298,6 +310,7 @@ public class VideoCallPresenter
         mContext.getResources().getBoolean(R.bool.video_call_auto_fullscreen);
     mAutoFullscreenTimeoutMillis =
         mContext.getResources().getInteger(R.integer.video_call_auto_fullscreen_timeout);
+    setFixedPreviewSurfaceSize();
   }
 
   /** Called when the user interface is ready to be used. */
@@ -956,6 +969,7 @@ public class VideoCallPresenter
     }
 
     mPreviewSurfaceState = PreviewSurfaceState.CAPABILITIES_RECEIVED;
+
     changePreviewDimensions(width, height);
 
     // Check if the preview surface is ready yet; if it is, set it on the {@code VideoCall}.
@@ -978,8 +992,12 @@ public class VideoCallPresenter
       return;
     }
 
+    Point previewSize = (mFixedPreviewSurfaceSize != null) ? mFixedPreviewSurfaceSize :
+        new Point(width, height);
+    LogUtil.i("VideoCallPresenter.changePreviewDimensions", "width: %d, height: %d", previewSize.x,
+        previewSize.y);
     // Resize the surface used to display the preview video
-    getLocalVideoSurfaceTexture().setSurfaceDimensions(new Point(width, height));
+    getLocalVideoSurfaceTexture().setSurfaceDimensions(previewSize);
     mVideoCallScreen.onLocalVideoDimensionsChanged();
   }
 
@@ -1279,5 +1297,29 @@ public class VideoCallPresenter
     return CompatUtils.isVideoCompatible()
         && (VideoProfile.isTransmissionEnabled(videoState)
             || VideoProfile.isReceptionEnabled(videoState));
+  }
+
+  /**
+   * Reads the fixed preview size from global settings and caches it
+   */
+  private void setFixedPreviewSurfaceSize() {
+    final String previewSurfaceSize = Settings.Global.getString(
+        mContext.getContentResolver(), LOCAL_PREVIEW_SURFACE_SIZE_SETTING);
+
+    if (previewSurfaceSize == null) {
+      mFixedPreviewSurfaceSize = null;
+      return;
+    }
+
+    try {
+      final String[] sizeDimensions = previewSurfaceSize.split("x");
+      final int width = Integer.parseInt(sizeDimensions[0]);
+      final int height = Integer.parseInt(sizeDimensions[1]);
+      mFixedPreviewSurfaceSize = new Point(width, height);
+    } catch (Exception ex) {
+      LogUtil.e("VideoCallPresenter.setFixedPreviewSurfaceSize", "Exception in parsing " +
+          LOCAL_PREVIEW_SURFACE_SIZE_SETTING + " - " + ex);
+      mFixedPreviewSurfaceSize = null;
+    }
   }
 }
