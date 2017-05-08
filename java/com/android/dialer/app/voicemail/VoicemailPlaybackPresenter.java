@@ -54,8 +54,8 @@ import com.android.dialer.common.concurrent.AsyncTaskExecutors;
 import com.android.dialer.common.concurrent.DialerExecutor;
 import com.android.dialer.common.concurrent.DialerExecutors;
 import com.android.dialer.constants.Constants;
+import com.android.dialer.logging.DialerImpression;
 import com.android.dialer.logging.Logger;
-import com.android.dialer.logging.nano.DialerImpression;
 import com.android.dialer.phonenumbercache.CallLogQuery;
 import com.google.common.io.ByteStreams;
 import java.io.File;
@@ -847,6 +847,9 @@ public class VoicemailPlaybackPresenter
   }
 
   private void showShareVoicemailButton(boolean show) {
+    if (mContext == null) {
+      return;
+    }
     if (isShareVoicemailAllowed(mContext) && shareVoicemailButtonView != null) {
       if (show) {
         Logger.get(mContext).logImpression(DialerImpression.Type.VVM_SHARE_VISIBLE);

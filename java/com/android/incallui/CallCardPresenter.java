@@ -50,8 +50,8 @@ import com.android.dialer.compat.ActivityCompat;
 import com.android.dialer.enrichedcall.EnrichedCallComponent;
 import com.android.dialer.enrichedcall.EnrichedCallManager;
 import com.android.dialer.enrichedcall.Session;
+import com.android.dialer.logging.DialerImpression;
 import com.android.dialer.logging.Logger;
-import com.android.dialer.logging.nano.DialerImpression;
 import com.android.dialer.multimedia.MultimediaData;
 import com.android.dialer.oem.MotorolaUtils;
 import com.android.incallui.ContactInfoCache.ContactCacheEntry;
@@ -663,10 +663,21 @@ public class CallCardPresenter
 
     MultimediaData multimediaData = null;
     if (mPrimary.getNumber() != null) {
+      EnrichedCallManager manager = EnrichedCallComponent.get(mContext).getEnrichedCallManager();
+
+      EnrichedCallManager.Filter filter;
+      if (mPrimary.isIncoming()) {
+        filter = manager.createIncomingCallComposerFilter();
+      } else {
+        filter = manager.createOutgoingCallComposerFilter();
+      }
+
       Session enrichedCallSession =
-          EnrichedCallComponent.get(mContext)
-              .getEnrichedCallManager()
-              .getSession(mPrimary.getUniqueCallId(), mPrimary.getNumber());
+          manager.getSession(mPrimary.getUniqueCallId(), mPrimary.getNumber(), filter);
+
+      mPrimary.setEnrichedCallSession(enrichedCallSession);
+      mPrimary.setEnrichedCallCapabilities(manager.getCapabilities(mPrimary.getNumber()));
+
       if (enrichedCallSession != null) {
         enrichedCallSession.setUniqueDialerCallId(mPrimary.getUniqueCallId());
         multimediaData = enrichedCallSession.getMultimediaData();

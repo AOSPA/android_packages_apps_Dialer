@@ -31,28 +31,18 @@ import com.android.dialer.app.voicemail.VoicemailAudioManager;
 import com.android.dialer.app.voicemail.VoicemailErrorManager;
 import com.android.dialer.app.voicemail.VoicemailPlaybackPresenter;
 import com.android.dialer.common.LogUtil;
+import com.android.dialer.logging.DialerImpression;
 import com.android.dialer.logging.Logger;
-import com.android.dialer.logging.nano.DialerImpression;
 
 public class VisualVoicemailCallLogFragment extends CallLogFragment {
 
   private final ContentObserver mVoicemailStatusObserver = new CustomContentObserver();
   private VoicemailPlaybackPresenter mVoicemailPlaybackPresenter;
 
-  private VoicemailErrorManager mVoicemailAlertManager;
+  private VoicemailErrorManager mVoicemailErrorManager;
 
   public VisualVoicemailCallLogFragment() {
     super(CallLog.Calls.VOICEMAIL_TYPE);
-  }
-
-  @Override
-  public void onCreate(Bundle state) {
-    super.onCreate(state);
-    mVoicemailPlaybackPresenter = VoicemailPlaybackPresenter.getInstance(getActivity(), state);
-    getActivity()
-        .getContentResolver()
-        .registerContentObserver(
-            VoicemailContract.Status.CONTENT_URI, true, mVoicemailStatusObserver);
   }
 
   @Override
@@ -62,15 +52,21 @@ public class VisualVoicemailCallLogFragment extends CallLogFragment {
 
   @Override
   public void onActivityCreated(Bundle savedInstanceState) {
+    mVoicemailPlaybackPresenter =
+        VoicemailPlaybackPresenter.getInstance(getActivity(), savedInstanceState);
+    getActivity()
+        .getContentResolver()
+        .registerContentObserver(
+            VoicemailContract.Status.CONTENT_URI, true, mVoicemailStatusObserver);
     super.onActivityCreated(savedInstanceState);
-    mVoicemailAlertManager =
+    mVoicemailErrorManager =
         new VoicemailErrorManager(getContext(), getAdapter().getAlertManager(), mModalAlertManager);
     getActivity()
         .getContentResolver()
         .registerContentObserver(
             VoicemailContract.Status.CONTENT_URI,
             true,
-            mVoicemailAlertManager.getContentObserver());
+            mVoicemailErrorManager.getContentObserver());
   }
 
   @Override
@@ -84,13 +80,13 @@ public class VisualVoicemailCallLogFragment extends CallLogFragment {
   public void onResume() {
     super.onResume();
     mVoicemailPlaybackPresenter.onResume();
-    mVoicemailAlertManager.onResume();
+    mVoicemailErrorManager.onResume();
   }
 
   @Override
   public void onPause() {
     mVoicemailPlaybackPresenter.onPause();
-    mVoicemailAlertManager.onPause();
+    mVoicemailErrorManager.onPause();
     super.onPause();
   }
 
@@ -98,8 +94,9 @@ public class VisualVoicemailCallLogFragment extends CallLogFragment {
   public void onDestroy() {
     getActivity()
         .getContentResolver()
-        .unregisterContentObserver(mVoicemailAlertManager.getContentObserver());
+        .unregisterContentObserver(mVoicemailErrorManager.getContentObserver());
     mVoicemailPlaybackPresenter.onDestroy();
+    mVoicemailErrorManager.onDestroy();
     getActivity().getContentResolver().unregisterContentObserver(mVoicemailStatusObserver);
     super.onDestroy();
   }

@@ -29,8 +29,9 @@ import android.support.annotation.WorkerThread;
 import android.telecom.PhoneAccountHandle;
 import android.telephony.ServiceState;
 import android.telephony.TelephonyManager;
-import com.android.dialer.logging.Logger;
-import com.android.dialer.logging.nano.DialerImpression;
+import com.android.dialer.logging.DialerImpression;
+import com.android.dialer.proguard.UsedByReflection;
+import com.android.voicemail.VoicemailClient;
 import com.android.voicemail.impl.protocol.VisualVoicemailProtocol;
 import com.android.voicemail.impl.scheduling.BaseTask;
 import com.android.voicemail.impl.scheduling.RetryPolicy;
@@ -40,6 +41,7 @@ import com.android.voicemail.impl.sms.StatusSmsFetcher;
 import com.android.voicemail.impl.sync.OmtpVvmSyncService;
 import com.android.voicemail.impl.sync.SyncTask;
 import com.android.voicemail.impl.sync.VvmAccountManager;
+import com.android.voicemail.impl.utils.LoggerUtils;
 import java.io.IOException;
 import java.util.HashSet;
 import java.util.Set;
@@ -55,6 +57,7 @@ import java.util.concurrent.TimeoutException;
  * spontaneously sent a STATUS SMS.
  */
 @TargetApi(VERSION_CODES.O)
+@UsedByReflection(value = "Tasks.java")
 public class ActivationTask extends BaseTask {
 
   private static final String TAG = "VvmActivationTask";
@@ -103,18 +106,19 @@ public class ActivationTask extends BaseTask {
     if (messageData != null) {
       intent.putExtra(EXTRA_MESSAGE_DATA_BUNDLE, messageData);
     }
-    context.startService(intent);
+    context.sendBroadcast(intent);
   }
 
   @Override
-  public void onCreate(Context context, Intent intent, int flags, int startId) {
-    super.onCreate(context, intent, flags, startId);
-    mMessageData = intent.getParcelableExtra(EXTRA_MESSAGE_DATA_BUNDLE);
+  public void onCreate(Context context, Bundle extras) {
+    super.onCreate(context, extras);
+    mMessageData = extras.getParcelable(EXTRA_MESSAGE_DATA_BUNDLE);
   }
 
   @Override
   public Intent createRestartIntent() {
-    Logger.get(getContext()).logImpression(DialerImpression.Type.VVM_AUTO_RETRY_ACTIVATION);
+    LoggerUtils.logImpressionOnMainThread(
+        getContext(), DialerImpression.Type.VVM_AUTO_RETRY_ACTIVATION);
     Intent intent = super.createRestartIntent();
     // mMessageData is discarded, request a fresh STATUS SMS for retries.
     return intent;
@@ -124,13 +128,16 @@ public class ActivationTask extends BaseTask {
   @WorkerThread
   public void onExecuteInBackgroundThread() {
     Assert.isNotMainThread();
-    Logger.get(getContext()).logImpression(DialerImpression.Type.VVM_ACTIVATION_STARTED);
+    LoggerUtils.logImpressionOnMainThread(
+        getContext(), DialerImpression.Type.VVM_ACTIVATION_STARTED);
     PhoneAccountHandle phoneAccountHandle = getPhoneAccountHandle();
     if (phoneAccountHandle == null) {
       // This should never happen
       VvmLog.e(TAG, "null PhoneAccountHandle");
       return;
     }
+
+    PreOMigrationHandler.migrate(getContext(), phoneAccountHandle);
 
     if (!VisualVoicemailSettingsUtil.isEnabled(getContext(), phoneAccountHandle)) {
       VvmLog.i(TAG, "VVM is disabled");
@@ -159,6 +166,7 @@ public class ActivationTask extends BaseTask {
 
     if (VvmAccountManager.isAccountActivated(getContext(), phoneAccountHandle)) {
       VvmLog.i(TAG, "Account is already activated");
+      onSuccess(getContext(), phoneAccountHandle);
       return;
     }
     helper.handleEvent(
@@ -218,7 +226,7 @@ public class ActivationTask extends BaseTask {
             + message.getReturnCode());
     if (message.getProvisioningStatus().equals(OmtpConstants.SUBSCRIBER_READY)) {
       VvmLog.d(TAG, "subscriber ready, no activation required");
-      updateSource(getContext(), phoneAccountHandle, status, message);
+      updateSource(getContext(), phoneAccountHandle, message);
     } else {
       if (helper.supportsProvisioning()) {
         VvmLog.i(TAG, "Subscriber not ready, start provisioning");
@@ -228,32 +236,46 @@ public class ActivationTask extends BaseTask {
         VvmLog.i(TAG, "Subscriber new but provisioning is not supported");
         // Ignore the non-ready state and attempt to use the provided info as is.
         // This is probably caused by not completing the new user tutorial.
-        updateSource(getContext(), phoneAccountHandle, status, message);
+        updateSource(getContext(), phoneAccountHandle, message);
       } else {
         VvmLog.i(TAG, "Subscriber not ready but provisioning is not supported");
         helper.handleEvent(status, OmtpEvents.CONFIG_SERVICE_NOT_AVAILABLE);
       }
     }
-    Logger.get(getContext()).logImpression(DialerImpression.Type.VVM_ACTIVATION_COMPLETED);
+    LoggerUtils.logImpressionOnMainThread(
+        getContext(), DialerImpression.Type.VVM_ACTIVATION_COMPLETED);
   }
 
-  public static void updateSource(
-      Context context,
-      PhoneAccountHandle phone,
-      VoicemailStatus.Editor status,
-      StatusMessage message) {
+  private static void updateSource(
+      Context context, PhoneAccountHandle phone, StatusMessage message) {
 
     if (OmtpConstants.SUCCESS.equals(message.getReturnCode())) {
-      OmtpVvmCarrierConfigHelper helper = new OmtpVvmCarrierConfigHelper(context, phone);
-      helper.handleEvent(status, OmtpEvents.CONFIG_REQUEST_STATUS_SUCCESS);
-
       // Save the IMAP credentials in preferences so they are persistent and can be retrieved.
       VvmAccountManager.addAccount(context, phone, message);
-
-      SyncTask.start(context, phone, OmtpVvmSyncService.SYNC_FULL_SYNC);
+      onSuccess(context, phone);
     } else {
       VvmLog.e(TAG, "Visual voicemail not available for subscriber.");
     }
+  }
+
+  private static void onSuccess(Context context, PhoneAccountHandle phoneAccountHandle) {
+    OmtpVvmCarrierConfigHelper helper = new OmtpVvmCarrierConfigHelper(context, phoneAccountHandle);
+    helper.handleEvent(
+        VoicemailStatus.edit(context, phoneAccountHandle),
+        OmtpEvents.CONFIG_REQUEST_STATUS_SUCCESS);
+    clearLegacyVoicemailNotification(context, phoneAccountHandle);
+    SyncTask.start(context, phoneAccountHandle, OmtpVvmSyncService.SYNC_FULL_SYNC);
+  }
+
+  /** Sends a broadcast to the dialer UI to clear legacy voicemail notifications if any. */
+  private static void clearLegacyVoicemailNotification(
+      Context context, PhoneAccountHandle phoneAccountHandle) {
+    Intent intent = new Intent(VoicemailClient.ACTION_SHOW_LEGACY_VOICEMAIL);
+    intent.setPackage(context.getPackageName());
+    intent.putExtra(TelephonyManager.EXTRA_PHONE_ACCOUNT_HANDLE, phoneAccountHandle);
+    // Setting voicemail message count to zero will clear the notification.
+    intent.putExtra(TelephonyManager.EXTRA_NOTIFICATION_COUNT, 0);
+    context.sendBroadcast(intent);
   }
 
   private static boolean hasSignal(Context context, PhoneAccountHandle phoneAccountHandle) {
