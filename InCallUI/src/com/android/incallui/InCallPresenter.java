@@ -161,6 +161,10 @@ public class InCallPresenter implements CallList.Listener,
         @Override
         public void onDetailsChanged(android.telecom.Call telecomCall,
                 android.telecom.Call.Details details) {
+            if (mCallList == null) {
+                Log.e(this, "mCallList is empty so returning");
+                return;
+            }
             final Call call = mCallList.getCallByTelecomCall(telecomCall);
             if (call == null) {
                 Log.w(this, "Call not found in call list: " + telecomCall);

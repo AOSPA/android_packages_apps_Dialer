@@ -40,8 +40,6 @@
     <bool name="config_enable_conference_dialer">false</bool>
     <!-- Config to enable/disable conference state display -->
     <bool name="config_conference_call_show_participant_status">false</bool>
-    <!-- Config to enable/disable add multi participants -->
-    <bool name="add_multi_participants_enabled">false</bool>
     <!-- Config to if show preview before the receiver accepts a show me upgrade video call -->
     <bool name="config_enable_modify_call_preview">false</bool>
     <!-- Config to show/hide HD Icon2 -->
