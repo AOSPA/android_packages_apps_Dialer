@@ -42,6 +42,14 @@
     android:orientation="horizontal"
     android:visibility="invisible"
     tools:visibility="visible">
+   <ImageButton
+     android:id="@+id/videocall_more_button"
+     style="@style/Incall.Button.VideoCall"
+     android:layout_width="@dimen/videocall_button_size"
+     android:layout_height="@dimen/videocall_button_size"
+     android:layout_marginEnd="24dp"
+     android:src="@drawable/quantum_ic_more_vert_white_24"/>
+
     <com.android.incallui.video.impl.CheckableImageButton
       android:id="@+id/videocall_speaker_button"
       style="@style/Incall.Button.VideoCall"

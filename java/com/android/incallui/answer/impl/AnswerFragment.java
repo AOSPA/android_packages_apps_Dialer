@@ -48,6 +48,7 @@ import android.view.accessibility.AccessibilityEvent;
 import android.view.accessibility.AccessibilityNodeInfo;
 import android.view.accessibility.AccessibilityNodeInfo.AccessibilityAction;
 import android.widget.ImageView;
+import android.widget.ImageButton;
 import com.android.dialer.common.Assert;
 import com.android.dialer.common.FragmentUtils;
 import com.android.dialer.common.LogUtil;
@@ -57,6 +58,8 @@ import com.android.dialer.logging.DialerImpression;
 import com.android.dialer.logging.Logger;
 import com.android.dialer.multimedia.MultimediaData;
 import com.android.dialer.util.ViewUtil;
+import com.android.incallui.BottomSheetHelper;
+import com.android.incallui.ExtBottomSheetFragment.ExtBottomSheetActionCallback;
 import com.android.incallui.answer.impl.CreateCustomSmsDialogFragment.CreateCustomSmsHolder;
 import com.android.incallui.answer.impl.SmsBottomSheetFragment.SmsSheetHolder;
 import com.android.incallui.answer.impl.affordance.SwipeButtonHelper.Callback;
@@ -83,6 +86,7 @@ import com.android.incallui.sessiondata.MultimediaFragment;
 import com.android.incallui.util.AccessibilityUtil;
 import com.android.incallui.video.protocol.VideoCallScreen;
 import com.android.incallui.videotech.utils.VideoUtils;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -95,6 +99,8 @@ public class AnswerFragment extends Fragment
         SmsSheetHolder,
         CreateCustomSmsHolder,
         AnswerMethodHolder,
+        OnClickListener,
+        ExtBottomSheetActionCallback,
         MultimediaFragment.Holder {
 
   @VisibleForTesting(otherwise = VisibleForTesting.PRIVATE)
@@ -136,6 +142,7 @@ public class AnswerFragment extends Fragment
   private View importanceBadge;
   private SwipeButtonView secondaryButton;
   private SwipeButtonView answerAndReleaseButton;
+  private ImageButton moreOptionsMenuButton;
   private AffordanceHolderLayout affordanceHolderLayout;
   // Use these flags to prevent user from clicking accept/reject buttons multiple times.
   // We use separate flags because in some rare cases accepting a call may fail to join the room,
@@ -442,6 +449,25 @@ public class AnswerFragment extends Fragment
   }
 
   @Override
+  public void onClick(View v) {
+  if (moreOptionsMenuButton == v) {
+     BottomSheetHelper.getInstance()
+          .showBottomSheet(getChildFragmentManager());
+     }
+  }
+
+  @Override
+  public void optionSelected(@Nullable String text) {
+    //callback for bottomsheet clicks
+    BottomSheetHelper.getInstance().optionSelected(text);
+  }
+
+  @Override
+  public void sheetDismissed() {
+    BottomSheetHelper.getInstance().sheetDismissed();
+  }
+
+  @Override
   public boolean hasPendingDialogs() {
     boolean hasPendingDialogs =
         textResponsesFragment != null || createCustomSmsDialogFragment != null;
@@ -656,6 +682,8 @@ public class AnswerFragment extends Fragment
     View view = inflater.inflate(R.layout.fragment_incoming_call, container, false);
     secondaryButton = (SwipeButtonView) view.findViewById(R.id.incoming_secondary_button);
     answerAndReleaseButton = (SwipeButtonView) view.findViewById(R.id.incoming_secondary_button2);
+    moreOptionsMenuButton = (ImageButton) view.findViewById(R.id.qti_dialer_incoming_botton_more);
+    moreOptionsMenuButton.setOnClickListener(this);
 
     affordanceHolderLayout = (AffordanceHolderLayout) view.findViewById(R.id.incoming_container);
     affordanceHolderLayout.setAffordanceCallback(affordanceCallback);
@@ -802,8 +830,13 @@ public class AnswerFragment extends Fragment
     if (primaryCallState != null) {
       contactGridManager.setCallState(primaryCallState);
     }
-
     restoreBackgroundMaskColor();
+    if (BottomSheetHelper.getInstance().shallShowMoreButton(getActivity())) {
+      BottomSheetHelper.getInstance().updateMap();
+      moreOptionsMenuButton.setVisibility(View.VISIBLE);
+    } else {
+      moreOptionsMenuButton.setVisibility(View.GONE);
+    }
   }
 
   @Override

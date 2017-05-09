@@ -42,6 +42,8 @@ import com.android.dialer.common.Assert;
 import com.android.dialer.common.FragmentUtils;
 import com.android.dialer.common.LogUtil;
 import com.android.dialer.multimedia.MultimediaData;
+import com.android.incallui.BottomSheetHelper;
+import com.android.incallui.ExtBottomSheetFragment.ExtBottomSheetActionCallback;
 import com.android.incallui.audioroute.AudioRouteSelectorDialogFragment;
 import com.android.incallui.audioroute.AudioRouteSelectorDialogFragment.AudioRouteSelectorPresenter;
 import com.android.incallui.contactgrid.ContactGridManager;
@@ -59,6 +61,7 @@ import com.android.incallui.incall.protocol.InCallScreenDelegateFactory;
 import com.android.incallui.incall.protocol.PrimaryCallState;
 import com.android.incallui.incall.protocol.PrimaryInfo;
 import com.android.incallui.incall.protocol.SecondaryInfo;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -67,6 +70,7 @@ public class InCallFragment extends Fragment
     implements InCallScreen,
         InCallButtonUi,
         OnClickListener,
+        ExtBottomSheetActionCallback,
         AudioRouteSelectorPresenter,
         OnButtonGridCreatedListener {
 
@@ -75,6 +79,7 @@ public class InCallFragment extends Fragment
   private InCallPaginator paginator;
   private LockableViewPager pager;
   private InCallPagerAdapter adapter;
+  private View moreOptionsMenuButton;
   private ContactGridManager contactGridManager;
   private InCallScreenDelegate inCallScreenDelegate;
   private InCallButtonUiDelegate inCallButtonUiDelegate;
@@ -154,6 +159,9 @@ public class InCallFragment extends Fragment
     endCallButton = view.findViewById(R.id.incall_end_call);
     endCallButton.setOnClickListener(this);
 
+    moreOptionsMenuButton = view.findViewById(R.id.incall_more_button);
+    moreOptionsMenuButton.setOnClickListener(this);
+
     if (ContextCompat.checkSelfPermission(getContext(), permission.READ_PHONE_STATE)
         != PackageManager.PERMISSION_GRANTED) {
       voiceNetworkType = TelephonyManager.NETWORK_TYPE_UNKNOWN;
@@ -224,10 +232,25 @@ public class InCallFragment extends Fragment
     if (view == endCallButton) {
       LogUtil.i("InCallFragment.onClick", "end call button clicked");
       inCallScreenDelegate.onEndCallClicked();
+    } else if (view == moreOptionsMenuButton) {
+      LogUtil.i("InCallFragment.onClick","more options button clicked");
+      BottomSheetHelper.getInstance()
+              .showBottomSheet(getChildFragmentManager());
     } else {
       LogUtil.e("InCallFragment.onClick", "unknown view: " + view);
       Assert.fail();
     }
+  }
+
+  @Override
+  public void optionSelected(@Nullable String text) {
+    //Tiggered on item selection on bottomsheet.
+    BottomSheetHelper.getInstance().optionSelected(text);
+  }
+
+  @Override
+  public void sheetDismissed() {
+    BottomSheetHelper.getInstance().sheetDismissed();
   }
 
   @Override
@@ -452,6 +475,9 @@ public class InCallFragment extends Fragment
         pager.setCurrentItem(adapter.getButtonGridPosition());
       }
     }
+    moreOptionsMenuButton.setVisibility(
+       BottomSheetHelper.getInstance().shallShowMoreButton(
+          getActivity()) ? View.VISIBLE : View.GONE);
   }
 
   @Override

@@ -40,4 +40,20 @@
     <string name="cs_redial_yes">Yes</string>
     <!-- No option of the IMS to CS redial dialog -->
     <string name="cs_redial_no">No</string>
+
+    <!--Bottom Sheet resources.String arrays with same format should be introduced
+        for each feature/option to be shown on the bottomsheet -->
+    <!--
+        <item>Options to be shown on sheet</item>
+        <item>Visibility</item>
+     -->
+    <string-array name="option">
+       <item>option</item>
+       <item>true</item>
+    </string-array>
+
+    <!-- array of all the options to insure maping-->
+    <array name="bottom_sheet_more_options">
+       <item>@array/option</item>
+    </array>
 </resources>

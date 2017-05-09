@@ -323,7 +323,7 @@ public class InCallPresenter implements CallList.Listener {
 
     Objects.requireNonNull(context);
     mContext = context;
-
+    BottomSheetHelper.getInstance().setUp(context);
     mContactInfoCache = contactInfoCache;
 
     mStatusBarNotifier = statusBarNotifier;
@@ -383,7 +383,6 @@ public class InCallPresenter implements CallList.Listener {
   public void tearDown() {
     Log.d(this, "tearDown");
     mCallList.clearOnDisconnect();
-
     mServiceConnected = false;
 
     mContext
@@ -396,6 +395,8 @@ public class InCallPresenter implements CallList.Listener {
 
     removeDetailsListener(CallSubstateNotifier.getInstance());
     CallList.getInstance().removeListener(CallSubstateNotifier.getInstance());
+
+    BottomSheetHelper.getInstance().tearDown();
   }
 
   private void attemptFinishActivity() {
@@ -748,6 +749,7 @@ public class InCallPresenter implements CallList.Listener {
     } else {
       wakeUpScreen();
     }
+    BottomSheetHelper.getInstance().dismissBottomSheet();
 
     if (mInCallActivity != null) {
       // Re-evaluate which fragment is being shown.
