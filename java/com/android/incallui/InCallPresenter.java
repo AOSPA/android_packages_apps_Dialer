@@ -352,6 +352,7 @@ public class InCallPresenter implements CallList.Listener {
     mSpamCallListListener = new SpamCallListListener(context);
     mCallList.addListener(mSpamCallListListener);
 
+    InCallCsRedialHandler.getInstance().setUp(mContext);
     VideoPauseController.getInstance().setUp(this);
 
     mFilteredQueryHandler = new FilteredNumberAsyncQueryHandler(context);
@@ -1390,6 +1391,8 @@ public class InCallPresenter implements CallList.Listener {
         mExternalCallList.removeExternalCallListener(mExternalCallNotifier);
       }
       mStatusBarNotifier = null;
+
+      InCallCsRedialHandler.getInstance().tearDown();
 
       if (mCallList != null) {
         mCallList.removeListener(this);

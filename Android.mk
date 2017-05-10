@@ -226,6 +226,7 @@ LOCAL_STATIC_JAVA_LIBRARIES := \
 	jsr305 \
 	libphonenumber \
 	volley \
+        ims-ext-common
 
 LOCAL_STATIC_ANDROID_LIBRARIES := \
 	android-support-design \

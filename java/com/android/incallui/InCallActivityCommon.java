@@ -510,6 +510,8 @@ public class InCallActivityCommon {
       selectPhoneAccountDialogFragment.dismiss();
       selectPhoneAccountDialogFragment = null;
     }
+
+    InCallCsRedialHandler.getInstance().dismissPendingDialogs();
   }
 
   private static boolean shouldShowDisconnectErrorDialog(@NonNull DisconnectCause cause) {
@@ -755,7 +757,7 @@ public class InCallActivityCommon {
   }
 
   public boolean hasPendingDialogs() {
-    return dialog != null;
+    return dialog != null || InCallCsRedialHandler.getInstance().hasPendingDialogs();
   }
 
   private void internalResolveIntent(Intent intent) {
