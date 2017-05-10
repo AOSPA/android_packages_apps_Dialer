@@ -360,6 +360,9 @@ public class InCallPresenter implements CallList.Listener {
         .getSystemService(TelephonyManager.class)
         .listen(mPhoneStateListener, PhoneStateListener.LISTEN_CALL_STATE);
 
+    addDetailsListener(CallSubstateNotifier.getInstance());
+    CallList.getInstance().addListener(CallSubstateNotifier.getInstance());
+
     Log.d(this, "Finished InCallPresenter.setUp");
   }
 
@@ -382,6 +385,9 @@ public class InCallPresenter implements CallList.Listener {
 
     attemptCleanup();
     VideoPauseController.getInstance().tearDown();
+
+    removeDetailsListener(CallSubstateNotifier.getInstance());
+    CallList.getInstance().removeListener(CallSubstateNotifier.getInstance());
   }
 
   private void attemptFinishActivity() {
