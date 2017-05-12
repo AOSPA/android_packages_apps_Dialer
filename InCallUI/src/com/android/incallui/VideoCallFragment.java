@@ -129,6 +129,7 @@ public class VideoCallFragment extends BaseFragment<VideoCallPresenter,
         private TextureView mTextureView;
         private SurfaceTexture mSavedSurfaceTexture;
         private Surface mSavedSurface;
+        // variable indicates whether surface is being used for a video call or not.
         private boolean mIsDoneWithSurface;
         private int mWidth = DIMENSIONS_NOT_SET;
         private int mHeight = DIMENSIONS_NOT_SET;
@@ -174,7 +175,7 @@ public class VideoCallFragment extends BaseFragment<VideoCallPresenter,
             if (DEBUG) {
                 Log.i(TAG, "recreateView: " + view);
             }
-
+            mIsDoneWithSurface = false;
             if (mTextureView == view) {
                 return;
             }
@@ -194,7 +195,6 @@ public class VideoCallFragment extends BaseFragment<VideoCallPresenter,
                     onSurfaceCreated();
                 }
             }
-            mIsDoneWithSurface = false;
         }
 
         public void resetPresenter(VideoCallPresenter presenter) {
@@ -333,13 +333,15 @@ public class VideoCallFragment extends BaseFragment<VideoCallPresenter,
         /**
          * Called by the user presenter to indicate that the surface is no longer required due to a
          * change in video state.  Releases and clears out the saved surface and surface textures.
+         * @return true if the saved surface is released.
+         * If the surfacetexture is available for use, surface is not released.
          */
-        public void setDoneWithSurface() {
-            Log.d(this, "setDoneWithSurface: SavedSurface=" + mSavedSurface
+        public boolean maybeReleaseSurface() {
+            Log.d(this, "maybeReleaseSurface: SavedSurface=" + mSavedSurface
                     + " SavedSurfaceTexture=" + mSavedSurfaceTexture);
             mIsDoneWithSurface = true;
             if (mTextureView != null && mTextureView.isAvailable()) {
-                return;
+                return false;
             }
 
             if (mSavedSurface != null) {
@@ -351,13 +353,16 @@ public class VideoCallFragment extends BaseFragment<VideoCallPresenter,
                 mSavedSurfaceTexture.release();
                 mSavedSurfaceTexture = null;
             }
+            return true;
         }
 
         private void onSurfaceReleased() {
+            Log.d(this, "onSurfaceReleased: id = " + mSurfaceId);
+            clearCachedSurface(mSurfaceId);
             if (mPresenter != null) {
                 mPresenter.onSurfaceReleased(mSurfaceId);
             } else {
-                Log.d(this, "setDoneWithSurface: Presenter is null.");
+                Log.d(this, "onSurfaceReleased: Presenter is null.");
             }
         }
 
@@ -645,20 +650,37 @@ public class VideoCallFragment extends BaseFragment<VideoCallPresenter,
     /**
      * Cleans up the video telephony surfaces.  Used when the presenter indicates a change to an
      * audio-only state.  Since the surfaces are static, it is important to ensure they are cleaned
-     * up promptly.
+     * up promptly. If the surfacetextures are not yet destroyed by framework,
+     * donot clear the cached surfaces. They will be cleared when
+     * surfacetexture is destroyed later.
      */
     @Override
     public void cleanupSurfaces() {
         Log.d(this, "cleanupSurfaces");
-        if (sDisplaySurface != null) {
-            sDisplaySurface.setDoneWithSurface();
+        // Clear the saved surfaces only if they were released
+        if (sDisplaySurface != null && sDisplaySurface.maybeReleaseSurface()) {
             sDisplaySurface = null;
         }
-        if (sPreviewSurface != null) {
-            sPreviewSurface.setDoneWithSurface();
+        if (sPreviewSurface != null && sPreviewSurface.maybeReleaseSurface()) {
             sPreviewSurface = null;
         }
-        sVideoSurfacesInUse = false;
+        // When the surfaces are succefully released, mark them as not in use
+        // so that for next video call, new surfaces will be created.
+        if (sDisplaySurface == null && sPreviewSurface == null) sVideoSurfacesInUse = false;
+    }
+
+    /**
+     * This is called when surfacetexture is destroyed and released when they
+     * are not used anymore. It clears the saved surface and marks surfaces
+     * as not in use when both display and preview surfaces are cleared.
+     */
+    private static void clearCachedSurface(int surfaceId) {
+        if (surfaceId == SURFACE_DISPLAY) {
+            sDisplaySurface = null;
+        } else if (surfaceId == SURFACE_PREVIEW) {
+            sPreviewSurface = null;
+        }
+        if (sDisplaySurface == null && sPreviewSurface == null) sVideoSurfacesInUse = false;
     }
 
     @Override
