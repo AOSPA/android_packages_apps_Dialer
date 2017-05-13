@@ -31,7 +31,6 @@ import android.telecom.InCallService.VideoCall;
 import android.telecom.PhoneAccount;
 import android.telecom.PhoneAccountHandle;
 import android.telecom.TelecomManager;
-import android.telephony.SubscriptionManager;
 import android.telecom.VideoProfile;
 import android.telephony.SubscriptionManager;
 import android.text.TextUtils;
@@ -49,6 +48,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
+import java.util.regex.Pattern;
+import java.util.regex.Matcher;
 
 import org.codeaurora.ims.internal.IQtiImsExt;
 import org.codeaurora.ims.QtiCallConstants;
@@ -389,6 +390,8 @@ public class Call {
     private final VideoSettings mVideoSettings = new VideoSettings();
     private int mVideoState;
 
+    private static final String KEY_CARRIER_PARSE_NUMBER_ON_FORWARD_CALL_BOOL
+            = "carrier_parse_number_on_forward_call_bool";
     /**
      * mRequestedVideoState is used to store requested upgrade / downgrade video state
      */
@@ -555,6 +558,22 @@ public class Call {
         }
     }
 
+     private String parsePhoneNumbers(String fwNumber) {
+         if (fwNumber == null) {
+             Log.d(this, "parsePhoneNumbers: fwNumber is null.");
+             return "";
+         }
+         String parsedNumber = "";
+         final Pattern p = Pattern.compile("(.*?)(\\+?\\d+)((?s).*)");
+                 final Matcher m = p.matcher(fwNumber);
+                 if (m.matches() ) {
+                     parsedNumber = m.group(2);
+                 } else {
+                     Log.d(this, "parsePhoneNumbers: string format incorrect" + fwNumber);
+                 }
+         return parsedNumber;
+     }
+
     protected void updateFromCallExtras(Bundle callExtras) {
         if (callExtras == null || areCallExtrasCorrupted(callExtras)) {
             /**
@@ -575,6 +594,9 @@ public class Call {
         // Last forwarded number comes in as an array of strings.  We want to choose the
         // last item in the array.  The forwarding numbers arrive independently of when the
         // call is originally set up, so we need to notify the the UI of the change.
+        int subId = getSubId();
+        boolean needNumberParsed = InCallPresenter.getInstance().getConfigItem(
+                subId, KEY_CARRIER_PARSE_NUMBER_ON_FORWARD_CALL_BOOL);
         if (callExtras.containsKey(Connection.EXTRA_LAST_FORWARDED_NUMBER)) {
             ArrayList<String> lastForwardedNumbers =
                     callExtras.getStringArrayList(Connection.EXTRA_LAST_FORWARDED_NUMBER);
@@ -584,8 +606,13 @@ public class Call {
                 if (!lastForwardedNumbers.isEmpty()) {
                     lastForwardedNumber = lastForwardedNumbers.get(
                             lastForwardedNumbers.size() - 1);
+                    Log.d(this, "Before parsing: lastForwardedNumber" + lastForwardedNumber);
                 }
-
+                lastForwardedNumber = needNumberParsed ?
+                        parsePhoneNumbers(lastForwardedNumber) : lastForwardedNumber;
+                if (needNumberParsed) {
+                    Log.d(this, "After parsing: lastForwardedNumber" + lastForwardedNumber);
+                }
                 if (!Objects.equals(lastForwardedNumber, mLastForwardedNumber)) {
                     mLastForwardedNumber = lastForwardedNumber;
                     CallList.getInstance().onLastForwardedNumberChange(this);
