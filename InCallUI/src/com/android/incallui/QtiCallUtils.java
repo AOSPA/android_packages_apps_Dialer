@@ -84,6 +84,8 @@ public class QtiCallUtils {
         VIDEO_QUALITY_TABLE.put(new Size(480,640), VideoProfile.QUALITY_MEDIUM);
         VIDEO_QUALITY_TABLE.put(new Size(960,720), VideoProfile.QUALITY_HIGH);
         VIDEO_QUALITY_TABLE.put(new Size(720,960), VideoProfile.QUALITY_HIGH);
+        VIDEO_QUALITY_TABLE.put(new Size(720,1280), VideoProfile.QUALITY_HIGH);
+        VIDEO_QUALITY_TABLE.put(new Size(1280,720), VideoProfile.QUALITY_HIGH);
     }
 
     /**
