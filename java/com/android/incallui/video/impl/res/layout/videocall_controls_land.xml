@@ -80,6 +80,16 @@
       android:layout_width="@dimen/videocall_button_size"
       android:layout_height="@dimen/videocall_button_size"
       android:layout_marginEnd="24dp"/>
+    <ImageButton
+      android:id="@+id/videocall_add_call"
+      style="@style/Incall.Button.VideoCall"
+      android:layout_width="@dimen/videocall_button_size"
+      android:layout_height="@dimen/videocall_button_size"
+      android:contentDescription="@string/incall_content_description_add_call"
+      android:src="@drawable/ic_addcall_white"
+      android:layout_marginEnd="24dp"
+      tools:visibility="visible"
+      />
   </LinearLayout>
 
   <FrameLayout
