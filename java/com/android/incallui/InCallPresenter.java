@@ -21,6 +21,7 @@ import android.content.Intent;
 import android.graphics.Point;
 import android.os.Bundle;
 import android.os.Handler;
+import android.os.PowerManager;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.annotation.VisibleForTesting;
@@ -179,6 +180,8 @@ public class InCallPresenter implements CallList.Listener {
   private boolean mBoundAndWaitingForOutgoingCall;
   /** Determines if the InCall UI is in fullscreen mode or not. */
   private boolean mIsFullScreen = false;
+  private PowerManager mPowerManager;
+  private PowerManager.WakeLock mWakeLock = null;
 
   private PhoneStateListener mPhoneStateListener =
       new PhoneStateListener() {
@@ -341,6 +344,9 @@ public class InCallPresenter implements CallList.Listener {
     externalCallList.addExternalCallListener(mExternalCallNotifier);
     externalCallList.addExternalCallListener(mExternalCallListener);
 
+    mPowerManager = (PowerManager) mContext.getSystemService(Context.POWER_SERVICE);
+    mWakeLock = mPowerManager.newWakeLock(PowerManager.SCREEN_BRIGHT_WAKE_LOCK |
+        PowerManager.ACQUIRE_CAUSES_WAKEUP, "InCallPresenter");
     // This only gets called by the service so this is okay.
     mServiceConnected = true;
 
@@ -353,6 +359,7 @@ public class InCallPresenter implements CallList.Listener {
     mCallList.addListener(mSpamCallListListener);
 
     InCallCsRedialHandler.getInstance().setUp(mContext);
+    InCallUiStateNotifier.getInstance().setUp(context);
     VideoPauseController.getInstance().setUp(this);
 
     mFilteredQueryHandler = new FilteredNumberAsyncQueryHandler(context);
@@ -385,6 +392,7 @@ public class InCallPresenter implements CallList.Listener {
 
     attemptCleanup();
     VideoPauseController.getInstance().tearDown();
+    InCallUiStateNotifier.getInstance().tearDown();
 
     removeDetailsListener(CallSubstateNotifier.getInstance());
     CallList.getInstance().removeListener(CallSubstateNotifier.getInstance());
@@ -737,6 +745,8 @@ public class InCallPresenter implements CallList.Listener {
           "InCallPresenter.onUpgradeToVideo",
           "rejecting upgrade request due to existing incoming call");
       call.getVideoTech().declineVideoRequest();
+    } else {
+      wakeUpScreen();
     }
 
     if (mInCallActivity != null) {
@@ -1013,8 +1023,8 @@ public class InCallPresenter implements CallList.Listener {
 
   /*package*/
   void onActivityStarted() {
-    Log.d(this, "onActivityStarted");
-    notifyVideoPauseController(true);
+    LogUtil.i("InCallPresenter.onActivityStarted", "");
+    notifyInCallUiStateNotifier(true);
     if (mStatusBarNotifier != null) {
       // TODO - b/36649622: Investigate this redundant call
       mStatusBarNotifier.updateNotification(mCallList);
@@ -1023,15 +1033,15 @@ public class InCallPresenter implements CallList.Listener {
 
   /*package*/
   void onActivityStopped() {
-    Log.d(this, "onActivityStopped");
-    notifyVideoPauseController(false);
+    LogUtil.i("InCallPresenter.onActivityStopped", "");
+    notifyInCallUiStateNotifier(false);
   }
 
-  private void notifyVideoPauseController(boolean showing) {
-    Log.d(
-        this, "notifyVideoPauseController: mIsChangingConfigurations=" + mIsChangingConfigurations);
+  private void notifyInCallUiStateNotifier(boolean showing) {
+    LogUtil.i("InCallPresenter.notifyInCallUiStateNotifier", " mIsChangingConfigurations= " +
+        mIsChangingConfigurations);
     if (!mIsChangingConfigurations) {
-      VideoPauseController.getInstance().onUiShowing(showing);
+      InCallUiStateNotifier.getInstance().onUiShowing(showing);
     }
   }
 
@@ -1394,6 +1404,9 @@ public class InCallPresenter implements CallList.Listener {
       }
       mProximitySensor = null;
 
+      mWakeLock = null;
+      mPowerManager = null;
+
       if (mStatusBarNotifier != null) {
         removeListener(mStatusBarNotifier);
         EnrichedCallComponent.get(mContext)
@@ -1529,6 +1542,34 @@ public class InCallPresenter implements CallList.Listener {
       return;
     }
     mInCallActivity.setAllowOrientationChange(allowOrientationChange);
+  }
+
+  /* returns TRUE if screen is turned ON else false */
+  private boolean isScreenInteractive() {
+    return mPowerManager.isInteractive();
+  }
+
+  public void wakeUpScreen() {
+    if (!isScreenInteractive()) {
+      acquireWakeLock();
+      releaseWakeLock();
+    }
+  }
+
+  private void acquireWakeLock() {
+    LogUtil.v("InCallPresenter.acquireWakeLock", "");
+
+    if (mWakeLock != null) {
+      mWakeLock.acquire();
+    }
+  }
+
+  private void releaseWakeLock() {
+    LogUtil.v("InCallPresenter.releaseWakeLock", "");
+
+    if (mWakeLock != null && mWakeLock.isHeld()) {
+      mWakeLock.release();
+    }
   }
 
   public void enableScreenTimeout(boolean enable) {
