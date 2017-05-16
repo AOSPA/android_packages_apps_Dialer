@@ -79,7 +79,7 @@ public class SwitchOnHoldCallController implements OnClickListener {
 
   public void updateButtonState() {
     switchOnHoldButton.setEnabled(isEnabled);
-    switchOnHoldButton.setVisibility(isVisible ? View.VISIBLE : View.INVISIBLE);
+    switchOnHoldButton.setVisibility(isVisible ? View.VISIBLE : View.GONE);
     onHoldBanner.setVisibility(isVisible ? View.VISIBLE : View.INVISIBLE);
   }
 

@@ -90,6 +90,17 @@
     android:orientation="vertical"
     android:layout_alignParentBottom="true"
     android:layout_alignParentEnd="true">
+    <com.android.incallui.video.impl.CheckableImageButton
+      android:id="@+id/videocall_hold_button"
+      style="@style/Incall.Button.VideoCall"
+      android:layout_width="@dimen/videocall_button_size"
+      android:layout_height="@dimen/videocall_button_size"
+      android:layout_marginEnd="24dp"
+      android:layout_marginBottom="@dimen/videocall_button_spacing"
+      android:visibility="gone"
+      android:src="@drawable/quantum_ic_pause_white_36"
+      android:contentDescription="@string/incall_content_description_hold"
+      />
     <ImageButton
       android:id="@+id/videocall_switch_on_hold"
       style="@style/Incall.Button.VideoCall"
