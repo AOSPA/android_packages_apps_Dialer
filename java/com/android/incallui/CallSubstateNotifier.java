@@ -174,4 +174,9 @@ public class CallSubstateNotifier implements InCallDetailsListener, CallList.Lis
     public void onHandoverToWifiFailed(DialerCall call) {
         //NO-OP
     }
+
+    @Override
+    public void onInternationalCallOnWifi(DialerCall call) {
+        //NO-OP
+    }
 }
