@@ -31,6 +31,7 @@ import com.android.contacts.common.GeoUtil;
 import com.android.contacts.common.dialog.IndeterminateProgressDialog;
 import com.android.contacts.common.list.OnPhoneNumberPickerActionListener;
 import com.android.dialer.R;
+import com.android.dialer.ThemeController;
 import com.android.dialer.database.FilteredNumberAsyncQueryHandler;
 import com.android.dialer.list.BlockedListSearchAdapter;
 import com.android.dialer.list.OnListFragmentScrolledListener;
@@ -48,6 +49,8 @@ public class BlockedNumbersSettingsActivity extends AppCompatActivity
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        final ThemeController controller = new ThemeController(this);
+        controller.applyTheme();
         super.onCreate(savedInstanceState);
         setContentView(R.layout.blocked_numbers_activity);
 

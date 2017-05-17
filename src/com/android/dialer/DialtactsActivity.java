@@ -396,6 +396,8 @@ public class DialtactsActivity extends TransactionSafeActivity implements View.O
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         Trace.beginSection(TAG + " onCreate");
+        final ThemeController controller = new ThemeController(this);
+        controller.applyTheme();
         super.onCreate(savedInstanceState);
 
         mFirstLaunch = true;
