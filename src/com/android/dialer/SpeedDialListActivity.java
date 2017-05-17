@@ -151,6 +151,8 @@ public class SpeedDialListActivity extends ListActivity implements
     /** Called when the activity is first created. */
     @Override
     public void onCreate(Bundle savedInstanceState) {
+        final ThemeController controller = new ThemeController(this);
+        controller.applyTheme();
         super.onCreate(savedInstanceState);
 
         mInitialPickNumber = getIntent().getIntExtra(EXTRA_INITIAL_PICK_NUMBER, -1);

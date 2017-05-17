@@ -31,6 +31,7 @@ import android.widget.Toast;
 import com.android.contacts.common.compat.CompatUtils;
 import com.android.contacts.common.compat.TelephonyManagerCompat;
 import com.android.dialer.SpeedDialListActivity;
+import com.android.dialer.ThemeController;
 import com.android.contacts.common.CallUtil;
 import com.android.dialer.R;
 import com.android.dialer.compat.FilteredNumberCompat;
@@ -47,6 +48,8 @@ public class DialerSettingsActivity extends AppCompatPreferenceActivity {
     private final String ACTION_LAUNCH_CALL_SETTINGS = "org.codeaurora.CALL_SETTINGS";
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        final ThemeController controller = new ThemeController(this);
+        controller.applyTheme();
         super.onCreate(savedInstanceState);
         mPreferences = PreferenceManager.getDefaultSharedPreferences(this);
     }

@@ -28,6 +28,7 @@ import android.view.View;
 import com.android.contacts.common.GeoUtil;
 import com.android.dialer.DialtactsActivity;
 import com.android.dialer.R;
+import com.android.dialer.ThemeController;
 import com.android.dialer.TransactionSafeActivity;
 import com.android.dialer.calllog.CallLogAdapter;
 import com.android.dialer.calllog.CallLogQueryHandler;
@@ -67,6 +68,8 @@ public class VoicemailArchiveActivity extends TransactionSafeActivity
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        final ThemeController controller = new ThemeController(this);
+        controller.applyTheme();
         super.onCreate(savedInstanceState);
 
         setContentView(R.layout.call_log_fragment);

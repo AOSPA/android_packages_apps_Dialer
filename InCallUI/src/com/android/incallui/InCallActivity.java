@@ -65,6 +65,7 @@ import com.android.contacts.common.interactions.TouchPointManager;
 import com.android.contacts.common.widget.SelectPhoneAccountDialogFragment;
 import com.android.contacts.common.widget.SelectPhoneAccountDialogFragment.SelectPhoneAccountListener;
 import com.android.dialer.R;
+import com.android.dialer.ThemeController;
 import com.android.dialer.logging.Logger;
 import com.android.dialer.logging.ScreenEvent;
 import com.android.incallui.Call.State;
@@ -187,6 +188,8 @@ public class InCallActivity extends TransactionSafeActivity implements FragmentD
     protected void onCreate(Bundle icicle) {
         Log.d(this, "onCreate()...  this = " + this);
 
+        final ThemeController controller = new ThemeController(this);
+        controller.applyTheme();
         super.onCreate(icicle);
 
         // set this flag so this activity will stay in front of the keyguard

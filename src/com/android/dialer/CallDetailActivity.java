@@ -244,6 +244,8 @@ public class CallDetailActivity extends AppCompatActivity
 
     @Override
     protected void onCreate(Bundle icicle) {
+        final ThemeController controller = new ThemeController(this);
+        controller.applyTheme();
         super.onCreate(icicle);
 
         mContext = this;

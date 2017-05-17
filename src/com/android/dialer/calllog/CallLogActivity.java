@@ -56,6 +56,7 @@ import com.android.contacts.common.util.PermissionsUtil;
 import com.android.contacts.commonbind.analytics.AnalyticsUtil;
 import com.android.dialer.DialtactsActivity;
 import com.android.dialer.R;
+import com.android.dialer.ThemeController;
 import com.android.dialer.TransactionSafeActivity;
 import com.android.dialer.logging.Logger;
 import com.android.dialer.logging.ScreenEvent;
@@ -177,6 +178,8 @@ public class CallLogActivity extends TransactionSafeActivity implements ViewPage
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        final ThemeController controller = new ThemeController(this);
+        controller.applyTheme();
         super.onCreate(savedInstanceState);
 
         final ActionBar actionBar = getSupportActionBar();

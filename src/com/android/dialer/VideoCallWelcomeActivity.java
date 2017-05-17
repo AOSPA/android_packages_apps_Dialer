@@ -48,6 +48,8 @@ public class VideoCallWelcomeActivity extends AlertActivity
 
     @Override
     public void onCreate(Bundle icicle) {
+        final ThemeController controller = new ThemeController(this);
+        controller.applyTheme();
         super.onCreate(icicle);
 
         final AlertController.AlertParams ap = mAlertParams;
