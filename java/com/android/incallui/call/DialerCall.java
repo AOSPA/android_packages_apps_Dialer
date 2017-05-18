@@ -57,6 +57,7 @@ import com.android.dialer.lightbringer.LightbringerComponent;
 import com.android.dialer.logging.ContactLookupResult;
 import com.android.dialer.logging.DialerImpression;
 import com.android.dialer.logging.Logger;
+import com.android.dialer.theme.R;
 import com.android.incallui.audiomode.AudioModeProvider;
 import com.android.incallui.latencyreport.LatencyReport;
 import com.android.incallui.QtiCallUtils;
@@ -94,6 +95,13 @@ public class DialerCall implements VideoTechListener {
   private static int sIdCounter = 0;
 
   /**
+   * A counter used to append to restricted/private/hidden calls so that users can identify them in
+   * a conversation. This value is reset in {@link CallList#onCallRemoved(Context, Call)} when there
+   * are no live calls.
+   */
+  private static int sHiddenCounter;
+
+  /**
    * The unique call ID for every call. This will help us to identify each call and allow us the
    * ability to stitch impressions to calls if needed.
    */
@@ -102,6 +110,7 @@ public class DialerCall implements VideoTechListener {
   private final Call mTelecomCall;
   private final LatencyReport mLatencyReport;
   private final String mId;
+  private final int mHiddenId;
   private final List<String> mChildCallIds = new ArrayList<>();
   private final LogState mLogState = new LogState();
   private final Context mContext;
@@ -246,11 +255,15 @@ public class DialerCall implements VideoTechListener {
               isRemotelyHeld = false;
               update();
               break;
+            case TelephonyManagerCompat.EVENT_NOTIFY_INTERNATIONAL_CALL_ON_WFC:
+              notifyInternationalCallOnWifi();
+              break;
             default:
               break;
           }
         }
       };
+
   private long mTimeAddedMs;
 
   public DialerCall(
@@ -270,6 +283,11 @@ public class DialerCall implements VideoTechListener {
     mVideoTechManager = new VideoTechManager(this);
 
     updateFromTelecomCall();
+    if (isHiddenNumber() && TextUtils.isEmpty(getNumber())) {
+      mHiddenId = ++sHiddenCounter;
+    } else {
+      mHiddenId = 0;
+    }
 
     if (registerCallback) {
       mTelecomCall.registerCallback(mTelecomCallCallback);
@@ -358,6 +376,13 @@ public class DialerCall implements VideoTechListener {
     LogUtil.i("DialerCall.notifyHandoverToWifiFailed", "");
     for (DialerCallListener listener : mListeners) {
       listener.onHandoverToWifiFailure();
+    }
+  }
+
+  public void notifyInternationalCallOnWifi() {
+    LogUtil.enterBlock("DialerCall.notifyInternationalCallOnWifi");
+    for (DialerCallListener dialerCallListener : mListeners) {
+      dialerCallListener.onInternationalCallOnWifi();
     }
   }
 
@@ -527,6 +552,27 @@ public class DialerCall implements VideoTechListener {
 
   public String getId() {
     return mId;
+  }
+
+  /**
+   * @return name appended with a number if the number is restricted/unknown and the user has
+   *     received more than one restricted/unknown call.
+   */
+  @Nullable
+  public String updateNameIfRestricted(@Nullable String name) {
+    if (name != null && isHiddenNumber() && mHiddenId != 0 && sHiddenCounter > 1) {
+      return mContext.getString(R.string.unknown_counter, name, mHiddenId);
+    }
+    return name;
+  }
+
+  public static void clearRestrictedCount() {
+    sHiddenCounter = 0;
+  }
+
+  private boolean isHiddenNumber() {
+    return getNumberPresentation() == TelecomManager.PRESENTATION_RESTRICTED
+        || getNumberPresentation() == TelecomManager.PRESENTATION_UNKNOWN;
   }
 
   public boolean hasShownWiFiToLteHandoverToast() {
@@ -1346,7 +1392,6 @@ public class DialerCall implements VideoTechListener {
 
       String phoneNumber = call.getNumber();
       phoneNumber = phoneNumber != null ? phoneNumber : "";
-      phoneNumber = phoneNumber.replaceAll("[^+0-9]", "");
 
       // Insert order here determines the priority of that video tech option
       videoTechs = new ArrayList<>();

@@ -139,6 +139,11 @@ public class InCallCsRedialHandler implements CallList.Listener {
         // no-op
     }
 
+    @Override
+    public void onInternationalCallOnWifi(DialerCall call) {
+        //NO-OP
+    }
+
     /**
      * This method overrides onDisconnect method of {@interface CallList.Listener}
      */
