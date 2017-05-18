@@ -59,6 +59,7 @@ import com.android.dialer.logging.DialerImpression;
 import com.android.dialer.logging.Logger;
 import com.android.incallui.audiomode.AudioModeProvider;
 import com.android.incallui.latencyreport.LatencyReport;
+import com.android.incallui.QtiCallUtils;
 import com.android.incallui.util.TelecomCallUtil;
 import com.android.incallui.videotech.VideoTech;
 import com.android.incallui.videotech.VideoTech.VideoTechListener;
@@ -759,7 +760,9 @@ public class DialerCall implements VideoTechListener {
    * repeated calls to isEmergencyNumber.
    */
   private void updateEmergencyCallState() {
-    mIsEmergencyCall = TelecomCallUtil.isEmergencyCall(mTelecomCall);
+    Uri handle = mTelecomCall.getDetails().getHandle();
+    mIsEmergencyCall = QtiCallUtils.isEmergencyNumber
+        (handle == null ? "" : handle.getSchemeSpecificPart());
   }
 
   public LogState getLogState() {

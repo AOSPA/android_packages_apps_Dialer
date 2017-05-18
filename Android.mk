@@ -240,6 +240,7 @@ LOCAL_STATIC_ANDROID_LIBRARIES := \
 LOCAL_JAVA_LIBRARIES := \
 	org.apache.http.legacy \
 	dialer-auto-value \
+        telephony-ext \
 
 # Libraries needed by the compiler (JACK) to generate code.
 PROCESSOR_LIBRARIES_TARGET := \
