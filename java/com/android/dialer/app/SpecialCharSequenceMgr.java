@@ -72,6 +72,7 @@ public class SpecialCharSequenceMgr {
 
   private static final String MMI_IMEI_DISPLAY = "*#06#";
   private static final String MMI_REGULATORY_INFO_DISPLAY = "*#07#";
+  private static final String PRL_VERSION_DISPLAY = "*#0000#";
   /** ***** This code is used to handle SIM Contact queries ***** */
   private static final String ADN_PHONE_NUMBER_COLUMN_NAME = "number";
 
@@ -101,6 +102,7 @@ public class SpecialCharSequenceMgr {
     String dialString = PhoneNumberUtils.stripSeparators(input);
 
     if (handleDeviceIdDisplay(context, dialString)
+        || handlePRLVersion(context, dialString)
         || handleRegulatoryInfoDisplay(context, dialString)
         || handlePinEntry(context, dialString)
         || handleAdnEntry(context, dialString, textField)
@@ -112,6 +114,20 @@ public class SpecialCharSequenceMgr {
       return true;
     }
 
+    return false;
+  }
+
+  static private boolean handlePRLVersion(Context context, String input) {
+    if (input.equals(PRL_VERSION_DISPLAY)) {
+        try {
+            Intent intent = new Intent("org.codeaurora.intent.action.ACTION_DEVICEINFO");
+            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            context.startActivity(intent);
+            return true;
+        } catch (ActivityNotFoundException e) {
+            LogUtil.d(TAG, "no activity to handle showing device info");
+        }
+    }
     return false;
   }
 
