@@ -130,6 +130,7 @@ public class VideoCallFragment extends Fragment
   private CheckableImageButton muteButton;
   private CheckableImageButton cameraOffButton;
   private ImageButton swapCameraButton;
+  private ImageButton addCallButton;
   private View switchOnHoldButton;
   private View onHoldContainer;
   private SwitchOnHoldCallController switchOnHoldCallController;
@@ -139,6 +140,7 @@ public class VideoCallFragment extends Fragment
   private View previewOffOverlay;
   private ImageView previewOffBlurredImageView;
   private View controls;
+  private View switchControls;
   private View controlsContainer;
   private TextureView previewTextureView;
   private TextureView remoteTextureView;
@@ -228,9 +230,11 @@ public class VideoCallFragment extends Fragment
         (ImageView) view.findViewById(R.id.videocall_preview_off_blurred_image_view);
     swapCameraButton = (ImageButton) view.findViewById(R.id.videocall_switch_video);
     swapCameraButton.setOnClickListener(this);
-    view.findViewById(R.id.videocall_switch_controls)
-        .setVisibility(
+    switchControls = view.findViewById(R.id.videocall_switch_controls);
+    switchControls.setVisibility(
             ActivityCompat.isInMultiWindowMode(getActivity()) ? View.GONE : View.VISIBLE);
+    addCallButton = (ImageButton) view.findViewById(R.id.videocall_add_call);
+    addCallButton.setOnClickListener(this);
     switchOnHoldButton = view.findViewById(R.id.videocall_switch_on_hold);
     onHoldContainer = view.findViewById(R.id.videocall_on_hold_banner);
     remoteVideoOff = (TextView) view.findViewById(R.id.videocall_remote_video_off);
@@ -348,6 +352,7 @@ public class VideoCallFragment extends Fragment
   public void onPause() {
     super.onPause();
     LogUtil.i("VideoCallFragment.onPause", null);
+    inCallScreenDelegate.onInCallScreenPaused();
   }
 
   @Override
@@ -361,6 +366,7 @@ public class VideoCallFragment extends Fragment
   public void onVideoScreenStop() {
     getView().removeCallbacks(cameraPermissionDialogRunnable);
     videoCallScreenDelegate.onVideoCallScreenUiUnready();
+    videoCallScreenDelegate.onUiShowing(false);
   }
 
   private void exitFullscreenMode() {
@@ -384,8 +390,16 @@ public class VideoCallFragment extends Fragment
         .alpha(1)
         .start();
 
-    // Animate onHold to the shown state.
-    switchOnHoldButton
+   switchControls
+        .animate()
+        .translationX(0)
+        .translationY(0)
+        .setInterpolator(linearOutSlowInInterpolator)
+        .alpha(1)
+        .start();
+
+   // Animate onHold to the shown state.
+   switchOnHoldButton
         .animate()
         .translationX(0)
         .translationY(0)
@@ -559,6 +573,15 @@ public class VideoCallFragment extends Fragment
         .alpha(0)
         .start();
 
+    offset = getControlsOffsetEndHidden(switchControls);
+    switchControls
+        .animate()
+        .translationX(offset.x)
+        .translationY(offset.y)
+        .setInterpolator(fastOutLinearInInterpolator)
+        .alpha(0)
+        .start();
+
     // Animate onHold to the hidden state.
     offset = getSwitchOnHoldOffsetEndHidden(switchOnHoldButton);
     switchOnHoldButton
@@ -625,6 +648,10 @@ public class VideoCallFragment extends Fragment
         ((Animatable) swapCameraButton.getDrawable()).start();
       }
       inCallButtonUiDelegate.toggleCameraClicked();
+      videoCallScreenDelegate.resetAutoFullscreenTimer();
+    } else if (v == addCallButton) {
+      LogUtil.i("VideoCallFragment.onClick", "add call button clicked");
+      inCallButtonUiDelegate.addCallClicked();
       videoCallScreenDelegate.resetAutoFullscreenTimer();
     }
   }
@@ -769,6 +796,8 @@ public class VideoCallFragment extends Fragment
       switchOnHoldCallController.setVisible(show);
     } else if (buttonId == InCallButtonIds.BUTTON_SWITCH_CAMERA) {
       swapCameraButton.setEnabled(show);
+    } else if (buttonId == InCallButtonIds.BUTTON_ADD_CALL) {
+      addCallButton.setEnabled(show);
     }
   }
 
@@ -787,6 +816,8 @@ public class VideoCallFragment extends Fragment
       cameraOffButton.setEnabled(enable);
     } else if (buttonId == InCallButtonIds.BUTTON_SWITCH_TO_SECONDARY) {
       switchOnHoldCallController.setEnabled(enable);
+    } else if (buttonId == InCallButtonIds.BUTTON_ADD_CALL) {
+      addCallButton.setEnabled(enable);
     }
   }
 
@@ -797,6 +828,7 @@ public class VideoCallFragment extends Fragment
     muteButton.setEnabled(enabled);
     cameraOffButton.setEnabled(enabled);
     switchOnHoldCallController.setEnabled(enabled);
+    addCallButton.setEnabled(enabled);
   }
 
   @Override
@@ -1216,6 +1248,9 @@ public class VideoCallFragment extends Fragment
     blurScript.setInput(allocationIn);
     blurScript.forEach(allocationOut);
     allocationOut.copyTo(image);
+    blurScript.destroy();
+    allocationIn.destroy();
+    allocationOut.destroy();
   }
 
   @Override

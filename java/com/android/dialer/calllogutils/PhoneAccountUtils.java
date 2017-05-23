@@ -18,10 +18,13 @@ package com.android.dialer.calllogutils;
 
 import android.content.ComponentName;
 import android.content.Context;
+import android.graphics.drawable.Drawable;
 import android.support.annotation.Nullable;
 import android.telecom.PhoneAccount;
 import android.telecom.PhoneAccountHandle;
+import android.telecom.TelecomManager;
 import android.text.TextUtils;
+import com.android.contacts.common.compat.telecom.TelecomManagerCompat;
 import com.android.dialer.telecom.TelecomUtil;
 import java.util.ArrayList;
 import java.util.List;
@@ -55,6 +58,18 @@ public class PhoneAccountUtils {
       return null;
     }
     return new PhoneAccountHandle(componentName, accountId);
+  }
+
+  /**
+    Extract account Icon from PhoneAccount object
+  */
+  public static Drawable getAccountIcon(
+      Context context, @Nullable PhoneAccountHandle phoneAccount) {
+    PhoneAccount account = getAccountOrNull(context, phoneAccount);
+    if (account == null) {
+      return null;
+    }
+    return account.getIcon().loadDrawable(context);
   }
 
   /** Extract account label from PhoneAccount object. */

@@ -50,8 +50,8 @@ import com.android.dialer.compat.ActivityCompat;
 import com.android.dialer.enrichedcall.EnrichedCallComponent;
 import com.android.dialer.enrichedcall.EnrichedCallManager;
 import com.android.dialer.enrichedcall.Session;
+import com.android.dialer.logging.DialerImpression;
 import com.android.dialer.logging.Logger;
-import com.android.dialer.logging.nano.DialerImpression;
 import com.android.dialer.multimedia.MultimediaData;
 import com.android.dialer.oem.MotorolaUtils;
 import com.android.incallui.ContactInfoCache.ContactCacheEntry;
@@ -373,6 +373,9 @@ public class CallCardPresenter
   @Override
   public void onHandoverToWifiFailure() {}
 
+  @Override
+  public void onInternationalCallOnWifi() {}
+
   /** Handles a change to the child number by refreshing the primary call info. */
   @Override
   public void onDialerCallChildNumberChange() {
@@ -429,6 +432,13 @@ public class CallCardPresenter
         || mInCallScreen.isManageConferenceVisible() != shouldShowManageConference();
   }
 
+  private String getPrimaryInfoLocation(ContactCacheEntry contactInfo) {
+    if (contactInfo != null) {
+      return contactInfo.location;
+    }
+    return "";
+  }
+
   private void updatePrimaryCallState() {
     if (getUi() != null && mPrimary != null) {
       boolean isWorkCall =
@@ -444,6 +454,8 @@ public class CallCardPresenter
 
       boolean isBusiness = mPrimaryContactInfo != null && mPrimaryContactInfo.isBusiness;
 
+      String primaryLocation = getPrimaryInfoLocation(mPrimaryContactInfo);
+
       // Check for video state change and update the visibility of the contact photo.  The contact
       // photo is hidden when the incoming video surface is shown.
       // The contact photo visibility can also change in setPrimary().
@@ -456,7 +468,9 @@ public class CallCardPresenter
                   mPrimary.isVideoCall(),
                   mPrimary.getVideoTech().getSessionModificationState(),
                   mPrimary.getDisconnectCause(),
-                  getConnectionLabel(),
+                  (getConnectionLabel() + "  " + (isPrimaryCallActive() ?
+                      (isOutgoingEmergencyCall(mPrimary) ?
+                      mPrimary.getNumber() : primaryLocation) : "")),
                   getCallStateIcon(),
                   getGatewayNumber(),
                   shouldShowCallSubject(mPrimary) ? mPrimary.getCallSubject() : null,
@@ -663,10 +677,21 @@ public class CallCardPresenter
 
     MultimediaData multimediaData = null;
     if (mPrimary.getNumber() != null) {
+      EnrichedCallManager manager = EnrichedCallComponent.get(mContext).getEnrichedCallManager();
+
+      EnrichedCallManager.Filter filter;
+      if (mPrimary.isIncoming()) {
+        filter = manager.createIncomingCallComposerFilter();
+      } else {
+        filter = manager.createOutgoingCallComposerFilter();
+      }
+
       Session enrichedCallSession =
-          EnrichedCallComponent.get(mContext)
-              .getEnrichedCallManager()
-              .getSession(mPrimary.getUniqueCallId(), mPrimary.getNumber());
+          manager.getSession(mPrimary.getUniqueCallId(), mPrimary.getNumber(), filter);
+
+      mPrimary.setEnrichedCallSession(enrichedCallSession);
+      mPrimary.setEnrichedCallCapabilities(manager.getCapabilities(mPrimary.getNumber()));
+
       if (enrichedCallSession != null) {
         enrichedCallSession.setUniqueDialerCallId(mPrimary.getUniqueCallId());
         multimediaData = enrichedCallSession.getMultimediaData();
@@ -726,7 +751,7 @@ public class CallCardPresenter
       mInCallScreen.setPrimary(
           new PrimaryInfo(
               number,
-              name,
+              mPrimary.updateNameIfRestricted(name),
               nameIsNumber,
               shouldShowLocationAsLabel(nameIsNumber, mPrimaryContactInfo.shouldShowLocation)
                   ? mPrimaryContactInfo.location
@@ -879,7 +904,7 @@ public class CallCardPresenter
       mInCallScreen.setSecondary(
           new SecondaryInfo(
               true /* show */,
-              name,
+              mSecondary.updateNameIfRestricted(name),
               nameIsNumber,
               mSecondaryContactInfo.label,
               mSecondary.getCallProviderLabel(),
@@ -939,7 +964,7 @@ public class CallCardPresenter
       }
     }
 
-    return null;
+    return mPrimary.getCallProviderIcon();
   }
 
   private boolean hasOutgoingGatewayCall() {

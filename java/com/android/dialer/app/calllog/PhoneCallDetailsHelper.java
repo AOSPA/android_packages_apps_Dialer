@@ -18,6 +18,7 @@ package com.android.dialer.app.calllog;
 
 import android.content.Context;
 import android.content.res.Resources;
+import android.graphics.drawable.Drawable;
 import android.graphics.Typeface;
 import android.provider.CallLog.Calls;
 import android.provider.ContactsContract.CommonDataKinds.Phone;
@@ -25,13 +26,14 @@ import android.support.v4.content.ContextCompat;
 import android.telecom.PhoneAccount;
 import android.text.TextUtils;
 import android.text.format.DateUtils;
+import android.text.util.Linkify;
 import android.view.View;
 import android.widget.TextView;
 import com.android.dialer.app.R;
 import com.android.dialer.app.calllog.calllogcache.CallLogCache;
 import com.android.dialer.calllogutils.PhoneCallDetails;
+import com.android.dialer.logging.ContactSource;
 import com.android.dialer.oem.MotorolaUtils;
-import com.android.dialer.phonenumbercache.CachedNumberLookupService.CachedContactInfo;
 import com.android.dialer.phonenumberutil.PhoneNumberHelper;
 import com.android.dialer.util.DialerUtils;
 import java.util.ArrayList;
@@ -104,6 +106,15 @@ public class PhoneCallDetailsHelper {
     // Set the call count, location, date and if voicemail, set the duration.
     setDetailText(views, callCount, details);
 
+    //set the account icon if it exists.
+    Drawable icon = details.accountIcon;
+    if (icon != null) {
+      views.callAccountIcon.setVisibility(View.VISIBLE);
+      views.callAccountIcon.setImageDrawable(icon);
+    } else {
+      views.callAccountIcon.setVisibility(View.GONE);
+    }
+
     // Set the account label if it exists.
     String accountLabel = mCallLogCache.getAccountLabel(details.accountHandle);
     if (!TextUtils.isEmpty(details.viaNumber)) {
@@ -142,6 +153,8 @@ public class PhoneCallDetailsHelper {
     views.nameView.setText(nameText);
 
     if (isVoicemail) {
+      int relevantLinkTypes = Linkify.EMAIL_ADDRESSES | Linkify.PHONE_NUMBERS | Linkify.WEB_URLS;
+      views.voicemailTranscriptionView.setAutoLinkMask(relevantLinkTypes);
       views.voicemailTranscriptionView.setText(
           TextUtils.isEmpty(details.transcription) ? null : details.transcription);
     }
@@ -230,7 +243,7 @@ public class PhoneCallDetailsHelper {
       return false;
     }
     // For caller ID provided by Cequint we want to show the geo location.
-    if (details.sourceType == CachedContactInfo.SOURCE_TYPE_CEQUINT_CALLER_ID) {
+    if (details.sourceType == ContactSource.Type.SOURCE_TYPE_CEQUINT_CALLER_ID) {
       return true;
     }
     // Don't bother showing geo location for contacts.
