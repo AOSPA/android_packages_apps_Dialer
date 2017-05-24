@@ -175,4 +175,16 @@
       android:src="@drawable/ic_end_answer_32"
       android:visibility="invisible"
       tools:visibility="visible"/>
+
+  <ImageButton
+      android:id="@+id/qti_dialer_incoming_botton_more"
+      android:layout_width="wrap_content"
+      android:layout_height="wrap_content"
+      android:layout_gravity="center|start"
+      android:layout_margin="15dp"
+      android:scaleType="center"
+      style="@style/Incall.Button.VideoCall"
+      android:src="@drawable/quantum_ic_more_vert_white_24"
+      tools:visibility="visible"/>
+
 </com.android.incallui.answer.impl.AffordanceHolderLayout>

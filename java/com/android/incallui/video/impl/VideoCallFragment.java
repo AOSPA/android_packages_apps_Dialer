@@ -60,6 +60,8 @@ import com.android.dialer.common.Assert;
 import com.android.dialer.common.FragmentUtils;
 import com.android.dialer.common.LogUtil;
 import com.android.dialer.compat.ActivityCompat;
+import com.android.incallui.BottomSheetHelper;
+import com.android.incallui.ExtBottomSheetFragment.ExtBottomSheetActionCallback;
 import com.android.incallui.audioroute.AudioRouteSelectorDialogFragment;
 import com.android.incallui.audioroute.AudioRouteSelectorDialogFragment.AudioRouteSelectorPresenter;
 import com.android.incallui.contactgrid.ContactGridManager;
@@ -92,6 +94,7 @@ public class VideoCallFragment extends Fragment
         VideoCallScreen,
         OnClickListener,
         OnCheckedChangeListener,
+        ExtBottomSheetActionCallback,
         AudioRouteSelectorPresenter,
         OnSystemUiVisibilityChangeListener,
         CameraPermissionDialogCallback {
@@ -125,6 +128,7 @@ public class VideoCallFragment extends Fragment
   private VideoCallScreenDelegate videoCallScreenDelegate;
   private InCallButtonUiDelegate inCallButtonUiDelegate;
   private View endCallButton;
+  private View moreOptionsMenuButton;
   private CheckableImageButton speakerButton;
   private SpeakerButtonController speakerButtonController;
   private CheckableImageButton muteButton;
@@ -243,6 +247,8 @@ public class VideoCallFragment extends Fragment
         (ImageView) view.findViewById(R.id.videocall_remote_off_blurred_image_view);
     endCallButton = view.findViewById(R.id.videocall_end_call);
     endCallButton.setOnClickListener(this);
+    moreOptionsMenuButton = view.findViewById(R.id.videocall_more_button);
+    moreOptionsMenuButton.setOnClickListener(this);
     previewTextureView = (TextureView) view.findViewById(R.id.videocall_video_preview);
     previewTextureView.setClipToOutline(true);
     previewOffOverlay.setOnClickListener(
@@ -282,7 +288,6 @@ public class VideoCallFragment extends Fragment
   public void onViewCreated(View view, @Nullable Bundle bundle) {
     super.onViewCreated(view, bundle);
     LogUtil.i("VideoCallFragment.onViewCreated", null);
-
     inCallScreenDelegate =
         FragmentUtils.getParentUnsafe(this, InCallScreenDelegateFactory.class)
             .newInCallScreenDelegate();
@@ -653,7 +658,23 @@ public class VideoCallFragment extends Fragment
       LogUtil.i("VideoCallFragment.onClick", "add call button clicked");
       inCallButtonUiDelegate.addCallClicked();
       videoCallScreenDelegate.resetAutoFullscreenTimer();
+    } else if (moreOptionsMenuButton == v) {
+      LogUtil.i("VideoCallFragment.onClick", "more button clicked");
+      BottomSheetHelper.getInstance()
+             .showBottomSheet(getChildFragmentManager());
+      videoCallScreenDelegate.resetAutoFullscreenTimer();
     }
+  }
+
+  @Override
+  public void optionSelected(@Nullable String text) {
+    //Handle bottomsheet clicks here.
+    BottomSheetHelper.getInstance().optionSelected(text);
+  }
+
+  @Override
+  public void sheetDismissed() {
+    BottomSheetHelper.getInstance().sheetDismissed();
   }
 
   @Override
@@ -786,6 +807,9 @@ public class VideoCallFragment extends Fragment
         "buttonId: %s, show: %b",
         InCallButtonIdsExtension.toString(buttonId),
         show);
+    moreOptionsMenuButton.setVisibility(
+      BottomSheetHelper.getInstance().shallShowMoreButton(
+      getActivity()) ? View.VISIBLE : View.GONE);
     if (buttonId == InCallButtonIds.BUTTON_AUDIO) {
       speakerButtonController.setEnabled(show);
     } else if (buttonId == InCallButtonIds.BUTTON_MUTE) {
@@ -808,6 +832,9 @@ public class VideoCallFragment extends Fragment
         "buttonId: %s, enable: %b",
         InCallButtonIdsExtension.toString(buttonId),
         enable);
+    moreOptionsMenuButton.setVisibility(
+      BottomSheetHelper.getInstance().shallShowMoreButton(
+      getActivity()) ? View.VISIBLE : View.GONE);
     if (buttonId == InCallButtonIds.BUTTON_AUDIO) {
       speakerButtonController.setEnabled(enable);
     } else if (buttonId == InCallButtonIds.BUTTON_MUTE) {
@@ -824,6 +851,9 @@ public class VideoCallFragment extends Fragment
   @Override
   public void setEnabled(boolean enabled) {
     LogUtil.v("VideoCallFragment.setEnabled", "enabled: " + enabled);
+    moreOptionsMenuButton.setVisibility(
+      BottomSheetHelper.getInstance().shallShowMoreButton(
+      getActivity()) ? View.VISIBLE : View.GONE);
     speakerButtonController.setEnabled(enabled);
     muteButton.setEnabled(enabled);
     cameraOffButton.setEnabled(enabled);

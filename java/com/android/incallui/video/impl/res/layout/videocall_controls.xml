@@ -108,7 +108,17 @@
       android:layout_height="@dimen/videocall_button_size"
       android:contentDescription="@string/incall_content_description_add_call"
       android:src="@drawable/ic_addcall_white"
+      android:layout_marginEnd="24dp"
       tools:visibility="visible"
+      />
+    <ImageButton
+      android:id="@+id/videocall_more_button"
+      style="@style/Incall.Button.VideoCall"
+      android:layout_width="@dimen/videocall_button_size"
+      android:layout_height="@dimen/videocall_button_size"
+      android:layout_marginBottom="@dimen/videocall_button_spacing"
+      android:src="@drawable/quantum_ic_more_vert_white_24"
+      android:contentDescription="@string/incall_content_description_more"
       />
   </LinearLayout>
 
