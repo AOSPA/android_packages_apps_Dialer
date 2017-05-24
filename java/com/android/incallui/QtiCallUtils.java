@@ -34,8 +34,14 @@ import android.content.Intent;
 import android.os.IBinder;
 import android.os.RemoteException;
 import android.telephony.TelephonyManager;
+import android.provider.Settings;
+
+import com.android.dialer.common.LogUtil;
+
 import java.lang.reflect.*;
+
 import org.codeaurora.internal.IExtTelephony;
+import org.codeaurora.ims.utils.QtiImsExtUtils;
 
 import com.android.ims.ImsManager;
 
@@ -136,5 +142,22 @@ public class QtiCallUtils {
         Intent intent = new Intent("org.codeaurora.confuridialer.ACTION_LAUNCH_CONF_URI_DIALER");
         intent.putExtra("add_participant", true);
         return intent;
+    }
+
+    /**
+     * Checks the Settings to conclude on the call deflect support.
+     * Returns true if call deflect is possible, false otherwise.
+     */
+    public static boolean isCallDeflectSupported(Context context) {
+        int value = 0;
+        try{
+            value = android.provider.Settings.Global.getInt(
+                    context.getContentResolver(),
+                    QtiImsExtUtils.QTI_IMS_DEFLECT_ENABLED);
+        } catch(Settings.SettingNotFoundException e) {
+            //do Nothing
+            LogUtil.e("QtiCallUtils.isCallDeflectSupported", "" + e);
+        }
+        return (value == 1);
     }
 }
