@@ -241,6 +241,9 @@ public class DialerCall implements VideoTechListener {
             case android.telecom.Connection.EVENT_CALL_MERGE_FAILED:
               update();
               break;
+            case TelephonyManagerCompat.EVENT_PHONE_ACCOUNT_CHANGED:
+              update();
+              break;
             case TelephonyManagerCompat.EVENT_HANDOVER_VIDEO_FROM_WIFI_TO_LTE:
               notifyWiFiToLteHandover();
               break;
@@ -1037,32 +1040,28 @@ public class DialerCall implements VideoTechListener {
 
   /** Return the string label to represent the call provider */
   public String getCallProviderLabel() {
+    PhoneAccount account = getPhoneAccount();
+    if (account != null && !TextUtils.isEmpty(account.getLabel())) {
+      List<PhoneAccountHandle> accounts =
+          mContext.getSystemService(TelecomManager.class).getCallCapablePhoneAccounts();
+      if (accounts != null && accounts.size() > 1) {
+        callProviderLabel = account.getLabel().toString();
+      }
+    }
     if (callProviderLabel == null) {
-      PhoneAccount account = getPhoneAccount();
-      if (account != null && !TextUtils.isEmpty(account.getLabel())) {
-        List<PhoneAccountHandle> accounts =
-            mContext.getSystemService(TelecomManager.class).getCallCapablePhoneAccounts();
-        if (accounts != null && accounts.size() > 1) {
-          callProviderLabel = account.getLabel().toString();
-        }
-      }
-      if (callProviderLabel == null) {
-        callProviderLabel = "";
-      }
+      callProviderLabel = "";
     }
     return callProviderLabel;
   }
 
   /** Return the Drawable Icon to represent the call provider */
   public Drawable getCallProviderIcon() {
-    if (callProviderIcon == null) {
-      PhoneAccount account = getPhoneAccount();
-      if (account != null && account.getIcon() != null) {
-        List<PhoneAccountHandle> accounts =
-            mContext.getSystemService(TelecomManager.class).getCallCapablePhoneAccounts();
-        if (accounts != null && accounts.size() > 1) {
-          callProviderIcon = account.getIcon().loadDrawable(mContext);
-        }
+    PhoneAccount account = getPhoneAccount();
+    if (account != null && account.getIcon() != null) {
+      List<PhoneAccountHandle> accounts =
+          mContext.getSystemService(TelecomManager.class).getCallCapablePhoneAccounts();
+      if (accounts != null && accounts.size() > 1) {
+        callProviderIcon = account.getIcon().loadDrawable(mContext);
       }
     }
     return callProviderIcon;
