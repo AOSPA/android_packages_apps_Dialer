@@ -29,7 +29,9 @@
 package com.android.incallui;
 
 import android.support.v4.app.FragmentManager;
+import android.support.v4.os.UserManagerCompat;
 import android.app.Activity;
+import android.content.ActivityNotFoundException;
 import android.content.Context;
 import android.content.res.Resources;
 import android.content.res.TypedArray;
@@ -40,8 +42,10 @@ import android.os.Build.VERSION_CODES;
 import android.telecom.Call.Details;
 import android.telephony.TelephonyManager;
 import com.android.dialer.compat.ActivityCompat;
+import com.android.incallui.call.CallList;
 import com.android.incallui.call.DialerCall;
 import com.android.dialer.common.LogUtil;
+import com.android.dialer.util.IntentUtil;
 
 import java.util.Arrays;
 import java.util.concurrent.ConcurrentHashMap;
@@ -72,7 +76,7 @@ public class BottomSheetHelper {
      mContext = context;
      final String[][] moreOptions = getMoreOptionsFromRes(
         mContext.getResources(),R.array.bottom_sheet_more_options);
-        moreOptionsMap = ExtBottomSheetFragment.prepareSheetOptions(moreOptions);
+     moreOptionsMap = ExtBottomSheetFragment.prepareSheetOptions(moreOptions);
      mPrimaryCallTracker = new PrimaryCallTracker();
      InCallPresenter.getInstance().addListener(mPrimaryCallTracker);
      InCallPresenter.getInstance().addIncomingCallListener(mPrimaryCallTracker);
@@ -89,6 +93,10 @@ public class BottomSheetHelper {
      //update as per requirement
      mCall = mPrimaryCallTracker.getPrimaryCall();
      LogUtil.i("BottomSheetHelper.updateMap","mCall = "+mCall);
+     if (mCall == null) {
+       return;
+     }
+     maybeUpdateAddParticipantInMap();
    }
 
    public void showBottomSheet(FragmentManager manager) {
@@ -106,7 +114,10 @@ public class BottomSheetHelper {
 
    public void optionSelected(@Nullable String text) {
      //callback for bottomsheet clicks
-     LogUtil.i("BottomSheetHelper.optionSelected","text : "+text);
+     LogUtil.i("BottomSheetHelper.optionSelected","text : " + text);
+     if (text.equals(mContext.getResources().getString(R.string.add_participant_option_msg))) {
+       startAddParticipantActivity();
+     }
      moreOptionsSheet = null;
    }
 
@@ -152,4 +163,28 @@ public class BottomSheetHelper {
        ? mContext.getSystemService(TelephonyManager.class).getVoiceNetworkType()
        : TelephonyManager.NETWORK_TYPE_UNKNOWN;
    }
+
+  private boolean isAddParticipantSupported() {
+    return mCall != null && mCall.can(DialerCall.CAPABILITY_ADD_PARTICIPANT)
+        && UserManagerCompat.isUserUnlocked(mContext);
+  }
+
+  private void maybeUpdateAddParticipantInMap() {
+    if (isAddParticipantSupported()) {
+      moreOptionsMap.put(mContext.getResources().getString(R.string.add_participant_option_msg),
+          Boolean.TRUE);
+    } else {
+      moreOptionsMap.put(mContext.getResources().getString(R.string.add_participant_option_msg),
+          Boolean.FALSE);
+    }
+  }
+
+  private void startAddParticipantActivity() {
+    try {
+      mContext.startActivity(QtiCallUtils.getAddParticipantsIntent());
+    } catch (ActivityNotFoundException e) {
+      LogUtil.e("BottomSheetHelper.startAddParticipantActivity",
+          "Activity not found. Exception = " + e);
+    }
+  }
 }

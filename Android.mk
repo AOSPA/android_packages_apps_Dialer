@@ -248,6 +248,7 @@ LOCAL_JAVA_LIBRARIES := \
 	org.apache.http.legacy \
 	dialer-auto-value \
         telephony-ext \
+        ims-common \
 
 # Libraries needed by the compiler (JACK) to generate code.
 PROCESSOR_LIBRARIES_TARGET := \
