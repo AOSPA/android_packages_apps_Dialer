@@ -95,7 +95,15 @@ public class TopRow {
   }
 
   private static CharSequence getLabelForIncoming(Context context, PrimaryCallState state) {
-    if (state.isVideoCall) {
+    if (state.isConference) {
+      if (isAccount(state)) {
+        return context.getString(R.string.incoming_conf_via_template, state.connectionLabel);
+      } else if (state.isVideoCall) {
+        return context.getString(R.string.card_title_incoming_video_conf_call);
+      }else {
+        return context.getString(R.string.card_title_incoming_conf_call);
+      }
+    } else if (state.isVideoCall) {
       return getLabelForIncomingVideo(context, state.isWifi);
     } else if (state.isWifi && !TextUtils.isEmpty(state.connectionLabel)) {
       return state.connectionLabel;
