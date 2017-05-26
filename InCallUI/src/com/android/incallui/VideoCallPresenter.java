@@ -84,6 +84,8 @@ public class VideoCallPresenter extends Presenter<VideoCallPresenter.VideoCallUi
 
     public static final boolean DEBUG = false;
 
+    private static final int DIMENSIONS_NOT_SET = -1;
+
     /**
      * Runnable which is posted to schedule automatically entering fullscreen mode.  Will not auto
      * enter fullscreen mode if the dialpad is visible (doing so would make it impossible to exit
@@ -206,6 +208,9 @@ public class VideoCallPresenter extends Presenter<VideoCallPresenter.VideoCallUi
      * fullscreen mode.  Requires {@link #mIsAutoFullscreenEnabled} to be {@code true}.
      */
     private int mAutoFullscreenTimeoutMillis = 0;
+
+    private int mNegotiatedHeight = DIMENSIONS_NOT_SET;
+    private int mNegotiatedWidth = DIMENSIONS_NOT_SET;
 
     /**
      *Caches information about whether InCall UI is in the background or foreground
@@ -888,6 +893,14 @@ public class VideoCallPresenter extends Presenter<VideoCallPresenter.VideoCallUi
         enableCamera(mVideoCall, false);
         InCallPresenter.getInstance().setFullScreen(false);
 
+        if (mPrimaryCall != null && mVideoCall != null &&
+                QtiCallUtils.shallTransmitStaticImage(mContext) &&
+                !QtiCallUtils.shallShowStaticImageUi(mContext) &&
+                VideoUtils.isTransmissionEnabled(mPrimaryCall)) {
+            Log.v(this, "exitVideoMode: setPauseImage(null)");
+            mVideoCall.setPauseImage(null);
+        }
+
         mIsVideoMode = false;
     }
 
@@ -1187,12 +1200,15 @@ public class VideoCallPresenter extends Presenter<VideoCallPresenter.VideoCallUi
         }
 
         if (!VideoUtils.isVideoCall(mPrimaryCall)) {
-            Log.w(this, "onUiShowing, received for non-active video call");
+            Log.w(this, "onUiShowing, received for non video call");
             return;
         }
 
         if (!QtiCallUtils.shallShowStaticImageUi(mContext) &&
-            VideoUtils.isTransmissionEnabled(mPrimaryCall)) {
+                VideoUtils.isTransmissionEnabled(mPrimaryCall) &&
+                (showing || VideoUtils.isActiveVideoCall(mPrimaryCall))) {
+            // Set pause image only for ACTIVE calls going to background.
+            // While coming to foreground, unset pause image for all calls.
             setPauseImage();
         }
 
@@ -1289,12 +1305,11 @@ public class VideoCallPresenter extends Presenter<VideoCallPresenter.VideoCallUi
         }
 
         mPreviewSurfaceState = PreviewSurfaceState.CAPABILITIES_RECEIVED;
-        Point previewDimensions = ui.getPreviewSize();
-
-        if (QtiImsExtUtils.isCarrierOneSupported() &&
-                QtiImsExtUtils.shallCheckSupportForHighVideoQuality(mContext) &&
-                previewDimensions != null &&
-                (previewDimensions.x != width || previewDimensions.y != height)) {
+        if (QtiImsExtUtils.shallCheckSupportForHighVideoQuality(mContext) &&
+                !VideoUtils.isIncomingVideoCall(call) &&
+                (mNegotiatedHeight != height || mNegotiatedWidth != width)) {
+            mNegotiatedHeight = height;
+            mNegotiatedWidth = width;
             QtiCallUtils.displayToast(mContext, (mContext.getResources().getString(
                     R.string.video_quality_changed) + mContext.getResources().getString(
                     QtiCallUtils.getVideoQualityResourceId(
