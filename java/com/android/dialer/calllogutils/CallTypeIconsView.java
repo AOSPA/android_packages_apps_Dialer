@@ -138,11 +138,14 @@ public class CallTypeIconsView extends View {
     Resources resources = useLargeIcons ? sLargeResouces : sResources;
     switch (callType) {
       case AppCompatConstants.CALLS_INCOMING_TYPE:
+      case AppCompatConstants.INCOMING_IMS_TYPE:
       case AppCompatConstants.CALLS_ANSWERED_EXTERNALLY_TYPE:
         return resources.incoming;
       case AppCompatConstants.CALLS_OUTGOING_TYPE:
+      case AppCompatConstants.OUTGOING_IMS_TYPE:
         return resources.outgoing;
       case AppCompatConstants.CALLS_MISSED_TYPE:
+      case AppCompatConstants.MISSED_IMS_TYPE:
         return resources.missed;
       case AppCompatConstants.CALLS_VOICEMAIL_TYPE:
         return resources.voicemail;
