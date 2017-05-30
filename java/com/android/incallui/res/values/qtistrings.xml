@@ -42,6 +42,8 @@
     <string name="cs_redial_no">No</string>
     <!-- Option to add participant -->
     <string name="add_participant_option_msg">Add participant</string>
+    <string name="qti_description_target_deflect">Call Deflect</string>
+
     <!--Bottom Sheet resources.String arrays with same format should be introduced
         for each feature/option to be shown on the bottomsheet -->
     <!--
@@ -53,8 +55,14 @@
        <item>false</item>
     </string-array>
 
-    <!-- array of all the options to insure maping-->
+    <string-array name="deflect">
+       <item>@string/qti_description_target_deflect</item>
+       <item>false</item>
+    </string-array>
+
+    <!-- array of all the options to ensure mapping-->
     <array name="bottom_sheet_more_options">
        <item>@array/add_participant_option</item>
+       <item>@array/deflect</item>
     </array>
 </resources>

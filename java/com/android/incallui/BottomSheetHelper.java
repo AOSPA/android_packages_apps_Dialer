@@ -40,6 +40,9 @@ import android.support.annotation.Nullable;
 import android.os.Build.VERSION;
 import android.os.Build.VERSION_CODES;
 import android.telecom.Call.Details;
+import android.telecom.PhoneAccountHandle;
+import android.telephony.SubscriptionInfo;
+import android.telephony.SubscriptionManager;
 import android.telephony.TelephonyManager;
 import com.android.dialer.compat.ActivityCompat;
 import com.android.incallui.call.CallList;
@@ -47,8 +50,14 @@ import com.android.incallui.call.DialerCall;
 import com.android.dialer.common.LogUtil;
 import com.android.dialer.util.IntentUtil;
 
+import java.lang.reflect.*;
 import java.util.Arrays;
 import java.util.concurrent.ConcurrentHashMap;
+
+import org.codeaurora.ims.QtiImsException;
+import org.codeaurora.ims.QtiImsExtListenerBaseImpl;
+import org.codeaurora.ims.QtiImsExtManager;
+import org.codeaurora.ims.utils.QtiImsExtUtils;
 
 public class BottomSheetHelper {
 
@@ -58,10 +67,22 @@ public class BottomSheetHelper {
    private Context mContext;
    private DialerCall mCall;
    private PrimaryCallTracker mPrimaryCallTracker;
+   private Resources mResources;
    private static BottomSheetHelper mHelper;
 
+   /* QtiImsExtListenerBaseImpl instance to handle call deflection response */
+   private QtiImsExtListenerBaseImpl imsInterfaceListener =
+      new QtiImsExtListenerBaseImpl() {
+
+     /* Handles call deflect response */
+     @Override
+     public void receiveCallDeflectResponse(int phoneId, int result) {
+          LogUtil.w("BottomSheetHelper.receiveCallDeflectResponse:", "result = " + result);
+     }
+   };
+
    private BottomSheetHelper() {
-     LogUtil.i("BottomSheetHelper"," ");
+     LogUtil.d("BottomSheetHelper"," ");
    }
 
    public static BottomSheetHelper getInstance() {
@@ -72,8 +93,9 @@ public class BottomSheetHelper {
    }
 
    public void setUp(Context context) {
-     LogUtil.i("BottomSheetHelper","setUp");
+     LogUtil.d("BottomSheetHelper","setUp");
      mContext = context;
+     mResources = context.getResources();
      final String[][] moreOptions = getMoreOptionsFromRes(
         mContext.getResources(),R.array.bottom_sheet_more_options);
      moreOptionsMap = ExtBottomSheetFragment.prepareSheetOptions(moreOptions);
@@ -83,30 +105,32 @@ public class BottomSheetHelper {
    }
 
    public void tearDown() {
-     LogUtil.i("BottomSheetHelper","tearDown");
+     LogUtil.d("BottomSheetHelper","tearDown");
      InCallPresenter.getInstance().removeListener(mPrimaryCallTracker);
      InCallPresenter.getInstance().removeIncomingCallListener(mPrimaryCallTracker);
      mPrimaryCallTracker = null;
+     mContext = null;
+     mResources = null;
    }
 
    public void updateMap() {
      //update as per requirement
      mCall = mPrimaryCallTracker.getPrimaryCall();
-     LogUtil.i("BottomSheetHelper.updateMap","mCall = "+mCall);
-     if (mCall == null) {
-       return;
+     LogUtil.i("BottomSheetHelper.updateMap","mCall = " + mCall);
+     if (mCall != null) {
+       maybeUpdateDeflectInMap();
+       maybeUpdateAddParticipantInMap();
      }
-     maybeUpdateAddParticipantInMap();
    }
 
    public void showBottomSheet(FragmentManager manager) {
-     LogUtil.i("BottomSheetHelper.showBottomSheet","moreOptionsMap: "+moreOptionsMap);
+     LogUtil.d("BottomSheetHelper.showBottomSheet","moreOptionsMap: " + moreOptionsMap);
      moreOptionsSheet = ExtBottomSheetFragment.newInstance(moreOptionsMap);
      moreOptionsSheet.show(manager, null);
    }
 
    public void dismissBottomSheet() {
-     LogUtil.i("BottomSheetHelper.dismissBottomSheet","moreOptionsSheet: "+moreOptionsSheet);
+     LogUtil.d("BottomSheetHelper.dismissBottomSheet","moreOptionsSheet: " + moreOptionsSheet);
      if (moreOptionsSheet != null) {
        moreOptionsSheet.dismiss();
      }
@@ -114,15 +138,17 @@ public class BottomSheetHelper {
 
    public void optionSelected(@Nullable String text) {
      //callback for bottomsheet clicks
-     LogUtil.i("BottomSheetHelper.optionSelected","text : " + text);
+     LogUtil.d("BottomSheetHelper.optionSelected","text : " + text);
      if (text.equals(mContext.getResources().getString(R.string.add_participant_option_msg))) {
        startAddParticipantActivity();
+     } else if (text.equals(mResources.getString(R.string.qti_description_target_deflect))) {
+       deflectCall();
      }
      moreOptionsSheet = null;
    }
 
    public void sheetDismissed() {
-     LogUtil.i("BottomSheetHelper.sheetDismissed"," ");
+     LogUtil.d("BottomSheetHelper.sheetDismissed"," ");
      moreOptionsSheet = null;
    }
 
@@ -150,6 +176,7 @@ public class BottomSheetHelper {
            || DialerCall.State.isDialing(primaryCallState)
            || DialerCall.State.CONNECTING == primaryCallState
            || DialerCall.State.DISCONNECTING == primaryCallState
+           || call.hasSentVideoUpgradeRequest()
            || !((getVoiceNetworkType() == TelephonyManager.NETWORK_TYPE_LTE)
            || call.hasProperty(Details.PROPERTY_WIFI)));
        }
@@ -187,4 +214,117 @@ public class BottomSheetHelper {
           "Activity not found. Exception = " + e);
     }
   }
+
+   private String getIccId() {
+     if (mPrimaryCallTracker != null) {
+       DialerCall call = mPrimaryCallTracker.getPrimaryCall();
+       if (call != null) {
+         PhoneAccountHandle ph = call.getAccountHandle();
+         if (ph != null) {
+           try {
+             String iccId = ph.getId();
+             if (iccId != null) {
+               return iccId;
+             }
+           } catch (Exception e) {
+             LogUtil.w("BottomSheetHelper.getIccId", "exception: " + e);
+           }
+           return null;
+         } else {
+           LogUtil.w("BottomSheetHelper.getIccId", "phoneAccountHandle is null");
+           return null;
+         }
+       }
+     }
+     LogUtil.w("BottomSheetHelper.getIccId", "mPrimaryCallTracker or call is null");
+     return null;
+   }
+
+   private int getActiveSubIdFromIccId(String iccId) {
+     SubscriptionInfo subInfo = null;
+     try {
+       Class c = Class.forName("android.telephony.SubscriptionManager");
+       Method m = c.getMethod("getActiveSubscriptionInfoForIccIndex",
+            new Class[]{String.class});
+       SubscriptionManager subscriptionManager = SubscriptionManager.from(mContext);
+       if (subscriptionManager == null) {
+         return SubscriptionManager.INVALID_SUBSCRIPTION_ID;
+       }
+       subInfo = (SubscriptionInfo)m.invoke(subscriptionManager, iccId);
+     } catch (Exception e) {
+       LogUtil.e("BottomSheetHelper.getActiveSubIdFromIccId", " ex: " + e);
+     }
+     return (subInfo != null) ? subInfo.getSubscriptionId()
+          : SubscriptionManager.INVALID_SUBSCRIPTION_ID;
+   }
+
+   public int getSubId() {
+     return getActiveSubIdFromIccId(getIccId());
+   }
+
+   /* this API should be called only when there is a call */
+   public int getPhoneId() {
+     // check for phoneId only in multisim case, otherwise return 0
+     int phoneCount = mContext.getSystemService(TelephonyManager.class).getPhoneCount();
+     if (phoneCount > 1) {
+       int subId = getSubId();
+       LogUtil.d("BottomSheetHelper.getPhoneId", "subId: " + subId);
+       try {
+         Class c = Class.forName("android.telephony.SubscriptionManager");
+         Method m = c.getMethod("getPhoneId",new Class[]{int.class});
+         int phoneId = (Integer)m.invoke(null, subId);
+         if (phoneId >= phoneCount || phoneId < 0) {
+           phoneId = 0;
+         }
+         LogUtil.d("BottomSheetHelper.getPhoneId", "phoneid: " + phoneId);
+         return phoneId;
+       } catch (Exception e) {
+         LogUtil.e("BottomSheetHelper.getPhoneId", " ex: " + e);
+       }
+     }
+     return 0;
+   }
+
+   private void maybeUpdateDeflectInMap() {
+     if (QtiCallUtils.isCallDeflectSupported(mContext) &&
+          (mCall.getState() == DialerCall.State.INCOMING) && !mCall.isVideoCall() &&
+          !mCall.hasReceivedVideoUpgradeRequest()) {
+       moreOptionsMap.put(mResources.getString(R.string.qti_description_target_deflect),
+            Boolean.TRUE);
+     } else {
+       moreOptionsMap.put(mResources.getString(R.string.qti_description_target_deflect),
+            Boolean.FALSE);
+     }
+   }
+
+   /**
+    * Deflect the incoming call.
+    */
+   private void deflectCall() {
+     LogUtil.enterBlock("BottomSheetHelper.onDeflect");
+     if(mCall == null ) {
+       LogUtil.w("BottomSheetHelper.onDeflect", "mCall is null");
+       return;
+     }
+     String deflectCallNumber = QtiImsExtUtils.getCallDeflectNumber(
+          mContext.getContentResolver());
+     /* If not set properly, inform via Log */
+     if (deflectCallNumber == null) {
+       LogUtil.w("BottomSheetHelper.onDeflect",
+            "Number not set. Provide the number via IMS settings and retry.");
+       return;
+     }
+     int phoneId = getPhoneId();
+     LogUtil.d("BottomSheetHelper.onDeflect", "mCall:" + mCall +
+          "deflectCallNumber:" + deflectCallNumber);
+     try {
+       LogUtil.d("BottomSheetHelper.onDeflect",
+            "Sending deflect request with Phone id " + phoneId +
+            " to " + deflectCallNumber);
+       new QtiImsExtManager(mContext).sendCallDeflectRequest(phoneId,
+            deflectCallNumber, imsInterfaceListener);
+     } catch (QtiImsException e) {
+       LogUtil.e("BottomSheetHelper.onDeflect", "sendCallDeflectRequest exception " + e);
+     }
+   }
 }
