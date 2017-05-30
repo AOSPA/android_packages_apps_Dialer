@@ -94,13 +94,16 @@ public class ExtBottomSheetFragment extends BottomSheetDialogFragment {
   /* Creates a new instance of ExtBottomSheetFragment */
   public static ExtBottomSheetFragment newInstance(
       @Nullable ConcurrentHashMap<String,Boolean> optionsMap) {
-    logi("newInstance with values : "+optionsMap);
+    logi("newInstance with values : " + optionsMap);
     ExtBottomSheetFragment fragment = new ExtBottomSheetFragment();
     Bundle args = new Bundle();
-    optionsMap.values().removeAll(Collections.singleton(Boolean.FALSE));
-    ArrayList<String> options = new ArrayList<>(optionsMap.keySet());
+    ConcurrentHashMap<String,Boolean> map = new ConcurrentHashMap<String,Boolean>();
+    map.putAll(optionsMap);
+    map.values().removeAll(Collections.singleton(Boolean.FALSE));
+    ArrayList<String> options = new ArrayList<>(map.keySet());
     args.putStringArrayList(OPTIONS, options);
     fragment.setArguments(args);
+    map = null;
     return fragment;
   }
 
