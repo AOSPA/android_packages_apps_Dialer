@@ -29,8 +29,10 @@ import android.database.ContentObserver;
 import android.graphics.Point;
 import android.os.Bundle;
 import android.os.Handler;
+import android.os.PersistableBundle;
 import android.os.PowerManager;
 import android.provider.CallLog;
+import android.telephony.CarrierConfigManager;
 import android.telecom.DisconnectCause;
 import android.telecom.PhoneAccount;
 import android.telecom.PhoneAccountHandle;
@@ -161,6 +163,10 @@ public class InCallPresenter implements CallList.Listener,
         @Override
         public void onDetailsChanged(android.telecom.Call telecomCall,
                 android.telecom.Call.Details details) {
+            if (mCallList == null) {
+                Log.e(this, "mCallList is empty so returning");
+                return;
+            }
             final Call call = mCallList.getCallByTelecomCall(telecomCall);
             if (call == null) {
                 Log.w(this, "Call not found in call list: " + telecomCall);
@@ -285,6 +291,7 @@ public class InCallPresenter implements CallList.Listener,
 
     private TelecomManager mTelecomManager;
     private TelephonyManager mTelephonyManager;
+    private CarrierConfigManager mCarrierConfigManager;
 
     public static synchronized InCallPresenter getInstance() {
         if (sInCallPresenter == null) {
@@ -826,6 +833,15 @@ public class InCallPresenter implements CallList.Listener,
         }
 
         return newState;
+    }
+
+    public boolean getConfigItem(int subId, String key) {
+       PersistableBundle carrierConfig = getCarrierConfigManager().getConfigForSubId(subId);
+       if (carrierConfig == null) {
+           Log.d(this, "getConfigItem: Empty carrier config.");
+           return false;
+       }
+       return carrierConfig.getBoolean(key);
     }
 
     public boolean isBoundAndWaitingForOutgoingCall() {
@@ -2077,6 +2093,17 @@ public class InCallPresenter implements CallList.Listener,
      */
     public TelephonyManager getTelephonyManager() {
         return mTelephonyManager;
+    }
+
+    /**
+     * @return An instance of mCarrierConfigManager.
+     */
+    public CarrierConfigManager getCarrierConfigManager() {
+        if (mCarrierConfigManager == null) {
+            mCarrierConfigManager = (CarrierConfigManager)
+                    mContext.getSystemService(Context.CARRIER_CONFIG_SERVICE);
+        }
+        return mCarrierConfigManager;
     }
 
     InCallActivity getActivity() {
