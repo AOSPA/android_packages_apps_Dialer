@@ -59,6 +59,7 @@ import android.text.SpannableString;
 import android.text.TextDirectionHeuristics;
 import android.text.TextUtils;
 import android.text.style.ForegroundColorSpan;
+import com.android.contacts.common.compat.telecom.TelecomManagerCompat;
 import com.android.contacts.common.ContactsUtils;
 import com.android.contacts.common.ContactsUtils.UserType;
 import com.android.contacts.common.GeoUtil;
@@ -311,7 +312,7 @@ public class StatusBarNotifier
     // Check if data has changed; if nothing is different, don't issue another notification.
     final int iconResId = getIconToDisplay(call);
     Bitmap largeIcon = getLargeIconToDisplay(contactInfo, call);
-    final String content = getContentString(call, contactInfo.userType);
+    String content = getContentString(call, contactInfo.userType);
     final String contentTitle = getContentTitle(contactInfo, call);
 
     final boolean isVideoUpgradeRequest =
@@ -328,6 +329,19 @@ public class StatusBarNotifier
           alreadyActive ? NOTIFICATION_INCOMING_CALL_QUIET : NOTIFICATION_INCOMING_CALL;
     } else {
       notificationType = NOTIFICATION_IN_CALL;
+    }
+
+    PhoneAccountHandle ph = call.getAccountHandle();
+    String accountLabel = null;
+    if (ph != null) {
+      PhoneAccount account = TelecomManagerCompat.getPhoneAccount(
+          mContext.getSystemService(TelecomManager.class), ph);
+      if (account != null && !TextUtils.isEmpty(account.getLabel())) {
+        accountLabel = account.getLabel().toString();
+      }
+    }
+    if (!TextUtils.isEmpty(accountLabel)) {
+      content += " (" + accountLabel + ")";
     }
 
     if (!checkForChangeAndSaveData(
