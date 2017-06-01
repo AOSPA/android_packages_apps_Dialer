@@ -117,6 +117,7 @@ import com.android.dialer.util.PermissionsUtil;
 import com.android.dialer.util.TouchPointManager;
 import com.android.dialer.util.TransactionSafeActivity;
 import com.android.dialer.util.ViewUtil;
+import com.android.incallui.QtiCallUtils;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -710,6 +711,14 @@ public class DialtactsActivity extends TransactionSafeActivity
       handleMenuSettings();
       Logger.get(this).logScreenView(ScreenEvent.Type.SETTINGS, this);
       return true;
+    } else if (resId == R.id.menu_4g_conference_call) {
+      try {
+        startActivity(QtiCallUtils.getConferenceDialerIntent());
+      } catch (ActivityNotFoundException e) {
+        LogUtil.e("DialtactsActivity.onMenuItemClick", "Activity not found. " + e);
+      } finally {
+        return true;
+      }
     }
     return false;
   }
@@ -1505,6 +1514,9 @@ public class DialtactsActivity extends TransactionSafeActivity
         simulatorMenuItem.setVisible(false);
       }
 
+      final MenuItem conferDialerOption = menu.findItem(R.id.menu_4g_conference_call);
+      conferDialerOption.setVisible(
+          QtiCallUtils.isConferenceUriDialerEnabled(getApplicationContext()));
       super.show();
     }
   }

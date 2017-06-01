@@ -38,6 +38,10 @@ public class TelephonyManagerCompat {
   public static final String EVENT_HANDOVER_TO_WIFI_FAILED =
       "android.telephony.event.EVENT_HANDOVER_TO_WIFI_FAILED";
   public static final String EVENT_CALL_REMOTELY_HELD = "android.telecom.event.CALL_REMOTELY_HELD";
+
+  public static final String EVENT_PHONE_ACCOUNT_CHANGED =
+       "org.codeaurora.event.PHONE_ACCOUNT_CHANGED";
+
   public static final String EVENT_CALL_REMOTELY_UNHELD =
       "android.telecom.event.CALL_REMOTELY_UNHELD";
 

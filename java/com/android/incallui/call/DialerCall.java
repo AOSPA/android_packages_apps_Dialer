@@ -85,6 +85,12 @@ public class DialerCall implements VideoTechListener {
   public static final int CALL_HISTORY_STATUS_PRESENT = 1;
   public static final int CALL_HISTORY_STATUS_NOT_PRESENT = 2;
 
+  /**
+  * NOTE: Capability constant definition has been duplicated to avoid bundling the
+  * Dialer with Frameworks. DON"T chage it without changing the framework value.
+  */
+  public static final int CAPABILITY_ADD_PARTICIPANT = 0x01000000;
+
   // Hard coded property for {@code Call}. Upstreamed change from Motorola.
   // TODO(b/35359461): Move it to Telecom in framework.
   public static final int PROPERTY_CODEC_KNOWN = 0x04000000;
@@ -239,6 +245,9 @@ public class DialerCall implements VideoTechListener {
               // now update the UI to possibly re-enable the Merge button based on the number of
               // currently conferenceable calls available or Connection Capabilities.
             case android.telecom.Connection.EVENT_CALL_MERGE_FAILED:
+              update();
+              break;
+            case TelephonyManagerCompat.EVENT_PHONE_ACCOUNT_CHANGED:
               update();
               break;
             case TelephonyManagerCompat.EVENT_HANDOVER_VIDEO_FROM_WIFI_TO_LTE:
@@ -1037,32 +1046,28 @@ public class DialerCall implements VideoTechListener {
 
   /** Return the string label to represent the call provider */
   public String getCallProviderLabel() {
+    PhoneAccount account = getPhoneAccount();
+    if (account != null && !TextUtils.isEmpty(account.getLabel())) {
+      List<PhoneAccountHandle> accounts =
+          mContext.getSystemService(TelecomManager.class).getCallCapablePhoneAccounts();
+      if (accounts != null && accounts.size() > 1) {
+        callProviderLabel = account.getLabel().toString();
+      }
+    }
     if (callProviderLabel == null) {
-      PhoneAccount account = getPhoneAccount();
-      if (account != null && !TextUtils.isEmpty(account.getLabel())) {
-        List<PhoneAccountHandle> accounts =
-            mContext.getSystemService(TelecomManager.class).getCallCapablePhoneAccounts();
-        if (accounts != null && accounts.size() > 1) {
-          callProviderLabel = account.getLabel().toString();
-        }
-      }
-      if (callProviderLabel == null) {
-        callProviderLabel = "";
-      }
+      callProviderLabel = "";
     }
     return callProviderLabel;
   }
 
   /** Return the Drawable Icon to represent the call provider */
   public Drawable getCallProviderIcon() {
-    if (callProviderIcon == null) {
-      PhoneAccount account = getPhoneAccount();
-      if (account != null && account.getIcon() != null) {
-        List<PhoneAccountHandle> accounts =
-            mContext.getSystemService(TelecomManager.class).getCallCapablePhoneAccounts();
-        if (accounts != null && accounts.size() > 1) {
-          callProviderIcon = account.getIcon().loadDrawable(mContext);
-        }
+    PhoneAccount account = getPhoneAccount();
+    if (account != null && account.getIcon() != null) {
+      List<PhoneAccountHandle> accounts =
+          mContext.getSystemService(TelecomManager.class).getCallCapablePhoneAccounts();
+      if (accounts != null && accounts.size() > 1) {
+        callProviderIcon = account.getIcon().loadDrawable(mContext);
       }
     }
     return callProviderIcon;

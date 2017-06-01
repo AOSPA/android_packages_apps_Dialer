@@ -58,6 +58,7 @@ import com.android.dialer.logging.Logger;
 import com.android.dialer.logging.ScreenEvent;
 import com.android.dialer.util.ViewUtil;
 import com.android.incallui.audiomode.AudioModeProvider;
+import com.android.incallui.BottomSheetHelper;
 import com.android.incallui.call.CallList;
 import com.android.incallui.call.DialerCall;
 import com.android.incallui.call.DialerCall.State;
@@ -557,6 +558,7 @@ public class InCallActivityCommon {
     }
 
     InCallCsRedialHandler.getInstance().dismissPendingDialogs();
+    BottomSheetHelper.getInstance().dismissBottomSheet();
   }
 
   private static boolean shouldShowDisconnectErrorDialog(@NonNull DisconnectCause cause) {

@@ -392,6 +392,7 @@ public class CallButtonPresenter
     final boolean showSwap = call.can(android.telecom.Call.Details.CAPABILITY_SWAP_CONFERENCE);
     final boolean showHold =
         !showSwap
+            && !call.hasSentVideoUpgradeRequest()
             && call.can(android.telecom.Call.Details.CAPABILITY_SUPPORT_HOLD)
             && call.can(android.telecom.Call.Details.CAPABILITY_HOLD);
     final boolean isCallOnHold = call.getState() == DialerCall.State.ONHOLD;
@@ -430,6 +431,9 @@ public class CallButtonPresenter
     mInCallButtonUi.showButton(InCallButtonIds.BUTTON_MERGE, showMerge);
 
     mInCallButtonUi.updateButtonStates();
+    if (BottomSheetHelper.getInstance().shallShowMoreButton(getActivity())) {
+      BottomSheetHelper.getInstance().updateMap();
+    }
   }
 
   private boolean hasVideoCallCapabilities(DialerCall call) {

@@ -140,6 +140,7 @@ DIALER_MANIFEST_FILES += \
 	$(BASE_DIR)/incallui/video/protocol/AndroidManifest.xml \
 	$(BASE_DIR)/incallui/wifi/AndroidManifest.xml \
 	$(BASE_DIR)/voicemail/impl/AndroidManifest.xml \
+	$(BASE_DIR)/voicemail/permissions.xml \
 
 
 # Merge all manifest files.
@@ -248,6 +249,7 @@ LOCAL_JAVA_LIBRARIES := \
 	org.apache.http.legacy \
 	dialer-auto-value \
         telephony-ext \
+        ims-common \
 
 # Libraries needed by the compiler (JACK) to generate code.
 PROCESSOR_LIBRARIES_TARGET := \
