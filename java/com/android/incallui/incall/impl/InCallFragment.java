@@ -16,6 +16,7 @@
 
 package com.android.incallui.incall.impl;
 
+import android.app.Activity;
 import android.Manifest.permission;
 import android.content.Context;
 import android.content.pm.PackageManager;
@@ -28,13 +29,18 @@ import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentTransaction;
 import android.support.v4.content.ContextCompat;
+import android.support.v4.view.ViewPager;
+import android.media.AudioManager;
+import android.provider.Settings;
 import android.telecom.CallAudioState;
 import android.telephony.TelephonyManager;
+import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.view.ViewGroup;
 import android.view.accessibility.AccessibilityEvent;
+import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.RelativeLayout;
 import android.widget.Toast;
@@ -44,9 +50,12 @@ import com.android.dialer.common.LogUtil;
 import com.android.dialer.multimedia.MultimediaData;
 import com.android.incallui.BottomSheetHelper;
 import com.android.incallui.ExtBottomSheetFragment.ExtBottomSheetActionCallback;
+import com.android.incallui.audiomode.AudioModeProvider;
 import com.android.incallui.audioroute.AudioRouteSelectorDialogFragment;
 import com.android.incallui.audioroute.AudioRouteSelectorDialogFragment.AudioRouteSelectorPresenter;
 import com.android.incallui.contactgrid.ContactGridManager;
+import com.android.incallui.call.DialerCall;
+import com.android.incallui.call.DialerCall.State;
 import com.android.incallui.hold.OnHoldFragment;
 import com.android.incallui.incall.impl.ButtonController.SpeakerButtonController;
 import com.android.incallui.incall.impl.InCallButtonGridFragment.OnButtonGridCreatedListener;
@@ -89,6 +98,13 @@ public class InCallFragment extends Fragment
   private int voiceNetworkType;
   private int phoneType;
   private boolean stateRestored;
+  private ImageButton mVbButton;
+  private AudioManager mAudioManager;
+
+  private static final int TTY_MODE_OFF = 0;
+  private static final int TTY_MODE_HCO = 2;
+
+  private static final String VOLUME_BOOST = "volume_boost";
 
   // Add animation to educate users. If a call has enriched calling attachments then we'll
   // initially show the attachment page. After a delay seconds we'll animate to the button grid.
@@ -131,6 +147,7 @@ public class InCallFragment extends Fragment
       inCallButtonUiDelegate.onRestoreInstanceState(savedInstanceState);
       stateRestored = true;
     }
+    mAudioManager = (AudioManager) getActivity().getSystemService(Context.AUDIO_SERVICE);
   }
 
   @Nullable
@@ -162,6 +179,21 @@ public class InCallFragment extends Fragment
     moreOptionsMenuButton = view.findViewById(R.id.incall_more_button);
     moreOptionsMenuButton.setOnClickListener(this);
 
+    mVbButton = (ImageButton) view.findViewById(R.id.volumeBoost);
+      if (mVbButton != null) {
+        mVbButton.setOnClickListener(new View. OnClickListener() {
+          @Override
+          public void onClick(View arg0) {
+            if (isVbAvailable()) {
+            // Switch Volume Boost status
+            setVolumeBoost(!isVolumeBoostOn());
+            }
+
+            updateVbButton();
+            showVbNotify();
+          }
+      });
+      }
     if (ContextCompat.checkSelfPermission(getContext(), permission.READ_PHONE_STATE)
         != PackageManager.PERMISSION_GRANTED) {
       voiceNetworkType = TelephonyManager.NETWORK_TYPE_UNKNOWN;
@@ -338,6 +370,9 @@ public class InCallFragment extends Fragment
     buttonChooser =
         ButtonChooserFactory.newButtonChooser(voiceNetworkType, primaryCallState.isWifi, phoneType);
     updateButtonStates();
+    if (mVbButton != null) {
+      updateVbByCall(primaryCallState.state);
+    }
   }
 
   @Override
@@ -562,5 +597,99 @@ public class InCallFragment extends Fragment
 
   private Fragment getLocationFragment() {
     return getChildFragmentManager().findFragmentById(R.id.incall_location_holder);
+  }
+
+  private boolean isVbAvailable() {
+    int mode = AudioModeProvider.getInstance().getAudioState().getRoute();
+    final Context context = getContext();
+    final String PREFERRED_TTY_MODE = "preferred_tty_mode";
+    int settingsTtyMode = Settings.Secure.getInt(context.getContentResolver(),
+        PREFERRED_TTY_MODE,
+        TTY_MODE_OFF);
+
+    return (mode == CallAudioState.ROUTE_EARPIECE || mode == CallAudioState.ROUTE_SPEAKER
+        || settingsTtyMode == TTY_MODE_HCO);
+  }
+
+  private void updateVbButton() {
+    if (mVbButton != null) {
+      if (isVbAvailable()) {
+        if (isVolumeBoostOn()) {
+          mVbButton.setBackgroundResource(R.drawable.vb_active);
+        } else {
+          mVbButton.setBackgroundResource(R.drawable.vb_normal);
+        }
+      } else {
+        mVbButton.setBackgroundResource(R.drawable.vb_disable);
+      }
+    }
+  }
+
+  @Override
+  public void showVbButton(boolean show) {
+    if (mVbButton != null){
+      mVbButton.setVisibility(show ? View.VISIBLE : View.GONE);
+    }
+  }
+
+  private void showVbNotify() {
+    Toast vbnotify;
+    int resId = R.string.volume_boost_notify_unavailable;
+
+    if (isVbAvailable()) {
+      if (isVolumeBoostOn()) {
+        resId = R.string.volume_boost_notify_enabled;
+      } else {
+        resId = R.string.volume_boost_notify_disabled;
+      }
+    }
+
+    vbnotify = Toast.makeText(getView().getContext(), resId, Toast.LENGTH_SHORT);
+    vbnotify.setGravity(Gravity.CENTER, 0, 0);
+    vbnotify.show();
+  }
+
+  private void updateVbByCall(int state) {
+    updateVbButton();
+
+    if (DialerCall.State.ACTIVE == state) {
+      mVbButton.setVisibility(View.VISIBLE);
+    } else if (DialerCall.State.DISCONNECTED == state) {
+      if (DialerCall.State.ACTIVE != state
+          && isVolumeBoostOn()) {
+        mVbButton.setVisibility(View.GONE);
+
+        setVolumeBoost(false);
+      }
+    }
+  }
+
+  public void updateVbByAudioMode(CallAudioState audioState) {
+    int mode = audioState.getRoute();
+    if (!(mode == CallAudioState.ROUTE_EARPIECE
+        || mode == CallAudioState.ROUTE_BLUETOOTH
+        || mode == CallAudioState.ROUTE_WIRED_HEADSET
+        || mode == CallAudioState.ROUTE_SPEAKER)) {
+    return;
+    }
+
+    if (mAudioManager != null && isVolumeBoostOn()) {
+      setVolumeBoost(false);
+    }
+
+    updateVbButton();
+  }
+
+  private void setVolumeBoost(boolean on){
+    if (on) {
+      mAudioManager.setParameters(VOLUME_BOOST + "=on");
+    } else {
+      mAudioManager.setParameters(VOLUME_BOOST + "=off");
+    }
+  }
+
+  private boolean isVolumeBoostOn(){
+
+    return mAudioManager.getParameters(VOLUME_BOOST).contains("=on");
   }
 }

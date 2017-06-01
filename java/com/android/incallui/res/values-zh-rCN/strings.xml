@@ -138,4 +138,7 @@
     <string name="video_call_lte_to_wifi_failed_title" msgid="2793524281399509056">"无法切换到 WLAN 网络"</string>
     <string name="video_call_lte_to_wifi_failed_message" msgid="5950700221126447109">"系统将使用移动网络继续视频通话。这可能会产生标准数据流量费。"</string>
     <string name="video_call_lte_to_wifi_failed_do_not_show" msgid="7609115874511223150">"不再显示"</string>
+    <string name="volume_boost_notify_enabled">"开启音量增强"</string>
+    <string name="volume_boost_notify_disabled">"关闭音量增强"</string>
+    <string name="volume_boost_notify_unavailable">"有线/蓝牙耳机连接时，音效增强不可用。"</string>
 </resources>

@@ -16,6 +16,8 @@
 
 package com.android.incallui.incall.protocol;
 
+import android.telecom.CallAudioState;
+
 import android.support.annotation.NonNull;
 import android.support.v4.app.Fragment;
 import android.view.accessibility.AccessibilityEvent;
@@ -38,6 +40,10 @@ public interface InCallScreen {
   void dispatchPopulateAccessibilityEvent(AccessibilityEvent event);
 
   void showNoteSentToast();
+
+  void showVbButton(boolean show);
+
+  void updateVbByAudioMode(CallAudioState audioState);
 
   void updateInCallScreenColors();
 
