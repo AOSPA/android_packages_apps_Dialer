@@ -33,6 +33,7 @@ import android.os.Message;
 import android.provider.CallLog.Calls;
 import android.provider.VoicemailContract.Status;
 import android.provider.VoicemailContract.Voicemails;
+import android.text.TextUtils;
 import com.android.contacts.common.database.NoNullCursorAsyncQueryHandler;
 import com.android.dialer.common.LogUtil;
 import com.android.dialer.compat.AppCompatConstants;
@@ -107,6 +108,21 @@ public class CallLogQueryHandler extends NoNullCursorAsyncQueryHandler {
     }
   }
 
+  /**
+   * Fetches the list of calls from the call log for a given type for a sub.
+   * This call ignores the new or old state.
+   *
+   * <p>It will asynchronously update the content of the list view when the fetch completes.
+   */
+  public void fetchCalls(int callType, long newerThan, String accountId) {
+    cancelFetch();
+    if (PermissionsUtil.hasPhonePermissions(mContext)) {
+      fetchCalls(QUERY_CALLLOG_TOKEN, callType, false /* newOnly */, newerThan, accountId);
+    } else {
+      updateAdapterData(null);
+    }
+  }
+
   public void fetchCalls(int callType) {
     fetchCalls(callType, 0);
   }
@@ -155,6 +171,11 @@ public class CallLogQueryHandler extends NoNullCursorAsyncQueryHandler {
 
   /** Fetches the list of calls in the call log. */
   private void fetchCalls(int token, int callType, boolean newOnly, long newerThan) {
+    fetchCalls(token, callType, newOnly, newerThan, null);
+  }
+
+  /** Fetches the list of calls in the call log. */
+  private void fetchCalls(int token, int callType, boolean newOnly, long newerThan, String accountId) {
     StringBuilder where = new StringBuilder();
     List<String> selectionArgs = new ArrayList<>();
 
@@ -194,6 +215,12 @@ public class CallLogQueryHandler extends NoNullCursorAsyncQueryHandler {
     } else {
       where.append(" AND NOT ");
       where.append("(" + Calls.TYPE + " = " + AppCompatConstants.CALLS_VOICEMAIL_TYPE + ")");
+    }
+
+    if (!TextUtils.isEmpty(accountId)) {
+        where.append(" AND ");
+        where.append(String.format("(%s = ?)", Calls.PHONE_ACCOUNT_ID));
+        selectionArgs.add(accountId);
     }
 
     if (newerThan > 0) {
