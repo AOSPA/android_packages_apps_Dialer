@@ -62,6 +62,11 @@
        <item>false</item>
     </string-array>
 
+    <string-array name="manageConference">
+       <item>@string/manageConferenceLabel</item>
+       <item>false</item>
+    </string-array>
+
     <string-array name="deflect">
        <item>@string/qti_description_target_deflect</item>
        <item>false</item>
@@ -74,6 +79,7 @@
     <!-- array of all the options to ensure mapping-->
     <array name="bottom_sheet_more_options">
        <item>@array/add_participant_option</item>
+       <item>@array/manageConference</item>
        <item>@array/deflect</item>
        <item>@array/transfer</item>
     </array>

@@ -125,17 +125,37 @@ public class BottomSheetHelper {
      mPrimaryCallTracker = null;
      mContext = null;
      mResources = null;
+     moreOptionsMap = null;
    }
 
    public void updateMap() {
-     //update as per requirement
      mCall = mPrimaryCallTracker.getPrimaryCall();
      LogUtil.i("BottomSheetHelper.updateMap","mCall = " + mCall);
-     if (mCall != null) {
+
+     if (mCall != null && moreOptionsMap != null && mResources != null) {
        maybeUpdateDeflectInMap();
        maybeUpdateAddParticipantInMap();
        maybeUpdateTransferInMap();
+       maybeUpdateManageConferenceInMap();
      }
+   }
+
+   private void maybeUpdateManageConferenceInMap() {
+     /* show manage conference option only for active video conference calls if the call
+        has manage conference capability */
+     boolean visible = mCall.isVideoCall() && mCall.getState() == DialerCall.State.ACTIVE &&
+         mCall.can(android.telecom.Call.Details.CAPABILITY_MANAGE_CONFERENCE);
+     moreOptionsMap.put(mResources.getString(R.string.manageConferenceLabel),
+         Boolean.valueOf(visible));
+   }
+
+   public boolean isManageConferenceVisible() {
+     if (moreOptionsMap == null || mResources == null) {
+         LogUtil.w("isManageConferenceVisible","moreOptionsMap or mResources is null");
+         return false;
+     }
+
+     return moreOptionsMap.get(mResources.getString(R.string.manageConferenceLabel)).booleanValue();
    }
 
    public void showBottomSheet(FragmentManager manager) {
@@ -163,6 +183,8 @@ public class BottomSheetHelper {
        deflectCall();
      } else if (text.equals(mResources.getString(R.string.qti_description_transfer))) {
        transferCall();
+     } else if (text.equals(mResources.getString(R.string.manageConferenceLabel))) {
+       manageConferenceCall();
      }
      moreOptionsSheet = null;
    }
@@ -360,6 +382,16 @@ public class BottomSheetHelper {
      } else {
        moreOptionsMap.put(mResources.getString(R.string.qti_description_transfer), Boolean.FALSE);
      }
+   }
+
+   private void manageConferenceCall() {
+     final InCallActivity inCallActivity = InCallPresenter.getInstance().getActivity();
+     if (inCallActivity == null) {
+       LogUtil.w("BottomSheetHelper.manageConferenceCall", "inCallActivity is null");
+       return;
+     }
+
+     inCallActivity.showConferenceFragment(true);
    }
 
    private void transferCall() {
