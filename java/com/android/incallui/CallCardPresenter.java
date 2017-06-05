@@ -433,7 +433,7 @@ public class CallCardPresenter
   }
 
   private String getPrimaryInfoLocation(ContactCacheEntry contactInfo) {
-    if (contactInfo != null) {
+    if (contactInfo != null || contactInfo.location != null) {
       return contactInfo.location;
     }
     return "";
