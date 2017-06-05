@@ -1024,7 +1024,6 @@ public class VideoCallPresenter
     updateRemoteVideoSurfaceDimensions();
     mVideoCallScreen.showVideoViews(showOutgoingVideo, showIncomingVideo, isRemotelyHeld);
 
-    InCallPresenter.getInstance().enableScreenTimeout(VideoProfile.isAudioOnly(videoState));
     updateFullscreenAndGreenScreenMode(callState, sessionModificationState);
   }
 

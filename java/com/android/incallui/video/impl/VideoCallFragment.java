@@ -16,6 +16,7 @@
 
 package com.android.incallui.video.impl;
 
+import android.app.Activity;
 import android.Manifest.permission;
 import android.content.Context;
 import android.content.pm.PackageManager;
@@ -49,6 +50,8 @@ import android.view.ViewGroup;
 import android.view.ViewGroup.MarginLayoutParams;
 import android.view.ViewOutlineProvider;
 import android.view.ViewTreeObserver;
+import android.view.Window;
+import android.view.WindowManager;
 import android.view.accessibility.AccessibilityEvent;
 import android.view.animation.AccelerateDecelerateInterpolator;
 import android.view.animation.Interpolator;
@@ -720,7 +723,7 @@ public class VideoCallFragment extends Fragment
 
     videoCallScreenDelegate.getLocalVideoSurfaceTexture().attachToTextureView(previewTextureView);
     videoCallScreenDelegate.getRemoteVideoSurfaceTexture().attachToTextureView(remoteTextureView);
-
+    enableScreenTimeout(!(shouldShowPreview || shouldShowRemote));
     updateVideoOffViews();
     updateRemoteVideoScaling();
   }
@@ -1332,6 +1335,25 @@ public class VideoCallFragment extends Fragment
         CameraPermissionDialogFragment.newInstance()
             .show(getChildFragmentManager(), CAMERA_PERMISSION_DIALOG_FRAMENT_TAG);
       }
+    }
+  }
+
+  private void enableScreenTimeout(boolean enable) {
+    LogUtil.v("VideoCallFragment.enableScreenTimeout","value=" + enable);
+    final Activity activity = getActivity();
+    if (activity == null) {
+      LogUtil.e("VideoCallFragment.enableScreenTimeout","Activity is null.");
+      return;
+    }
+    final Window window = activity.getWindow();
+    if (window == null) {
+      LogUtil.e("VideoCallFragment.enableScreenTimeout","window is null");
+      return;
+    }
+    if (enable) {
+      window.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+    } else {
+      window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
     }
   }
 }
