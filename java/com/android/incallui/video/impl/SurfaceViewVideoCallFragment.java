@@ -897,6 +897,16 @@ public class SurfaceViewVideoCallFragment extends Fragment
   }
 
   @Override
+  public void showVbButton(boolean show) {
+    LogUtil.i("VideoCallFragment.showNVbButton", null);
+  }
+
+  @Override
+  public void updateVbByAudioMode(CallAudioState audioState) {
+    LogUtil.i("VideoCallFragment.updateVbByAudioMode", null);
+  }
+
+  @Override
   public void updateInCallScreenColors() {
     LogUtil.i("SurfaceViewVideoCallFragment.updateColors", null);
   }

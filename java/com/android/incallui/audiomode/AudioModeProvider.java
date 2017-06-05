@@ -17,6 +17,10 @@
 package com.android.incallui.audiomode;
 
 import android.telecom.CallAudioState;
+
+import com.android.incallui.InCallActivity;
+import com.android.incallui.InCallPresenter;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -40,6 +44,10 @@ public class AudioModeProvider {
   public void onAudioStateChanged(CallAudioState audioState) {
     if (!this.audioState.equals(audioState)) {
       this.audioState = audioState;
+      InCallActivity inCallActivity = InCallPresenter.getInstance().getActivity();
+      if (inCallActivity != null && inCallActivity.getInCallScreen() != null) {
+        inCallActivity.getInCallScreen().updateVbByAudioMode(audioState);
+      }
       for (AudioModeListener listener : listeners) {
         listener.onAudioStateChanged(audioState);
       }

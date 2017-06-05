@@ -36,6 +36,7 @@ import android.support.annotation.Nullable;
 import android.support.annotation.StringRes;
 import android.support.annotation.VisibleForTesting;
 import android.support.v4.app.Fragment;
+import android.telecom.CallAudioState;
 import android.text.TextUtils;
 import android.transition.TransitionManager;
 import android.view.LayoutInflater;
@@ -646,6 +647,12 @@ public class AnswerFragment extends Fragment
 
   @Override
   public void showNoteSentToast() {}
+
+  @Override
+  public void showVbButton(boolean show) {}
+
+  @Override
+  public void updateVbByAudioMode(CallAudioState audioState) {}
 
   @Override
   public void updateInCallScreenColors() {}

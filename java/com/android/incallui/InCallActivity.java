@@ -758,7 +758,7 @@ public class InCallActivity extends TransactionSafeFragmentActivity
     return (AnswerScreen) getSupportFragmentManager().findFragmentByTag(TAG_ANSWER_SCREEN);
   }
 
-  InCallScreen getInCallScreen() {
+  public InCallScreen getInCallScreen() {
     return (InCallScreen) getSupportFragmentManager().findFragmentByTag(TAG_IN_CALL_SCREEN);
   }
 
