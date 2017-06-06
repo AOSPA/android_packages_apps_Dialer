@@ -476,7 +476,8 @@ public class CallCardPresenter
                   shouldShowCallSubject(mPrimary) ? mPrimary.getCallSubject() : null,
                   mPrimary.getCallbackNumber(),
                   mPrimary.hasProperty(Details.PROPERTY_WIFI),
-                  mPrimary.isConferenceCall(),
+                  mPrimary.isConferenceCall()
+                      && !mPrimary.hasProperty(Details.PROPERTY_GENERIC_CONFERENCE),
                   isWorkCall,
                   isAttemptingHdAudioCall,
                   isHdAudioCall,
@@ -710,7 +711,7 @@ public class CallCardPresenter
               false /* nameIsNumber */,
               null /* location */,
               null /* label */,
-              getConferencePhoto(mPrimary),
+              null /* photo */,
               ContactPhotoType.DEFAULT_PLACEHOLDER,
               false /* isSipCall */,
               showContactPhoto,
@@ -1052,16 +1053,6 @@ public class CallCardPresenter
     final int resId =
         isGenericConference ? R.string.generic_conference_call_name : R.string.conference_call_name;
     return mContext.getResources().getString(resId);
-  }
-
-  private Drawable getConferencePhoto(DialerCall call) {
-    boolean isGenericConference = call.hasProperty(Details.PROPERTY_GENERIC_CONFERENCE);
-    LogUtil.v("CallCardPresenter.getConferencePhoto", "" + isGenericConference);
-
-    final int resId = isGenericConference ? R.drawable.img_phone : R.drawable.img_conference;
-    Drawable photo = mContext.getResources().getDrawable(resId);
-    photo.setAutoMirrored(true);
-    return photo;
   }
 
   private boolean shouldShowEndCallButton(DialerCall primary, int callState) {
