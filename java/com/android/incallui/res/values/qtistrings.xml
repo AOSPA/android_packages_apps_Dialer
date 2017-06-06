@@ -50,6 +50,7 @@
     <string name="qti_ims_onscreenAssuredTransfer">Assured Transfer</string>
     <!-- Text for the onscreen "consultative transfer" button -->
     <string name="qti_ims_onscreenConsultativeTransfer">Consultative Transfer</string>
+    <string name="dialpad_label">Show dialpad"</string>
 
     <string name="qti_ims_hideMeText_unselected">Hide Me</string>
     <string name="qti_ims_hideMeText_selected">Show Me</string>
@@ -69,6 +70,11 @@
         <item>Options to be shown on sheet</item>
         <item>Visibility</item>
      -->
+    <string-array name="show_dialpad">
+       <item>@string/dialpad_label</item>
+       <item>false</item>
+    </string-array>
+
     <string-array name="add_participant_option">
        <item>@string/add_participant_option_msg</item>
        <item>false</item>
@@ -116,6 +122,7 @@
 
     <!-- array of all the options to ensure mapping-->
     <array name="bottom_sheet_more_options">
+       <item>@array/show_dialpad</item>
        <item>@array/add_participant_option</item>
        <item>@array/manageConference</item>
        <item>@array/deflect</item>

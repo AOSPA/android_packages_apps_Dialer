@@ -298,12 +298,17 @@ public class InCallActivity extends TransactionSafeFragmentActivity
 
   public boolean showDialpadFragment(boolean show, boolean animate) {
     boolean didChange = common.showDialpadFragment(show, animate);
+    InCallScreen inCallScreen = getActiveInCallScreen();
+    if (inCallScreen == null) {
+      return didChange;
+    }
+
     if (didChange) {
       // Note:  onInCallScreenDialpadVisibilityChange is called here to ensure that the dialpad FAB
       // repositions itself.
-      getInCallScreen().onInCallScreenDialpadVisibilityChange(show);
+      inCallScreen.onInCallScreenDialpadVisibilityChange(show);
     }
-    getInCallScreen().onInCallShowDialpad(show);
+    inCallScreen.onInCallShowDialpad(show);
     return didChange;
   }
 
@@ -424,17 +429,28 @@ public class InCallActivity extends TransactionSafeFragmentActivity
     common.setExcludeFromRecents(exclude);
   }
 
+  private InCallScreen getActiveInCallScreen() {
+    String tag = null;
+    if (didShowVideoCallScreen) {
+      tag = TAG_VIDEO_CALL_SCREEN;
+    } else if (didShowInCallScreen) {
+      tag = TAG_IN_CALL_SCREEN;
+    }
+    return (tag == null) ? null : (InCallScreen)
+        getSupportFragmentManager().findFragmentByTag(tag);
+  }
+
   @Nullable
   public FragmentManager getDialpadFragmentManager() {
-    InCallScreen inCallScreen = getInCallScreen();
-    if (inCallScreen != null) {
-      return inCallScreen.getInCallScreenFragment().getChildFragmentManager();
-    }
-    return null;
+    InCallScreen inCallScreen = getActiveInCallScreen();
+    return (inCallScreen == null) ? null :
+        inCallScreen.getInCallScreenFragment().getChildFragmentManager();
   }
 
   public int getDialpadContainerId() {
-    return getInCallScreen().getAnswerAndDialpadContainerResourceId();
+    InCallScreen inCallScreen = getActiveInCallScreen();
+    return (inCallScreen == null) ? 0 :
+        inCallScreen.getAnswerAndDialpadContainerResourceId();
   }
 
   @Override

@@ -144,6 +144,7 @@ public class BottomSheetHelper implements InCallPresenter.InCallEventListener,
      LogUtil.i("BottomSheetHelper.updateMap","mCall = " + mCall);
 
      if (mCall != null && moreOptionsMap != null && mResources != null) {
+       maybeUpdateDialpadOptionInMap();
        maybeUpdateDeflectInMap();
        maybeUpdateAddParticipantInMap();
        maybeUpdateTransferInMap();
@@ -253,6 +254,8 @@ public class BottomSheetHelper implements InCallPresenter.InCallEventListener,
      } else if (text.equals(mResources.getString(R.string.qti_ims_hideMeText_unselected)) ||
          text.equals(mResources.getString(R.string.qti_ims_hideMeText_selected))) {
        hideMeClicked(text.equals(mResources.getString(R.string.qti_ims_hideMeText_unselected)));
+     } else if (text.equals(mResources.getString(R.string.dialpad_label))) {
+       showDialpad();
      } else if (text.equals(mResources.getString(R.string.video_tx_label))) {
        acceptIncomingCallOrUpgradeRequest(VideoProfile.STATE_TX_ENABLED);
      } else if (text.equals(mResources.getString(R.string.video_rx_label))) {
@@ -290,8 +293,9 @@ public class BottomSheetHelper implements InCallPresenter.InCallEventListener,
          int primaryCallState = call.getState();
          return !(ActivityCompat.isInMultiWindowMode(activity)
            || call.isEmergencyCall()
-           || DialerCall.State.isDialing(primaryCallState)
-           || DialerCall.State.CONNECTING == primaryCallState
+           || ((DialerCall.State.isDialing(primaryCallState) ||
+           DialerCall.State.CONNECTING == primaryCallState) &&
+           !call.isVideoCall())
            || DialerCall.State.DISCONNECTING == primaryCallState
            || call.hasSentVideoUpgradeRequest()
            || !(getPhoneIdExtra(call) != QtiCallConstants.INVALID_PHONE_ID));
@@ -485,6 +489,28 @@ public class BottomSheetHelper implements InCallPresenter.InCallEventListener,
      }
 
      inCallActivity.showConferenceFragment(true);
+   }
+
+   private void showDialpad() {
+     final InCallActivity inCallActivity = InCallPresenter.getInstance().getActivity();
+     if (inCallActivity == null) {
+       LogUtil.w("BottomSheetHelper.showDialpad", "inCallActivity is null");
+       return;
+     }
+
+     inCallActivity.showDialpadFragment(true, true);
+   }
+
+   private void maybeUpdateDialpadOptionInMap() {
+     // Enable dialpad option in bottomsheet only for video calls.
+     // When video call is held, UI displays onscreen dialpad button
+     // similar to volte calls.
+     final int primaryCallState = mCall.getActualState();
+     final boolean enable = mCall.isVideoCall()
+         && primaryCallState != DialerCall.State.INCOMING
+         && primaryCallState != DialerCall.State.CALL_WAITING
+         && primaryCallState != DialerCall.State.ONHOLD;
+     moreOptionsMap.put(mResources.getString(R.string.dialpad_label), enable);
    }
 
    private void transferCall() {
