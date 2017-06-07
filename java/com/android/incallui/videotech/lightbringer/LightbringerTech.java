@@ -19,6 +19,7 @@ package com.android.incallui.videotech.lightbringer;
 import android.content.Context;
 import android.support.annotation.NonNull;
 import android.telecom.Call;
+import android.telecom.InCallService.VideoCall;
 import com.android.dialer.common.Assert;
 import com.android.dialer.lightbringer.Lightbringer;
 import com.android.dialer.lightbringer.LightbringerListener;
@@ -143,4 +144,7 @@ public class LightbringerTech implements VideoTech, LightbringerListener {
   public void onLightbringerStateChanged() {
     listener.onVideoTechStateChanged();
   }
+
+  @Override
+  public VideoCall getVideoCall() {return null;}
 }

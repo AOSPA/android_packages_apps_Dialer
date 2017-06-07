@@ -17,6 +17,7 @@
 package com.android.incallui.videotech.empty;
 
 import android.content.Context;
+import android.telecom.InCallService.VideoCall;
 import com.android.dialer.common.Assert;
 import com.android.incallui.video.protocol.VideoCallScreen;
 import com.android.incallui.video.protocol.VideoCallScreenDelegate;
@@ -94,4 +95,7 @@ public class EmptyVideoTech implements VideoTech {
 
   @Override
   public void setDeviceOrientation(int rotation) {}
+
+  @Override
+  public VideoCall getVideoCall() {return null;}
 }
