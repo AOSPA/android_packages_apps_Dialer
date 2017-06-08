@@ -47,9 +47,15 @@ public interface VideoTech {
 
   void upgradeToVideo();
 
+  void upgradeToVideo(int videoState);
+
   void acceptVideoRequest();
 
   void acceptVideoRequestAsAudio();
+
+  void acceptVideoRequest(int videoState);
+
+  int getRequestedVideoState();
 
   void declineVideoRequest();
 

@@ -69,6 +69,7 @@ import com.android.incallui.audioroute.AudioRouteSelectorDialogFragment;
 import com.android.incallui.audioroute.AudioRouteSelectorDialogFragment.AudioRouteSelectorPresenter;
 import com.android.incallui.contactgrid.ContactGridManager;
 import com.android.incallui.hold.OnHoldFragment;
+import com.android.incallui.QtiCallUtils;
 import com.android.incallui.incall.protocol.InCallButtonIds;
 import com.android.incallui.incall.protocol.InCallButtonIdsExtension;
 import com.android.incallui.incall.protocol.InCallButtonUi;
@@ -831,7 +832,11 @@ public class VideoCallFragment extends Fragment
     } else if (buttonId == InCallButtonIds.BUTTON_MUTE) {
       muteButton.setEnabled(show);
     } else if (buttonId == InCallButtonIds.BUTTON_PAUSE_VIDEO) {
-      cameraOffButton.setEnabled(show);
+      if (QtiCallUtils.useExt(getContext())) {
+        cameraOffButton.setVisibility(View.GONE);
+      } else {
+        cameraOffButton.setEnabled(show);
+      }
     } else if (buttonId == InCallButtonIds.BUTTON_SWITCH_TO_SECONDARY) {
       switchOnHoldCallController.setVisible(show);
     } else if (buttonId == InCallButtonIds.BUTTON_SWITCH_CAMERA) {
