@@ -232,4 +232,8 @@
     <string name="about_phone_label" msgid="582991354677973731">"应用信息"</string>
     <string name="call_log_show_all_slots">"所有 SIM 卡"</string>
     <string name="call_log_all_calls_header">"所有通话"</string>
+    <!-- Text displayed when the list of incoming calls is empty -->
+    <string name="recentIncoming_empty">"您没有任何来电。"</string>
+    <!-- Text displayed when the list of outgoing calls is empty -->
+    <string name="recentOutgoing_empty">"您没有任何外拨电话。"</string>
 </resources>

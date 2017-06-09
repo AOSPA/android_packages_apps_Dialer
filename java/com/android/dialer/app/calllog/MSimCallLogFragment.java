@@ -453,6 +453,7 @@ public class MSimCallLogFragment extends Fragment
     if (!mIsCallLogActivity) {
       ((ListsFragment) getParentFragment()).updateTabUnreadCounts();
     }
+    updateEmptyMessage(mCallTypeFilter);
   }
 
   private void updateEmptyMessage(int filterType) {
@@ -469,6 +470,12 @@ public class MSimCallLogFragment extends Fragment
 
     final int messageId;
     switch (filterType) {
+      case Calls.INCOMING_TYPE:
+        messageId = R.string.recentIncoming_empty;
+        break;
+      case Calls.OUTGOING_TYPE:
+        messageId = R.string.recentOutgoing_empty;
+        break;
       case Calls.MISSED_TYPE:
         messageId = R.string.call_log_missed_empty;
         break;
