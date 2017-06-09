@@ -188,13 +188,13 @@ public class SelectPhoneAccountDialogFragment extends DialogFragment {
   }
 
   @Override
-  public void onCancel(DialogInterface dialog) {
+  public void onStop() {
     if (!mIsSelected && mListener != null) {
       Bundle result = new Bundle();
       result.putString(SelectPhoneAccountListener.EXTRA_CALL_ID, getCallId());
       mListener.onReceiveResult(SelectPhoneAccountListener.RESULT_DISMISSED, result);
     }
-    super.onCancel(dialog);
+    super.onStop();
   }
 
   @Nullable
