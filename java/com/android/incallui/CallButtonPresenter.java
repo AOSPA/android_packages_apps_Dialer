@@ -21,6 +21,7 @@ import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.support.v4.os.UserManagerCompat;
 import android.telecom.CallAudioState;
+import android.widget.Toast;
 import com.android.contacts.common.compat.CallCompat;
 import com.android.dialer.common.Assert;
 import com.android.dialer.common.LogUtil;
@@ -42,6 +43,7 @@ import com.android.incallui.incall.protocol.InCallButtonIds;
 import com.android.incallui.incall.protocol.InCallButtonUi;
 import com.android.incallui.incall.protocol.InCallButtonUiDelegate;
 import com.android.incallui.videotech.utils.VideoUtils;
+import org.codeaurora.ims.utils.QtiImsExtUtils;
 
 /** Logic for call buttons. */
 public class CallButtonPresenter
@@ -62,6 +64,7 @@ public class CallButtonPresenter
   private boolean mAutomaticallyMuted = false;
   private boolean mPreviousMuteState = false;
   private boolean isInCallButtonUiReady;
+  private static final int MAX_PARTICIPANTS_LIMIT = 6;
 
   public CallButtonPresenter(Context context) {
     mContext = context.getApplicationContext();
@@ -249,6 +252,28 @@ public class CallButtonPresenter
 
   @Override
   public void mergeClicked() {
+    if (mCall == null) {
+        return;
+    }
+
+    if (QtiImsExtUtils.isCarrierConfigEnabled(BottomSheetHelper.getInstance().getPhoneId(),
+            mContext,"config_conference_call_show_participant_status")) {
+        int participantsCount = 0;
+        if (mCall.isConferenceCall()) {
+            participantsCount = mCall.getChildCallIds().size();
+        } else {
+            DialerCall backgroundCall = CallList.getInstance().getBackgroundCall();
+            if (backgroundCall != null && backgroundCall.isConferenceCall()) {
+                participantsCount = backgroundCall.getChildCallIds().size();
+            }
+        }
+        Log.i(this, "Number of participantsCount is " + participantsCount);
+        if (participantsCount >= MAX_PARTICIPANTS_LIMIT) {
+            Toast.makeText(mContext,
+                    R.string.too_many_recipients, Toast.LENGTH_SHORT).show();
+            return;
+        }
+    }
     TelecomAdapter.getInstance().merge(mCall.getId());
   }
 
