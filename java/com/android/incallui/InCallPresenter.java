@@ -372,6 +372,7 @@ public class InCallPresenter implements CallList.Listener {
 
     addDetailsListener(CallSubstateNotifier.getInstance());
     CallList.getInstance().addListener(CallSubstateNotifier.getInstance());
+    InCallZoomController.getInstance().setUp(mContext);
 
     Log.d(this, "Finished InCallPresenter.setUp");
   }
@@ -400,6 +401,7 @@ public class InCallPresenter implements CallList.Listener {
     CallList.getInstance().removeListener(CallSubstateNotifier.getInstance());
 
     BottomSheetHelper.getInstance().tearDown();
+    InCallZoomController.getInstance().tearDown();
   }
 
   private void attemptFinishActivity() {

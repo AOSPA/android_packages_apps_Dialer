@@ -965,11 +965,13 @@ public class VideoCallPresenter
     } else if (isCameraRequired) {
       InCallCameraManager cameraManager = InCallPresenter.getInstance().getInCallCameraManager();
       videoCall.setCamera(cameraManager.getActiveCameraId());
+      InCallZoomController.getInstance().onCameraEnabled(cameraManager.getActiveCameraId());
       mPreviewSurfaceState = PreviewSurfaceState.CAMERA_SET;
       videoCall.requestCameraCapabilities();
     } else {
       mPreviewSurfaceState = PreviewSurfaceState.NONE;
       videoCall.setCamera(null);
+      InCallZoomController.getInstance().onCameraEnabled(null);
     }
   }
 
@@ -1317,7 +1319,19 @@ public class VideoCallPresenter
 
     @Override
     public void onSurfaceClick(VideoSurfaceTexture videoCallSurface) {
-      VideoCallPresenter.this.onSurfaceClick();
+      // Show zoom control when preview surface is clicked.
+      LogUtil.i("VideoCallPresenter.onSurfaceClick", "");
+      if (shallTransmitStaticImage()) {
+        VideoCallPresenter.this.onSurfaceClick();
+      } else {
+        // Set fullscreen to true when showing the zoom controls as the
+        // buttons on the left panel conflict with the zoom control bar.
+        cancelAutoFullScreen();
+        if (!InCallPresenter.getInstance().isFullscreen()) {
+          InCallPresenter.getInstance().setFullScreen(true);
+        }
+        InCallZoomController.getInstance().onPreviewSurfaceClicked(mVideoCall);
+      }
     }
   }
 
