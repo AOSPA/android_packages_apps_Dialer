@@ -439,6 +439,27 @@ public class CallCardPresenter
     return "";
   }
 
+  /**
+   * Returns the label with location for Active Call except conference call and
+   * calling from the saved contact.
+   */
+  private String getLabelWithLocation() {
+    String name = getNameForCall(mPrimaryContactInfo);
+    boolean nameIsNumber = name != null && !name.equals(mPrimaryContactInfo.number);
+    String primaryLocation = getPrimaryInfoLocation(mPrimaryContactInfo);
+    String label = getConnectionLabel();
+
+    if (!(nameIsNumber || mPrimary.isConferenceCall()) && isPrimaryCallActive()) {
+      label += "  ";
+      if (mPrimary.isEmergencyCall()) {
+        label += mPrimary.getNumber();
+      } else {
+        label += primaryLocation;
+      }
+    }
+    return label;
+  }
+
   private void updatePrimaryCallState() {
     if (getUi() != null && mPrimary != null) {
       boolean isWorkCall =
@@ -454,7 +475,7 @@ public class CallCardPresenter
 
       boolean isBusiness = mPrimaryContactInfo != null && mPrimaryContactInfo.isBusiness;
 
-      String primaryLocation = getPrimaryInfoLocation(mPrimaryContactInfo);
+      String label = getLabelWithLocation();
 
       // Check for video state change and update the visibility of the contact photo.  The contact
       // photo is hidden when the incoming video surface is shown.
@@ -468,9 +489,7 @@ public class CallCardPresenter
                   mPrimary.isVideoCall(),
                   mPrimary.getVideoTech().getSessionModificationState(),
                   mPrimary.getDisconnectCause(),
-                  (getConnectionLabel() + "  " + (isPrimaryCallActive() ?
-                      (isOutgoingEmergencyCall(mPrimary) ?
-                      mPrimary.getNumber() : primaryLocation) : "")),
+                  label,
                   getCallStateIcon(),
                   getGatewayNumber(),
                   shouldShowCallSubject(mPrimary) ? mPrimary.getCallSubject() : null,
