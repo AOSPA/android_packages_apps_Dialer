@@ -91,6 +91,15 @@
 
   </LinearLayout>
 
+  <TextView android:id="@+id/conferenceCallerState"
+    android:layout_width="wrap_content"
+    android:layout_height="match_parent"
+    android:textSize="18sp"
+    android:ellipsize="marquee"
+    android:gravity="center_vertical"
+    android:textColor="@color/conference_call_manager_secondary_text_color"
+    android:singleLine="true"/>
+
   <!-- "Separate" (i.e. "go private") button for this caller -->
   <ImageView
     android:id="@+id/conferenceCallerSeparate"

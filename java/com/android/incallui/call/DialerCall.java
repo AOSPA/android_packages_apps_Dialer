@@ -658,6 +658,10 @@ public class DialerCall implements VideoTechListener {
     }
   }
 
+  public int getActualState() {
+      return mState;
+  }
+
   public void setState(int state) {
     mState = state;
     if (mState == State.INCOMING) {
