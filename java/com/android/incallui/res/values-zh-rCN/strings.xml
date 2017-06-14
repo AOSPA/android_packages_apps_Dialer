@@ -141,4 +141,5 @@
     <string name="volume_boost_notify_enabled">"开启音量增强"</string>
     <string name="volume_boost_notify_disabled">"关闭音量增强"</string>
     <string name="volume_boost_notify_unavailable">"有线/蓝牙耳机连接时，音效增强不可用。"</string>
+    <string name="too_many_recipients">4G会议电话的参与人数上限为6人。</string>
 </resources>

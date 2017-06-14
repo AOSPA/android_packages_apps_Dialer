@@ -361,4 +361,5 @@
   </string>
   <string name="video_call_lte_to_wifi_failed_do_not_show">Do not show this again</string>
 
+  <string name="too_many_recipients">The maximum allowed participants in a 4G conference call are 6.</string>
 </resources>
