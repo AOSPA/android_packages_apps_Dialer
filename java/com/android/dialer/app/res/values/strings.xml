@@ -436,6 +436,12 @@
   <!-- String resource for the font-family to use for the full call history footer -->
   <string name="view_full_call_history_font_family" translatable="false">sans-serif</string>
 
+  <!-- Text displayed when the list of incoming calls is empty -->
+  <string name="recentIncoming_empty">You have no incoming calls.</string>
+
+  <!-- Text displayed when the list of outgoing calls is empty -->
+  <string name="recentOutgoing_empty">You have no outgoing calls.</string>
+
   <!-- Text displayed when the call log is empty. -->
   <string name="call_log_all_empty">Your call history is empty</string>
 
@@ -900,5 +906,9 @@
 
   <!-- Label for setting that shows more information about the Phone app [CHAR LIMIT=30] -->
   <string name="about_phone_label">About</string>
+
+  <string name="call_log_show_all_slots">All SIMs</string>
+
+  <string name="call_log_all_calls_header">All calls</string>
 
 </resources>

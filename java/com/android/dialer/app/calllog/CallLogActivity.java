@@ -17,6 +17,7 @@ package com.android.dialer.app.calllog;
 
 import android.app.Fragment;
 import android.app.FragmentManager;
+import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
 import android.provider.CallLog;
@@ -24,10 +25,12 @@ import android.provider.CallLog.Calls;
 import android.support.v13.app.FragmentPagerAdapter;
 import android.support.v4.view.ViewPager;
 import android.support.v7.app.ActionBar;
+import android.telephony.TelephonyManager;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.ViewGroup;
+import com.android.contacts.common.compat.TelephonyManagerCompat;
 import com.android.contacts.common.list.ViewPagerTabs;
 import com.android.dialer.app.DialtactsActivity;
 import com.android.dialer.app.R;
@@ -44,11 +47,15 @@ public class CallLogActivity extends TransactionSafeActivity
   private static final int TAB_INDEX_ALL = 0;
   private static final int TAB_INDEX_MISSED = 1;
   private static final int TAB_INDEX_COUNT = 2;
+
+  private static final int TAB_INDEX_MSIM = 0;
+  private static final int TAB_INDEX_COUNT_MSIM = 1;
   private ViewPager mViewPager;
   private ViewPagerTabs mViewPagerTabs;
-  private ViewPagerAdapter mViewPagerAdapter;
+  private FragmentPagerAdapter mViewPagerAdapter;
   private CallLogFragment mAllCallsFragment;
   private CallLogFragment mMissedCallsFragment;
+  private MSimCallLogFragment mMSimCallsFragment;
   private String[] mTabTitles;
   private boolean mIsResumed;
 
@@ -56,14 +63,20 @@ public class CallLogActivity extends TransactionSafeActivity
   protected void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
 
-    setContentView(R.layout.call_log_activity);
-    getWindow().setBackgroundDrawable(null);
-
     final ActionBar actionBar = getSupportActionBar();
     actionBar.setDisplayShowHomeEnabled(true);
     actionBar.setDisplayHomeAsUpEnabled(true);
     actionBar.setDisplayShowTitleEnabled(true);
     actionBar.setElevation(0);
+    TelephonyManager telephonyManager = (TelephonyManager)
+        getSystemService(Context.TELEPHONY_SERVICE);
+    if (TelephonyManagerCompat.getPhoneCount(telephonyManager) > 1) {
+      initMSimCallLog();
+      return;
+    }
+
+    setContentView(R.layout.call_log_activity);
+    getWindow().setBackgroundDrawable(null);
 
     int startingTab = TAB_INDEX_ALL;
     final Intent intent = getIntent();
@@ -114,6 +127,11 @@ public class CallLogActivity extends TransactionSafeActivity
   @Override
   public boolean onPrepareOptionsMenu(Menu menu) {
     final MenuItem itemDeleteAll = menu.findItem(R.id.delete_all);
+    if (mMSimCallsFragment != null && itemDeleteAll != null) {
+      final CallLogAdapter adapter = mMSimCallsFragment.getAdapter();
+      itemDeleteAll.setVisible(adapter != null && !adapter.isEmpty());
+    }
+
     if (mAllCallsFragment != null && itemDeleteAll != null) {
       // If onPrepareOptionsMenu is called before fragments are loaded, don't do anything.
       final CallLogAdapter adapter = mAllCallsFragment.getAdapter();
@@ -169,6 +187,34 @@ public class CallLogActivity extends TransactionSafeActivity
     return position;
   }
 
+  private void initMSimCallLog() {
+    setContentView(R.layout.call_log_activity);
+    getWindow().setBackgroundDrawable(null);
+
+    int startingTab = TAB_INDEX_MSIM;
+    final Intent intent = getIntent();
+    mTabTitles = new String[TAB_INDEX_COUNT_MSIM];
+    if (intent != null) {
+      final int callType = intent.getIntExtra(CallLog.Calls.EXTRA_CALL_TYPE_FILTER, -1);
+      if (callType == CallLog.Calls.MISSED_TYPE) {
+        mMSimCallsFragment.setFilterType(Calls.MISSED_TYPE);
+        mTabTitles[0] = getString(R.string.call_log_missed_title);
+      }
+    }
+
+    mViewPager = (ViewPager) findViewById(R.id.call_log_pager);
+
+    mViewPagerAdapter = new MSimViewPagerAdapter(getFragmentManager());
+    mViewPager.setAdapter(mViewPagerAdapter);
+    mViewPager.setOffscreenPageLimit(1);
+    mViewPager.setOnPageChangeListener(this);
+
+    mViewPagerTabs = (ViewPagerTabs) findViewById(R.id.viewpager_header);
+
+    mViewPagerTabs.setViewPager(mViewPager);
+    mViewPager.setCurrentItem(startingTab);
+  }
+
   /** Adapter for the view pager. */
   public class ViewPagerAdapter extends FragmentPagerAdapter {
 
@@ -215,6 +261,45 @@ public class CallLogActivity extends TransactionSafeActivity
     @Override
     public int getCount() {
       return TAB_INDEX_COUNT;
+    }
+  }
+
+  public class MSimViewPagerAdapter extends FragmentPagerAdapter {
+    public MSimViewPagerAdapter(FragmentManager fm) {
+      super(fm);
+    }
+
+    @Override
+    public Fragment getItem(int position) {
+      switch (position) {
+        case TAB_INDEX_MSIM:
+          mMSimCallsFragment = new MSimCallLogFragment(
+          CallLogQueryHandler.CALL_TYPE_ALL, true);
+          return mMSimCallsFragment;
+        }
+      throw new IllegalStateException("No fragment at position " + position);
+    }
+
+    @Override
+    public Object instantiateItem(ViewGroup container, int position) {
+      final MSimCallLogFragment fragment =
+          (MSimCallLogFragment) super.instantiateItem(container, position);
+        switch (position) {
+          case TAB_INDEX_MSIM:
+            mMSimCallsFragment = fragment;
+            break;
+        }
+      return fragment;
+    }
+
+    @Override
+    public CharSequence getPageTitle(int position) {
+      return mTabTitles[position];
+    }
+
+    @Override
+    public int getCount() {
+      return TAB_INDEX_COUNT_MSIM;
     }
   }
 }

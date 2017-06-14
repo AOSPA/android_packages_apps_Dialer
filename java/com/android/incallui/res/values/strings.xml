@@ -248,6 +248,9 @@
     <item>ABSENTNUMBER</item>
   </string-array>
 
+  <string name="volume_boost_notify_enabled">"Volume boost ON."</string>
+  <string name="volume_boost_notify_disabled">"Volume boost OFF."</string>
+  <string name="volume_boost_notify_unavailable">"Extra volume is not available when Wired/Bluetooth headset is used."</string>
   <!-- Title displayed above settings coming after voicemail in the call features screen -->
   <string name="other_settings">Other call settings</string>
 

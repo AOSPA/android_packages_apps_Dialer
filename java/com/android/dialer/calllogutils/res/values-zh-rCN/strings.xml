@@ -27,6 +27,9 @@
     <string name="type_outgoing_video" msgid="309370072333983910">"拨出的视频通话"</string>
     <string name="type_outgoing_video_pulled" msgid="3924450629684331345">"已转接至其他设备的外拨视频通话"</string>
     <string name="type_missed_video" msgid="4350107016317603785">"错过的视频通话"</string>
+    <string name="type_incoming_volte">4G语音通话来电</string>
+    <string name="type_outgoing_volte">外拨4G语音通话</string>
+    <string name="type_missed_volte">未接4G语音通话</string>
     <string name="type_voicemail" msgid="1877524395253846684">"语音邮件"</string>
     <string name="type_rejected" msgid="5632107438472996198">"拒接的来电"</string>
     <string name="type_blocked" msgid="9177237294052244929">"屏蔽的来电"</string>

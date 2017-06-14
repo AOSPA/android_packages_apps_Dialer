@@ -16,6 +16,7 @@
 
 package com.android.incallui.video.impl;
 
+import android.app.Activity;
 import android.Manifest.permission;
 import android.content.Context;
 import android.content.pm.PackageManager;
@@ -49,6 +50,8 @@ import android.view.ViewGroup;
 import android.view.ViewGroup.MarginLayoutParams;
 import android.view.ViewOutlineProvider;
 import android.view.ViewTreeObserver;
+import android.view.Window;
+import android.view.WindowManager;
 import android.view.accessibility.AccessibilityEvent;
 import android.view.animation.AccelerateDecelerateInterpolator;
 import android.view.animation.Interpolator;
@@ -136,6 +139,7 @@ public class VideoCallFragment extends Fragment
   private CheckableImageButton holdButton;
   private ImageButton swapCameraButton;
   private ImageButton addCallButton;
+  private ImageButton mergeCallButton;
   private View switchOnHoldButton;
   private View onHoldContainer;
   private SwitchOnHoldCallController switchOnHoldCallController;
@@ -242,6 +246,8 @@ public class VideoCallFragment extends Fragment
             ActivityCompat.isInMultiWindowMode(getActivity()) ? View.GONE : View.VISIBLE);
     addCallButton = (ImageButton) view.findViewById(R.id.videocall_add_call);
     addCallButton.setOnClickListener(this);
+    mergeCallButton = (ImageButton) view.findViewById(R.id.videocall_merge_call);
+    mergeCallButton.setOnClickListener(this);
     switchOnHoldButton = view.findViewById(R.id.videocall_switch_on_hold);
     onHoldContainer = view.findViewById(R.id.videocall_on_hold_banner);
     remoteVideoOff = (TextView) view.findViewById(R.id.videocall_remote_video_off);
@@ -661,6 +667,9 @@ public class VideoCallFragment extends Fragment
       LogUtil.i("VideoCallFragment.onClick", "add call button clicked");
       inCallButtonUiDelegate.addCallClicked();
       videoCallScreenDelegate.resetAutoFullscreenTimer();
+    } else if (v == mergeCallButton) {
+      inCallButtonUiDelegate.mergeClicked();
+      videoCallScreenDelegate.resetAutoFullscreenTimer();
     } else if (moreOptionsMenuButton == v) {
       LogUtil.i("VideoCallFragment.onClick", "more button clicked");
       BottomSheetHelper.getInstance()
@@ -714,7 +723,7 @@ public class VideoCallFragment extends Fragment
 
     videoCallScreenDelegate.getLocalVideoSurfaceTexture().attachToTextureView(previewTextureView);
     videoCallScreenDelegate.getRemoteVideoSurfaceTexture().attachToTextureView(remoteTextureView);
-
+    enableScreenTimeout(!(shouldShowPreview || shouldShowRemote));
     updateVideoOffViews();
     updateRemoteVideoScaling();
   }
@@ -828,7 +837,9 @@ public class VideoCallFragment extends Fragment
     } else if (buttonId == InCallButtonIds.BUTTON_SWITCH_CAMERA) {
       swapCameraButton.setEnabled(show);
     } else if (buttonId == InCallButtonIds.BUTTON_ADD_CALL) {
-      addCallButton.setEnabled(show);
+      addCallButton.setVisibility(show ? View.VISIBLE : View.GONE);
+    } else if (buttonId == InCallButtonIds.BUTTON_MERGE) {
+      mergeCallButton.setVisibility(show ? View.VISIBLE : View.GONE);
     } else if (buttonId == InCallButtonIds.BUTTON_HOLD) {
       holdButton.setVisibility(show ? View.VISIBLE : View.GONE);
     }
@@ -852,8 +863,6 @@ public class VideoCallFragment extends Fragment
       cameraOffButton.setEnabled(enable);
     } else if (buttonId == InCallButtonIds.BUTTON_SWITCH_TO_SECONDARY) {
       switchOnHoldCallController.setEnabled(enable);
-    } else if (buttonId == InCallButtonIds.BUTTON_ADD_CALL) {
-      addCallButton.setEnabled(enable);
     }
   }
 
@@ -867,7 +876,6 @@ public class VideoCallFragment extends Fragment
     muteButton.setEnabled(enabled);
     cameraOffButton.setEnabled(enabled);
     switchOnHoldCallController.setEnabled(enabled);
-    addCallButton.setEnabled(enabled);
   }
 
   @Override
@@ -972,7 +980,7 @@ public class VideoCallFragment extends Fragment
   @Override
   public boolean isManageConferenceVisible() {
     LogUtil.i("VideoCallFragment.isManageConferenceVisible", null);
-    return false;
+    return BottomSheetHelper.getInstance().isManageConferenceVisible();
   }
 
   @Override
@@ -983,6 +991,16 @@ public class VideoCallFragment extends Fragment
   @Override
   public void showNoteSentToast() {
     LogUtil.i("VideoCallFragment.showNoteSentToast", null);
+  }
+
+  @Override
+  public void showVbButton(boolean show) {
+    LogUtil.i("VideoCallFragment.showNVbButton", null);
+  }
+
+  @Override
+  public void updateVbByAudioMode(CallAudioState audioState) {
+    LogUtil.i("VideoCallFragment.updateVbByAudioMode", null);
   }
 
   @Override
@@ -1317,6 +1335,25 @@ public class VideoCallFragment extends Fragment
         CameraPermissionDialogFragment.newInstance()
             .show(getChildFragmentManager(), CAMERA_PERMISSION_DIALOG_FRAMENT_TAG);
       }
+    }
+  }
+
+  private void enableScreenTimeout(boolean enable) {
+    LogUtil.v("VideoCallFragment.enableScreenTimeout","value=" + enable);
+    final Activity activity = getActivity();
+    if (activity == null) {
+      LogUtil.e("VideoCallFragment.enableScreenTimeout","Activity is null.");
+      return;
+    }
+    final Window window = activity.getWindow();
+    if (window == null) {
+      LogUtil.e("VideoCallFragment.enableScreenTimeout","window is null");
+      return;
+    }
+    if (enable) {
+      window.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+    } else {
+      window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
     }
   }
 }

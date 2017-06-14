@@ -311,6 +311,7 @@ public class CallButtonPresenter
               : CameraDirection.CAMERA_DIRECTION_BACK_FACING;
       mCall.setCameraDir(cameraDir);
       mCall.getVideoTech().setCamera(cameraId);
+      InCallZoomController.getInstance().onCameraEnabled(cameraId);
     }
   }
 
@@ -398,7 +399,8 @@ public class CallButtonPresenter
     final boolean isCallOnHold = call.getState() == DialerCall.State.ONHOLD;
 
     final boolean showAddCall =
-        TelecomAdapter.getInstance().canAddCall() && UserManagerCompat.isUserUnlocked(mContext);
+        TelecomAdapter.getInstance().canAddCall() && UserManagerCompat.isUserUnlocked(mContext)
+            && !call.hasSentVideoUpgradeRequest();
     final boolean showMerge = call.can(android.telecom.Call.Details.CAPABILITY_MERGE_CONFERENCE);
     final boolean showUpgradeToVideo = !isVideo && (hasVideoCallCapabilities(call));
     final boolean showDowngradeToAudio = isVideo && isDowngradeToAudioSupported(call);
@@ -417,7 +419,7 @@ public class CallButtonPresenter
     mInCallButtonUi.showButton(InCallButtonIds.BUTTON_HOLD, showHold);
     mInCallButtonUi.setHold(isCallOnHold);
     mInCallButtonUi.showButton(InCallButtonIds.BUTTON_MUTE, showMute);
-    mInCallButtonUi.showButton(InCallButtonIds.BUTTON_ADD_CALL, true);
+    mInCallButtonUi.showButton(InCallButtonIds.BUTTON_ADD_CALL, showAddCall);
     mInCallButtonUi.enableButton(InCallButtonIds.BUTTON_ADD_CALL, showAddCall);
     mInCallButtonUi.showButton(InCallButtonIds.BUTTON_UPGRADE_TO_VIDEO, showUpgradeToVideo);
     mInCallButtonUi.showButton(InCallButtonIds.BUTTON_DOWNGRADE_TO_AUDIO, showDowngradeToAudio);

@@ -415,7 +415,7 @@ public class InCallActivity extends TransactionSafeFragmentActivity
     }
   }
 
-  private void enableInCallOrientationEventListener(boolean enable) {
+  public void enableInCallOrientationEventListener(boolean enable) {
     common.enableInCallOrientationEventListener(enable);
   }
 
@@ -494,6 +494,10 @@ public class InCallActivity extends TransactionSafeFragmentActivity
   }
 
   public void setAllowOrientationChange(boolean allowOrientationChange) {
+    if (!OrientationModeHandler.getInstance().isOrientationDynamic()) {
+      return;
+    }
+
     if (!allowOrientationChange) {
       setRequestedOrientation(InCallOrientationEventListener.ACTIVITY_PREFERENCE_DISALLOW_ROTATION);
     } else {
@@ -758,7 +762,7 @@ public class InCallActivity extends TransactionSafeFragmentActivity
     return (AnswerScreen) getSupportFragmentManager().findFragmentByTag(TAG_ANSWER_SCREEN);
   }
 
-  InCallScreen getInCallScreen() {
+  public InCallScreen getInCallScreen() {
     return (InCallScreen) getSupportFragmentManager().findFragmentByTag(TAG_IN_CALL_SCREEN);
   }
 
