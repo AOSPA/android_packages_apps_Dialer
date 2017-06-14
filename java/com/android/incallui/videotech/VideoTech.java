@@ -17,6 +17,7 @@
 package com.android.incallui.videotech;
 
 import android.content.Context;
+import android.telecom.InCallService.VideoCall;
 import com.android.incallui.video.protocol.VideoCallScreen;
 import com.android.incallui.video.protocol.VideoCallScreenDelegate;
 import com.android.incallui.videotech.utils.SessionModificationState;
@@ -65,6 +66,8 @@ public interface VideoTech {
   void setCamera(String cameraId);
 
   void setDeviceOrientation(int rotation);
+
+  VideoCall getVideoCall();
 
   /** Listener for video call events. */
   interface VideoTechListener {

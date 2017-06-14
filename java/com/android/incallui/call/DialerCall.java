@@ -779,7 +779,7 @@ public class DialerCall implements VideoTechListener {
 
   /** @return The {@link VideoCall} instance associated with the {@link Call}. */
   public VideoCall getVideoCall() {
-    return mTelecomCall == null ? null : mTelecomCall.getVideoCall();
+    return getVideoTech().getVideoCall();
   }
 
   public List<String> getChildCallIds() {

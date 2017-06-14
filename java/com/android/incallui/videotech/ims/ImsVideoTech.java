@@ -20,6 +20,7 @@ import android.content.Context;
 import android.os.Build;
 import android.telecom.Call;
 import android.telecom.Call.Details;
+import android.telecom.InCallService.VideoCall;
 import android.telecom.VideoProfile;
 import com.android.dialer.common.Assert;
 import com.android.dialer.common.LogUtil;
@@ -40,6 +41,7 @@ public class ImsVideoTech implements VideoTech {
       SessionModificationState.NO_REQUEST;
   private int previousVideoState = VideoProfile.STATE_AUDIO_ONLY;
   private boolean paused = false;
+  private VideoCall mRegisteredVideoCall;
 
   public ImsVideoTech(LoggingBindings logger, VideoTechListener listener, Call call) {
     this.logger = logger;
@@ -86,6 +88,12 @@ public class ImsVideoTech implements VideoTech {
   }
 
   @Override
+  public VideoCall getVideoCall() {
+      return call == null || (mRegisteredVideoCall != call.getVideoCall()) ? null
+        : call.getVideoCall();
+  }
+
+  @Override
   public void onCallStateChanged(Context context, int newState) {
     if (!isAvailable(context)) {
       return;
@@ -93,8 +101,9 @@ public class ImsVideoTech implements VideoTech {
 
     if (callback == null) {
       callback = new ImsVideoCallCallback(logger, call, this, listener);
-      call.getVideoCall().registerCallback(callback);
     }
+    call.getVideoCall().registerCallback(callback);
+    mRegisteredVideoCall = call.getVideoCall();
 
     if (getSessionModificationState()
             == SessionModificationState.WAITING_FOR_UPGRADE_TO_VIDEO_RESPONSE
