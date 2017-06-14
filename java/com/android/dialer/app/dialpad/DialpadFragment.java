@@ -89,6 +89,7 @@ import com.android.dialer.telecom.TelecomUtil;
 import com.android.dialer.util.CallUtil;
 import com.android.dialer.util.DialerUtils;
 import com.android.dialer.util.PermissionsUtil;
+import com.android.incallui.QtiCallUtils;
 import java.util.HashSet;
 import java.util.List;
 
@@ -863,6 +864,10 @@ public class DialpadFragment extends Fragment
           public void show() {
             final Menu menu = getMenu();
 
+            final MenuItem conferDialerOption
+                    = menu.findItem(R.id.menu_add_to_4g_conference_call);
+            conferDialerOption.setVisible(QtiCallUtils.isConferenceDialerEnabled(getActivity()));
+
             boolean enable = !isDigitsEmpty();
             for (int i = 0; i < menu.size(); i++) {
               MenuItem item = menu.getItem(i);
@@ -1269,6 +1274,10 @@ public class DialpadFragment extends Fragment
     } else if (resId == R.id.menu_call_with_note) {
       CallSubjectDialog.start(getActivity(), mDigits.getText().toString());
       hideAndClearDialpad(false);
+      return true;
+    } else if (resId == R.id.menu_add_to_4g_conference_call) {
+      getActivity().startActivity(QtiCallUtils.getConferenceDialerIntent(
+          mDigits.getText().toString()));
       return true;
     } else {
       return false;

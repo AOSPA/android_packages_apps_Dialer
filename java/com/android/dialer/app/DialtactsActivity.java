@@ -713,7 +713,11 @@ public class DialtactsActivity extends TransactionSafeActivity
       return true;
     } else if (resId == R.id.menu_4g_conference_call) {
       try {
-        startActivity(QtiCallUtils.getConferenceDialerIntent());
+        if (QtiCallUtils.isConferenceDialerEnabled(getApplicationContext())) {
+          startActivity(QtiCallUtils.getConferenceDialerIntent(null));
+        } else {
+          startActivity(QtiCallUtils.getConferenceDialerIntent());
+        }
       } catch (ActivityNotFoundException e) {
         LogUtil.e("DialtactsActivity.onMenuItemClick", "Activity not found. " + e);
       } finally {

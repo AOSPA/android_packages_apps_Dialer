@@ -50,6 +50,8 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 
+import org.codeaurora.ims.utils.QtiImsExtUtils;
+
 /** Adapter for a ListView containing conference call participant information. */
 public class ConferenceParticipantListAdapter extends BaseAdapter {
 
@@ -245,13 +247,41 @@ public class ConferenceParticipantListAdapter extends BaseAdapter {
         contactCache.lookupKey,
         contactCache.displayPhotoUri,
         thisRowCanSeparate,
-        thisRowCanDisconnect);
+        thisRowCanDisconnect,
+        getResourceforState(call.getActualState()));
 
     // Tag the row in the conference participant list with the call id to make it easier to
     // find calls when contact cache information is loaded.
     result.setTag(call.getId());
 
     return result;
+  }
+
+  private static int getResourceforState(int state){
+      int res;
+      switch (state){
+          case DialerCall.State.ACTIVE:
+              res = R.string.call_state_active;
+              break;
+          case DialerCall.State.NEW:
+          case DialerCall.State.IDLE:
+          case DialerCall.State.DIALING:
+          case DialerCall.State.REDIALING:
+              res = R.string.call_state_dialing;
+              break;
+          case DialerCall.State.ONHOLD:
+              res = R.string.call_state_holding;
+              break;
+          case DialerCall.State.DISCONNECTING:
+              res = R.string.call_state_disconnecting;
+              break;
+          case DialerCall.State.DISCONNECTED:
+              res = R.string.call_state_disconnected;
+              break;
+          default:
+              res = R.string.call_state_unknown;
+      }
+      return res;
   }
 
   /**
@@ -290,7 +320,8 @@ public class ConferenceParticipantListAdapter extends BaseAdapter {
       String lookupKey,
       Uri photoUri,
       boolean thisRowCanSeparate,
-      boolean thisRowCanDisconnect) {
+      boolean thisRowCanDisconnect,
+      int state) {
 
     final ImageView photoView = (ImageView) view.findViewById(R.id.callerPhoto);
     final TextView nameTextView = (TextView) view.findViewById(R.id.conferenceCallerName);
@@ -299,7 +330,11 @@ public class ConferenceParticipantListAdapter extends BaseAdapter {
         (TextView) view.findViewById(R.id.conferenceCallerNumberType);
     final View endButton = view.findViewById(R.id.conferenceCallerDisconnect);
     final View separateButton = view.findViewById(R.id.conferenceCallerSeparate);
-
+    if (QtiImsExtUtils.isCarrierConfigEnabled(BottomSheetHelper.getInstance().getPhoneId(),
+            getContext(), "config_conference_call_show_participant_status")) {
+        final TextView stateTextView = (TextView) view.findViewById(R.id.conferenceCallerState);
+        stateTextView.setText(state);
+    }
     endButton.setVisibility(thisRowCanDisconnect ? View.VISIBLE : View.GONE);
     if (thisRowCanDisconnect) {
       endButton.setOnClickListener(mDisconnectListener);
@@ -345,6 +380,7 @@ public class ConferenceParticipantListAdapter extends BaseAdapter {
    * @param conferenceParticipants The calls which make up the conference participants.
    */
   private void updateParticipantInfo(List<DialerCall> conferenceParticipants) {
+    Log.d(this, "updateParticipantInfo: " + conferenceParticipants);
     final ContactInfoCache cache = ContactInfoCache.getInstance(getContext());
     boolean newParticipantAdded = false;
     Set<String> newCallIds = new ArraySet<>(conferenceParticipants.size());

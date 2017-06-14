@@ -83,4 +83,11 @@
        <item>@array/deflect</item>
        <item>@array/transfer</item>
     </array>
+
+    <string name="call_state_dialing">Dialing</string>
+    <string name="call_state_holding">Holding</string>
+    <string name="call_state_active">Active</string>
+    <string name="call_state_unknown">Unknown</string>
+    <string name="call_state_disconnecting">Disconnecting</string>
+    <string name="call_state_disconnected">Disconnected</string>
 </resources>
