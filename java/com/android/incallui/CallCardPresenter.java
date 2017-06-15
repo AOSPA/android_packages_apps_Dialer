@@ -474,6 +474,8 @@ public class CallCardPresenter
               && MotorolaUtils.shouldBlinkHdIconWhenConnectingCall(mContext);
 
       boolean isBusiness = mPrimaryContactInfo != null && mPrimaryContactInfo.isBusiness;
+      boolean isConfCall = (mPrimary.isConferenceCall() || mPrimary.isIncomingConfCall())
+          && !mPrimary.hasProperty(Details.PROPERTY_GENERIC_CONFERENCE);
 
       String label = getLabelWithLocation();
 
@@ -495,8 +497,7 @@ public class CallCardPresenter
                   shouldShowCallSubject(mPrimary) ? mPrimary.getCallSubject() : null,
                   mPrimary.getCallbackNumber(),
                   mPrimary.hasProperty(Details.PROPERTY_WIFI),
-                  mPrimary.isConferenceCall()
-                      && !mPrimary.hasProperty(Details.PROPERTY_GENERIC_CONFERENCE),
+                  isConfCall,
                   isWorkCall,
                   isAttemptingHdAudioCall,
                   isHdAudioCall,
