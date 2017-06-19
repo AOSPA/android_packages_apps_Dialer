@@ -540,8 +540,7 @@ public class CallButtonPresenter extends Presenter<CallButtonPresenter.CallButto
         int callTransferCapabilities = call.isEmergencyCall()? 0 : call.getTransferCapabilities();
         boolean showAddParticipant = call.can(CAPABILITY_ADD_PARTICIPANT)
                 && UserManagerCompat.isUserUnlocked(ui.getContext());
-        if (QtiImsExtUtils.isCarrierConfigEnabled(getUi().getContext(),
-                "add_participant_only_in_conference")) {
+        if (QtiCallUtils.shallAddParticipantInConference(ui.getContext())) {
             showAddParticipant = showAddParticipant&&(call.isConferenceCall());
         }
 

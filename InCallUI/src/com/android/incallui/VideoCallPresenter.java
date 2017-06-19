@@ -1305,7 +1305,7 @@ public class VideoCallPresenter extends Presenter<VideoCallPresenter.VideoCallUi
         }
 
         mPreviewSurfaceState = PreviewSurfaceState.CAPABILITIES_RECEIVED;
-        if (QtiImsExtUtils.shallCheckSupportForHighVideoQuality(mContext) &&
+        if (QtiCallUtils.shallCheckSupportForHighVideoQuality(mContext) &&
                 !VideoUtils.isIncomingVideoCall(call) &&
                 (mNegotiatedHeight != height || mNegotiatedWidth != width)) {
             mNegotiatedHeight = height;
@@ -1868,7 +1868,7 @@ public class VideoCallPresenter extends Presenter<VideoCallPresenter.VideoCallUi
      */
     private boolean shallHidePreview(boolean isConf, int videoState) {
         return VideoProfile.isBidirectional(videoState) && isConf
-                && QtiImsExtUtils.shallHidePreviewInVtConference(mContext);
+                && QtiCallUtils.shallHidePreviewInVtConference(mContext);
     }
 
     private boolean isConfCall() {
