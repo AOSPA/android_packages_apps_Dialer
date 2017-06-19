@@ -444,17 +444,20 @@ public class CallCardPresenter
    * calling from the saved contact.
    */
   private String getLabelWithLocation() {
-    String name = getNameForCall(mPrimaryContactInfo);
-    boolean nameIsNumber = name != null && !name.equals(mPrimaryContactInfo.number);
-    String primaryLocation = getPrimaryInfoLocation(mPrimaryContactInfo);
     String label = getConnectionLabel();
-
-    if (!(nameIsNumber || mPrimary.isConferenceCall()) && isPrimaryCallActive()) {
-      label += "  ";
-      if (mPrimary.isEmergencyCall()) {
-        label += mPrimary.getNumber();
-      } else {
-        label += primaryLocation;
+    if (mPrimaryContactInfo != null) {
+      String name = getNameForCall(mPrimaryContactInfo);
+      String primaryLocation = getPrimaryInfoLocation(mPrimaryContactInfo);
+      boolean nameIsNumber = name != null && !name.equals(mPrimaryContactInfo.number);
+      boolean isConferenceCall = mPrimary != null && mPrimary.isConferenceCall();
+      boolean isEmergencyCall =  mPrimary != null && mPrimary.isEmergencyCall();
+      if (!(nameIsNumber || isConferenceCall) && isPrimaryCallActive()) {
+        label += "  ";
+        if (isEmergencyCall) {
+          label += mPrimary.getNumber();
+        } else {
+          label += primaryLocation;
+        }
       }
     }
     return label;
