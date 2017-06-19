@@ -207,7 +207,7 @@ public class VideoCallPresenter
       sShallTransmitStaticImage = sUseDefaultImage = mIsInBackground;
     }
 
-    if (!isVideoCall(mPrimaryCall)) {
+    if (!isVideoCall(mPrimaryCall) && !isVideoUpgrade(mPrimaryCall)) {
       LogUtil.w("VideoCallPresenter.onUiShowing", " received for voice call");
       return;
     }
