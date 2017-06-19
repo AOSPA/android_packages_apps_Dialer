@@ -589,6 +589,13 @@ public class BottomSheetHelper implements InCallPresenter.InCallEventListener {
         return;
       }
 
+      if (isTtyEnabled(inCallActivity)) {
+        LogUtil.w("BottomSheetHelper.displayModifyCallOptions",
+            "modify call is allowed only when TTY is off.");
+        QtiCallUtils.displayToast(inCallActivity, R.string.video_call_not_allowed_if_tty_enabled);
+        return;
+      }
+
       final ArrayList<CharSequence> items = new ArrayList<CharSequence>();
       final ArrayList<Integer> itemToCallType = new ArrayList<Integer>();
 
@@ -650,5 +657,20 @@ public class BottomSheetHelper implements InCallPresenter.InCallEventListener {
       if (isFullscreenMode) {
         dismissBottomSheet();
       }
+    }
+
+     /**
+     * Returns true if TTY mode is enabled, false otherwise
+     */
+    private static boolean isTtyEnabled(final Context context) {
+      if (context == null) {
+        LogUtil.w("BottomSheetHelper.isTtyEnabled", "Context is null...");
+        return false;
+      }
+
+      final int TTY_MODE_OFF = 0;
+      final String PREFERRED_TTY_MODE = "preferred_tty_mode";
+      return (android.provider.Settings.Secure.getInt(context.getContentResolver(),
+          PREFERRED_TTY_MODE, TTY_MODE_OFF) != TTY_MODE_OFF);
     }
 }

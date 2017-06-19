@@ -37,6 +37,7 @@ import android.os.RemoteException;
 import android.provider.Settings;
 import android.telecom.VideoProfile;
 import android.telephony.TelephonyManager;
+import android.widget.Toast;
 
 import com.android.dialer.common.LogUtil;
 
@@ -289,11 +290,25 @@ public class QtiCallUtils {
                 && call.can(android.telecom.Call.Details.CAPABILITY_SUPPORTS_VT_REMOTE_TX);
     }
 
-     /**
-      * Returns true if both voice and video capabilities (see above) are set
-      */
-     public static boolean hasVoiceOrVideoCapabilities(DialerCall call) {
-         return hasVoiceCapabilities(call) || hasTransmitVideoCapabilities(call)
-                 || hasReceiveVideoCapabilities(call);
-     }
+    /**
+     * Returns true if both voice and video capabilities (see above) are set
+     */
+    public static boolean hasVoiceOrVideoCapabilities(DialerCall call) {
+        return hasVoiceCapabilities(call) || hasTransmitVideoCapabilities(call)
+                || hasReceiveVideoCapabilities(call);
+    }
+
+    /**
+     * Displays the string corresponding to the resourceId as a Toast on the UI
+     */
+    public static void displayToast(Context context, int resourceId) {
+      displayToast(context, context.getResources().getString(resourceId));
+    }
+
+    /**
+     * Displays the message as a Toast on the UI
+     */
+    public static void displayToast(Context context, String msg) {
+      Toast.makeText(context, msg, Toast.LENGTH_SHORT).show();
+    }
 }
