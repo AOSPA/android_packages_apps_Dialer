@@ -40,6 +40,7 @@ import android.content.res.Resources;
 import android.app.AlertDialog;
 import android.content.DialogInterface;
 import android.os.IBinder;
+import android.os.PersistableBundle;
 import android.os.RemoteException;
 import android.content.pm.ActivityInfo;
 import android.telecom.InCallService.VideoCall;
@@ -53,6 +54,7 @@ import java.util.HashMap;
 
 import org.codeaurora.internal.IExtTelephony;
 import org.codeaurora.ims.QtiCallConstants;
+import org.codeaurora.ims.QtiCarrierConfigs;
 import org.codeaurora.ims.utils.QtiImsExtUtils;
 
 /**
@@ -75,6 +77,11 @@ public class QtiCallUtils {
     private static String mEditNumberCallId;
     private static int mRequestedVideoState = -1;
 
+    private static IExtTelephony mIExtTelephony = null;
+    private static Method sGetPhoneId = null;
+    private static Method sGetSubId = null;
+    private static final CarrierConfigCache sCarrierConfigCache = new CarrierConfigCache();
+
     static {
         VIDEO_QUALITY_TABLE.put(new Size(320,240), VideoProfile.QUALITY_LOW);
         VIDEO_QUALITY_TABLE.put(new Size(240,320), VideoProfile.QUALITY_LOW);
@@ -88,10 +95,47 @@ public class QtiCallUtils {
         VIDEO_QUALITY_TABLE.put(new Size(1280,720), VideoProfile.QUALITY_HIGH);
     }
 
+    private static final class CarrierConfigCache {
+        private  PersistableBundle mBackup = null;
+
+        private PersistableBundle loadConfig(Context context) {
+            start(context);
+            return mBackup;
+        }
+
+        public boolean getValue(Context context, String key) {
+            PersistableBundle values = loadConfig(context);
+            if (values != null && key != null) {
+                return values.getBoolean(key, false);
+            }
+            return false;
+        }
+
+        public void start(Context context) {
+            if (mBackup == null) {
+                mBackup = QtiImsExtUtils.getConfigForDefaultImsPhoneId(context);
+            }
+        }
+
+        public void clear() {
+            if (mBackup != null) {
+                mBackup = null;
+            }
+        }
+    }
+
     /**
      * Private constructor for QtiCallUtils as we don't want to instantiate this class
      */
     private QtiCallUtils() {
+    }
+
+    public static void startCarrierConfigCache(Context context) {
+        sCarrierConfigCache.start(context);
+    }
+
+    public static void clearCarrierConfigCache() {
+        sCarrierConfigCache.clear();
     }
 
     /**
@@ -295,7 +339,8 @@ public class QtiCallUtils {
         if (context == null) {
             Log.w(context, "Context is null...");
         }
-        return context != null && QtiImsExtUtils.useExt(context);
+        return context != null &&
+                sCarrierConfigCache.getValue(context, QtiCarrierConfigs.USE_VIDEO_UI_EXTENSIONS);
     }
 
     /**
@@ -306,14 +351,16 @@ public class QtiCallUtils {
         if (context == null) {
             Log.w(context, "Context is null...");
         }
-        return context != null && QtiImsExtUtils.useCustomVideoUi(context);
+        return context != null &&
+                sCarrierConfigCache.getValue(context, QtiCarrierConfigs.USE_CUSTOM_VIDEO_UI);
     }
 
     public static boolean shallShowStaticImageUi(Context context) {
         if (context == null) {
             Log.w(context, "Context is null...");
         }
-        return context != null && QtiImsExtUtils.shallShowStaticImageUi(context);
+        return context != null &&
+                sCarrierConfigCache.getValue(context, QtiCarrierConfigs.SHOW_STATIC_IMAGE_UI);
     }
 
     /**
@@ -324,9 +371,57 @@ public class QtiCallUtils {
         if (context == null) {
             Log.w(context, "Context is null...");
         }
-        return context != null && QtiImsExtUtils.shallTransmitStaticImage(context);
+        return context != null &&
+                sCarrierConfigCache.getValue(context, QtiCarrierConfigs.TRANSMIT_STATIC_IMAGE);
     }
 
+    public static boolean shallAddParticipantInConference(Context context) {
+        if (context == null) {
+            Log.w(context, "Context is null...");
+        }
+        return context != null &&
+                sCarrierConfigCache.getValue(context, "add_participant_only_in_conference");
+    }
+
+    public static boolean shallShowDataUsageToast(Context context) {
+        if (context == null) {
+            Log.w(context, "Context is null...");
+        }
+        return context != null &&
+                sCarrierConfigCache.getValue(context, QtiCarrierConfigs.SHOW_DATA_USAGE_TOAST);
+    }
+
+    public static boolean shallCheckSupportForHighVideoQuality(Context context) {
+        if (context == null) {
+            Log.w(context, "Context is null...");
+        }
+        return context != null && sCarrierConfigCache.getValue(context,
+                QtiCarrierConfigs.CHECK_SUPPORT_FOR_HIGH_VIDEO_QUALITY);
+    }
+
+    public static boolean shallHidePreviewInVtConference(Context context) {
+        if (context == null) {
+            Log.w(context, "Context is null...");
+        }
+        return context != null && sCarrierConfigCache.getValue(context,
+                QtiCarrierConfigs.HIDE_PREVIEW_IN_VT_CONFERENCE);
+    }
+
+    public static boolean shallShowVideoQualityToast(Context context) {
+        if (context == null) {
+            Log.w(context, "Context is null...");
+        }
+        return context != null && sCarrierConfigCache.getValue(context,
+                QtiCarrierConfigs.SHOW_VIDEO_QUALITY_TOAST);
+    }
+
+    public static boolean shallShowCallSessionEventToast(Context context) {
+        if (context == null) {
+            Log.w(context, "Context is null...");
+        }
+        return context != null && sCarrierConfigCache.getValue(context,
+                QtiCarrierConfigs.SHOW_CALL_SESSION_EVENT_TOAST);
+    }
 
     /**
      * Checks the boolean flag in config file to figure out if it support preview before the accept
@@ -397,12 +492,13 @@ public class QtiCallUtils {
      * Returns IExtTelephony handle
      */
     public static IExtTelephony getIExtTelephony() {
-        IExtTelephony mExtTelephony = null;
+        if (mIExtTelephony != null) return mIExtTelephony;
+
         try {
             Class c = Class.forName("android.os.ServiceManager");
             Method m = c.getMethod("getService",new Class[]{String.class});
 
-            mExtTelephony =
+            mIExtTelephony =
                 IExtTelephony.Stub.asInterface((IBinder)m.invoke(null, "extphone"));
         } catch (ClassNotFoundException e) {
             Log.e(LOG_TAG, " ex: " + e);
@@ -417,7 +513,7 @@ public class QtiCallUtils {
         } catch (NoSuchMethodException e) {
             Log.e(LOG_TAG, " ex: " + e);
         }
-        return mExtTelephony;
+        return mIExtTelephony;
     }
 
     /**
@@ -469,15 +565,27 @@ public class QtiCallUtils {
 
     static int getPhoneId(int subId) {
         try {
-            Class c = Class.forName("android.telephony.SubscriptionManager");
-            Method m = c.getMethod("getPhoneId",new Class[]{int.class});
-            int phoneId = (Integer)m.invoke(null, subId);
+            if (sGetPhoneId == null) {
+                Class c = Class.forName("android.telephony.SubscriptionManager");
+                sGetPhoneId = c.getMethod("getPhoneId", new Class[]{int.class});
+            }
+            int phoneId = (Integer) sGetPhoneId.invoke(null, subId);
             if (phoneId >= InCallServiceImpl.sPhoneCount || phoneId < 0) {
                 phoneId = 0;
             }
             Log.d (LOG_TAG, "phoneid:" + phoneId);
             return phoneId;
-        } catch (Exception e) {
+        } catch (ClassNotFoundException e) {
+            Log.e(LOG_TAG, " ex: " + e);
+        } catch (IllegalArgumentException e) {
+            Log.e(LOG_TAG, " ex: " + e);
+        } catch (IllegalAccessException e) {
+            Log.e(LOG_TAG, " ex: " + e);
+        } catch (InvocationTargetException e) {
+            Log.e(LOG_TAG, " ex: " + e);
+        } catch (SecurityException e) {
+            Log.e(LOG_TAG, " ex: " + e);
+        } catch (NoSuchMethodException e) {
             Log.e(LOG_TAG, " ex: " + e);
         }
         return 0;
@@ -485,16 +593,28 @@ public class QtiCallUtils {
 
     static int getSubId(int phoneId) {
         try {
-            Class c = Class.forName("android.telephony.SubscriptionManager");
-            Method m = c.getMethod("getSubId",new Class[]{int.class});
-            int subId[] = (int[])m.invoke(null, phoneId);
+            if (sGetSubId == null) {
+                Class c = Class.forName("android.telephony.SubscriptionManager");
+                sGetSubId = c.getMethod("getSubId", new Class[]{int.class});
+            }
+            int subId[] = (int[]) sGetSubId.invoke(null, phoneId);
             Log.d (LOG_TAG, "getSubId:" + subId[0]);
             if (subId != null && subId.length > 0) {
                 return subId[0];
             } else {
                 Log.e(LOG_TAG, "subId not valid: " + subId);
             }
-        } catch (Exception e) {
+        } catch (ClassNotFoundException e) {
+            Log.e(LOG_TAG, " ex: " + e);
+        } catch (IllegalArgumentException e) {
+            Log.e(LOG_TAG, " ex: " + e);
+        } catch (IllegalAccessException e) {
+            Log.e(LOG_TAG, " ex: " + e);
+        } catch (InvocationTargetException e) {
+            Log.e(LOG_TAG, " ex: " + e);
+        } catch (SecurityException e) {
+            Log.e(LOG_TAG, " ex: " + e);
+        } catch (NoSuchMethodException e) {
             Log.e(LOG_TAG, " ex: " + e);
         }
         return SubscriptionManager.INVALID_SUBSCRIPTION_ID;
@@ -514,12 +634,8 @@ public class QtiCallUtils {
 
     static int getPhoneCount(Context context) {
         TelephonyManager tm = null;
-        try {
-            Class c = Class.forName("android.telephony.TelephonyManager");
-            Method m = c.getMethod("from",new Class[]{Context.class});
-            tm = (TelephonyManager)m.invoke(null, context);
-        } catch (Exception e) {
-            Log.e(LOG_TAG, " ex: " + e);
+        if (context != null) {
+            tm = (TelephonyManager) context.getSystemService(Context.TELEPHONY_SERVICE);
         }
         if (tm != null) {
             return tm.getPhoneCount();
