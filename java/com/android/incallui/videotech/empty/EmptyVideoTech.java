@@ -65,10 +65,21 @@ public class EmptyVideoTech implements VideoTech {
   public void upgradeToVideo() {}
 
   @Override
+  public void upgradeToVideo(int videoState) {}
+
+  @Override
+  public int getRequestedVideoState() {
+    return -1;
+  }
+
+  @Override
   public void acceptVideoRequest() {}
 
   @Override
   public void acceptVideoRequestAsAudio() {}
+
+  @Override
+  public void acceptVideoRequest(int videoState) {}
 
   @Override
   public void declineVideoRequest() {}

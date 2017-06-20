@@ -51,6 +51,13 @@
     <!-- Text for the onscreen "consultative transfer" button -->
     <string name="qti_ims_onscreenConsultativeTransfer">Consultative Transfer</string>
 
+
+    <string name="video_rx_label">Video Rx</string>
+    <string name="video_tx_label">Video Tx</string>
+    <string name="modify_call_label">Modify Call</string>
+    <string name="notification_requesting_video_tx_call">"Incoming video tx request"</string>
+    <string name="notification_requesting_video_rx_call">"Incoming video rx request"</string>
+
     <!--Bottom Sheet resources.String arrays with same format should be introduced
         for each feature/option to be shown on the bottomsheet -->
     <!--
@@ -76,13 +83,38 @@
        <item>false</item>
     </string-array>
 
+    <string-array name="video_rx">
+       <item>@string/video_rx_label</item>
+       <item>false</item>
+    </string-array>
+
+    <string-array name="video_tx">
+       <item>@string/video_tx_label</item>
+       <item>false</item>
+    </string-array>
+
+    <string-array name="modify_call">
+       <item>@string/modify_call_label</item>
+       <item>false</item>
+    </string-array>
+
     <!-- array of all the options to ensure mapping-->
     <array name="bottom_sheet_more_options">
        <item>@array/add_participant_option</item>
        <item>@array/manageConference</item>
        <item>@array/deflect</item>
        <item>@array/transfer</item>
+       <item>@array/video_rx</item>
+       <item>@array/video_tx</item>
+       <item>@array/modify_call</item>
     </array>
+
+    <!-- In-call screen: Modify Call Options for IMS call -->
+    <string name="modify_call_option_title" translatable="false">Which type of call?</string>
+    <string name="modify_call_option_vt" translatable="false">Video bidirectional</string>
+    <string name="modify_call_option_vt_tx" translatable="false">Video Transmit</string>
+    <string name="modify_call_option_vt_rx" translatable="false">Video Receive</string>
+    <string name="modify_call_option_voice" translatable="false">Voice Only</string>
 
     <string name="call_state_dialing">Dialing</string>
     <string name="call_state_holding">Holding</string>
