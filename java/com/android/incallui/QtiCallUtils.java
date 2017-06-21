@@ -34,13 +34,12 @@ import android.content.Intent;
 import android.content.pm.ActivityInfo;
 import android.os.IBinder;
 import android.os.RemoteException;
-import android.provider.Settings;
+
 import android.telecom.Connection.VideoProvider;
 import android.telecom.VideoProfile;
 import android.telephony.TelephonyManager;
 import android.widget.Toast;
 
-import com.android.dialer.common.LogUtil;
 import com.android.dialer.util.PermissionsUtil;
 
 import java.lang.reflect.*;
@@ -196,23 +195,6 @@ public class QtiCallUtils {
         intent.putExtra("add_participant", true);
         intent.putExtra("current_participant_list", number);
         return intent;
-    }
-
-    /**
-     * Checks the Settings to conclude on the call deflect support.
-     * Returns true if call deflect is possible, false otherwise.
-     */
-    public static boolean isCallDeflectSupported(Context context) {
-        int value = 0;
-        try{
-            value = android.provider.Settings.Global.getInt(
-                    context.getContentResolver(),
-                    QtiImsExtUtils.QTI_IMS_DEFLECT_ENABLED);
-        } catch(Settings.SettingNotFoundException e) {
-            //do Nothing
-            LogUtil.e("QtiCallUtils.isCallDeflectSupported", "" + e);
-        }
-        return (value == 1);
     }
 
     /** This method converts the QtiCallConstants' Orientation modes to the ActivityInfo
