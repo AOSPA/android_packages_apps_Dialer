@@ -167,9 +167,9 @@ public class ExtBottomSheetFragment extends BottomSheetDialogFragment {
         new OnClickListener() {
           @Override
           public void onClick(View v) {
+            dismiss();
             FragmentUtils.getParentUnsafe(ExtBottomSheetFragment.this,
                     ExtBottomSheetActionCallback.class).optionSelected(text);
-            dismiss();
           }
         });
     return textView;
@@ -188,22 +188,13 @@ public class ExtBottomSheetFragment extends BottomSheetDialogFragment {
     FragmentUtils.getParentUnsafe(this, ExtBottomSheetActionCallback.class).sheetDismissed();
   }
 
-   // Utility function which converts options from string array to HashMap<String,Boolean>
-   public static ConcurrentHashMap<String,Boolean> prepareSheetOptions(String[][] answerOptArray) {
-    ConcurrentHashMap<String,Boolean> map = new ConcurrentHashMap<String,Boolean>();
-    for (int iter = 0; iter < answerOptArray.length; iter ++) {
-        map.put(answerOptArray[iter][0],Boolean.valueOf(answerOptArray[iter][1]));
-    }
-    return map;
-   }
+  private static void logi(String msg) {
+    Log.i("ExtBottomSheet",msg);
+  }
 
-   private static void logi(String msg) {
-     Log.i("ExtBottomSheet",msg);
-   }
-
-   private void loge(String msg) {
-     Log.e("ExtBottomSheet",msg);
-   }
+  private void loge(String msg) {
+    Log.e("ExtBottomSheet",msg);
+  }
 }
 
 

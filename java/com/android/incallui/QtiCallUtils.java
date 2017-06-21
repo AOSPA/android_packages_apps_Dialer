@@ -31,12 +31,12 @@ package com.android.incallui;
 
 import android.content.Context;
 import android.content.Intent;
-
 import android.content.pm.ActivityInfo;
 import android.os.IBinder;
 import android.os.RemoteException;
-import android.telephony.TelephonyManager;
 import android.provider.Settings;
+import android.telecom.VideoProfile;
+import android.telephony.TelephonyManager;
 
 import com.android.dialer.common.LogUtil;
 
@@ -47,6 +47,7 @@ import org.codeaurora.internal.IExtTelephony;
 import org.codeaurora.ims.utils.QtiImsExtUtils;
 
 import com.android.ims.ImsManager;
+import com.android.incallui.call.DialerCall;
 
 /**
  * This class contains Qti specific utiltity functions.
@@ -129,6 +130,23 @@ public class QtiCallUtils {
     }
 
     /**
+    * if true, conference dialer is enabled.
+    */
+    public static boolean isConferenceDialerEnabled(Context context) {
+        boolean isEnhanced4gLteModeSettingEnabled = false;
+        TelephonyManager telephonyManager =
+                (TelephonyManager) context.getSystemService(Context.TELEPHONY_SERVICE);
+            for (int i = 0; i < telephonyManager.getPhoneCount(); i++) {
+                if (QtiImsExtUtils.isCarrierConfigEnabled(i, context,
+                        "config_enable_conference_dialer")) {
+                    isEnhanced4gLteModeSettingEnabled |= ImsManager.getInstance(context, i)
+                            .isEnhanced4gLteModeSettingEnabledByUserForSlot();
+                }
+            }
+        return isEnhanced4gLteModeSettingEnabled && ImsManager.isVolteEnabledByPlatform(context);
+    }
+
+    /**
     * get intent to start conference dialer
     * with this intent, we can originate an conference call
     */
@@ -138,12 +156,33 @@ public class QtiCallUtils {
     }
 
     /**
-    * used to get intent to start conference dialer
+    * get intent to start conference dialer
+    * with this intent, we can originate an conference call
+    */
+    public static Intent getConferenceDialerIntent(String number) {
+        Intent intent = new Intent("org.codeaurora.confdialer.ACTION_LAUNCH_CONF_DIALER");
+        intent.putExtra("confernece_number_key", number);
+        return intent;
+    }
+
+    /**
+    * get intent to start conference dialer
     * with this intent, we can add participants to an existing conference call
     */
     public static Intent getAddParticipantsIntent() {
         Intent intent = new Intent("org.codeaurora.confuridialer.ACTION_LAUNCH_CONF_URI_DIALER");
         intent.putExtra("add_participant", true);
+        return intent;
+    }
+
+     /**
+     * used to get intent to start conference dialer
+     * with this intent, we can add participants to an existing conference call
+     */
+    public static Intent getAddParticipantsIntent(String number) {
+        Intent intent = new Intent("org.codeaurora.confdialer.ACTION_LAUNCH_CONF_DIALER");
+        intent.putExtra("add_participant", true);
+        intent.putExtra("current_participant_list", number);
         return intent;
     }
 
@@ -179,4 +218,82 @@ public class QtiCallUtils {
                 return ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED;
         }
     }
+
+   /**
+     * Checks the boolean flag in config file to figure out if we are going to use Qti extension or
+     * not
+     */
+    public static boolean useExt(Context context) {
+        if (context == null) {
+            Log.w(context, "Context is null...");
+        }
+        return context != null && context.getResources().getBoolean(R.bool.video_call_use_ext);
+    }
+
+    /**
+     * Converts the call type to string
+     */
+    public static String callTypeToString(int callType) {
+        switch (callType) {
+            case VideoProfile.STATE_BIDIRECTIONAL:
+                return "VT";
+            case VideoProfile.STATE_TX_ENABLED:
+                return "VT_TX";
+            case VideoProfile.STATE_RX_ENABLED:
+                return "VT_RX";
+        }
+        return "";
+    }
+
+    public static boolean isVideoBidirectional(DialerCall call) {
+        return (call != null && call.getVideoState() == VideoProfile.STATE_BIDIRECTIONAL);
+    }
+
+
+    public static boolean isVideoTxOnly(DialerCall call) {
+        return (call != null && call.getVideoState() == VideoProfile.STATE_TX_ENABLED);
+    }
+
+    public static boolean isVideoRxOnly(DialerCall call) {
+        return (call != null && call.getVideoState() == VideoProfile.STATE_RX_ENABLED);
+    }
+
+    /**
+     * Returns true if the CAPABILITY_CANNOT_DOWNGRADE_VIDEO_TO_AUDIO is set to false.
+     * Note that - CAPABILITY_SUPPORTS_DOWNGRADE_TO_VOICE_LOCAL and
+     * CAPABILITY_SUPPORTS_DOWNGRADE_TO_VOICE_REMOTE maps to
+     * CAPABILITY_CANNOT_DOWNGRADE_VIDEO_TO_AUDIO
+     */
+    public static boolean hasVoiceCapabilities(DialerCall call) {
+        return call != null &&
+                !call.can(android.telecom.Call.Details.CAPABILITY_CANNOT_DOWNGRADE_VIDEO_TO_AUDIO);
+    }
+
+    /**
+     * Returns true if local has the VT Transmit and if remote capability has VT Receive set i.e.
+     * Local can transmit and remote can receive
+     */
+    public static boolean hasTransmitVideoCapabilities(DialerCall call) {
+        return call != null &&
+                call.can(android.telecom.Call.Details.CAPABILITY_SUPPORTS_VT_LOCAL_TX)
+                && call.can(android.telecom.Call.Details.CAPABILITY_SUPPORTS_VT_REMOTE_RX);
+    }
+
+    /**
+     * Returns true if local has the VT Receive and if remote capability has VT Transmit set i.e.
+     * Local can transmit and remote can receive
+     */
+    public static boolean hasReceiveVideoCapabilities(DialerCall call) {
+        return call != null &&
+                call.can(android.telecom.Call.Details.CAPABILITY_SUPPORTS_VT_LOCAL_RX)
+                && call.can(android.telecom.Call.Details.CAPABILITY_SUPPORTS_VT_REMOTE_TX);
+    }
+
+     /**
+      * Returns true if both voice and video capabilities (see above) are set
+      */
+     public static boolean hasVoiceOrVideoCapabilities(DialerCall call) {
+         return hasVoiceCapabilities(call) || hasTransmitVideoCapabilities(call)
+                 || hasReceiveVideoCapabilities(call);
+     }
 }

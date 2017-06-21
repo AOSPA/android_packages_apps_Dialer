@@ -53,6 +53,7 @@ import android.telecom.Call.Details;
 import android.telecom.PhoneAccount;
 import android.telecom.PhoneAccountHandle;
 import android.telecom.TelecomManager;
+import android.telecom.VideoProfile;
 import android.text.BidiFormatter;
 import android.text.Spannable;
 import android.text.SpannableString;
@@ -747,6 +748,8 @@ public class StatusBarNotifier
         resId = R.string.notification_incoming_spam_call;
       } else if (session != null) {
         resId = getECIncomingCallText(session);
+      } else if (call.isIncomingConfCall()) {
+        resId = R.string.notification_incoming_conf_call;
       } else if (call.hasProperty(Details.PROPERTY_WIFI)) {
         resId = R.string.notification_incoming_call_wifi;
       } else {
@@ -759,6 +762,14 @@ public class StatusBarNotifier
     } else if (call.getVideoTech().getSessionModificationState()
         == SessionModificationState.RECEIVED_UPGRADE_TO_VIDEO_REQUEST) {
       resId = R.string.notification_requesting_video_call;
+      final int requestedVideoState = call.getVideoTech().getRequestedVideoState();
+      if(!VideoProfile.isBidirectional(requestedVideoState)) {
+        if(VideoProfile.isTransmissionEnabled(requestedVideoState)) {
+          resId = R.string.notification_requesting_video_tx_call;
+        } else if(VideoProfile.isReceptionEnabled(requestedVideoState)) {
+          resId = R.string.notification_requesting_video_rx_call;
+        }
+      }
     }
 
     // Is the call placed through work connection service.

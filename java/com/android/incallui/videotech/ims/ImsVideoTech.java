@@ -20,6 +20,7 @@ import android.content.Context;
 import android.os.Build;
 import android.telecom.Call;
 import android.telecom.Call.Details;
+import android.telecom.InCallService.VideoCall;
 import android.telecom.VideoProfile;
 import com.android.dialer.common.Assert;
 import com.android.dialer.common.LogUtil;
@@ -40,6 +41,7 @@ public class ImsVideoTech implements VideoTech {
       SessionModificationState.NO_REQUEST;
   private int previousVideoState = VideoProfile.STATE_AUDIO_ONLY;
   private boolean paused = false;
+  private VideoCall mRegisteredVideoCall;
 
   public ImsVideoTech(LoggingBindings logger, VideoTechListener listener, Call call) {
     this.logger = logger;
@@ -86,6 +88,12 @@ public class ImsVideoTech implements VideoTech {
   }
 
   @Override
+  public VideoCall getVideoCall() {
+      return call == null || (mRegisteredVideoCall != call.getVideoCall()) ? null
+        : call.getVideoCall();
+  }
+
+  @Override
   public void onCallStateChanged(Context context, int newState) {
     if (!isAvailable(context)) {
       return;
@@ -93,8 +101,9 @@ public class ImsVideoTech implements VideoTech {
 
     if (callback == null) {
       callback = new ImsVideoCallCallback(logger, call, this, listener);
-      call.getVideoCall().registerCallback(callback);
     }
+    call.getVideoCall().registerCallback(callback);
+    mRegisteredVideoCall = call.getVideoCall();
 
     if (getSessionModificationState()
             == SessionModificationState.WAITING_FOR_UPGRADE_TO_VIDEO_RESPONSE
@@ -136,13 +145,25 @@ public class ImsVideoTech implements VideoTech {
   @Override
   public void upgradeToVideo() {
     LogUtil.enterBlock("ImsVideoTech.upgradeToVideo");
-
     int unpausedVideoState = getUnpausedVideoState(call.getDetails().getVideoState());
     call.getVideoCall()
         .sendSessionModifyRequest(
             new VideoProfile(unpausedVideoState | VideoProfile.STATE_BIDIRECTIONAL));
     setSessionModificationState(SessionModificationState.WAITING_FOR_UPGRADE_TO_VIDEO_RESPONSE);
     logger.logImpression(DialerImpression.Type.IMS_VIDEO_UPGRADE_REQUESTED);
+  }
+
+
+  @Override
+  public void upgradeToVideo(int videoState) {
+    LogUtil.i("ImsVideoTech.upgradeToVideo", "videostate = " + videoState);
+    int unpausedVideoState = getUnpausedVideoState(videoState);
+    call.getVideoCall()
+        .sendSessionModifyRequest(
+            new VideoProfile(unpausedVideoState | videoState));
+    setSessionModificationState((videoState == VideoProfile.STATE_AUDIO_ONLY)
+        ? SessionModificationState.WAITING_FOR_RESPONSE
+        : SessionModificationState.WAITING_FOR_UPGRADE_TO_VIDEO_RESPONSE);
   }
 
   @Override
@@ -163,6 +184,17 @@ public class ImsVideoTech implements VideoTech {
     call.getVideoCall().sendSessionModifyResponse(new VideoProfile(VideoProfile.STATE_AUDIO_ONLY));
     setSessionModificationState(SessionModificationState.NO_REQUEST);
     logger.logImpression(DialerImpression.Type.IMS_VIDEO_REQUEST_ACCEPTED_AS_AUDIO);
+  }
+
+  @Override
+  public void acceptVideoRequest(int requestedVideoState) {
+    LogUtil.i("ImsVideoTech.acceptVideoRequest", "videoState: " + requestedVideoState);
+    call.getVideoCall().sendSessionModifyResponse(new VideoProfile(requestedVideoState));
+    setSessionModificationState(SessionModificationState.NO_REQUEST);
+    // Telecom manages audio route for us
+    if (VideoProfile.isVideo(requestedVideoState)) {
+      listener.onUpgradedToVideo(false /* switchToSpeaker */);
+    }
   }
 
   @Override
@@ -245,13 +277,22 @@ public class ImsVideoTech implements VideoTech {
     call.getVideoCall().setDeviceOrientation(rotation);
   }
 
+  @Override
+  public int getRequestedVideoState() {
+      if (callback == null) {
+        LogUtil.w("ImsVideoTech.getRequestedVideoState", "callback is null");
+        return VideoProfile.STATE_AUDIO_ONLY;
+      }
+      return callback.getRequestedVideoState();
+  }
+
   private boolean canPause() {
     return call.getDetails().can(Details.CAPABILITY_CAN_PAUSE_VIDEO)
         && call.getState() == Call.STATE_ACTIVE
         && isTransmitting();
   }
 
-  static int getUnpausedVideoState(int videoState) {
+  public static int getUnpausedVideoState(int videoState) {
     return videoState & (~VideoProfile.STATE_PAUSED);
   }
 }

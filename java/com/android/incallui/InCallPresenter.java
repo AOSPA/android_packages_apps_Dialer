@@ -402,7 +402,6 @@ public class InCallPresenter implements CallList.Listener {
     removeDetailsListener(CallSubstateNotifier.getInstance());
     CallList.getInstance().removeListener(CallSubstateNotifier.getInstance());
 
-    BottomSheetHelper.getInstance().tearDown();
     InCallZoomController.getInstance().tearDown();
     OrientationModeHandler.getInstance().tearDown();
     removeDetailsListener(SessionModificationCauseNotifier.getInstance());
@@ -1443,6 +1442,7 @@ public class InCallPresenter implements CallList.Listener {
       mStatusBarNotifier = null;
 
       InCallCsRedialHandler.getInstance().tearDown();
+      BottomSheetHelper.getInstance().tearDown();
 
       if (mCallList != null) {
         mCallList.removeListener(this);
