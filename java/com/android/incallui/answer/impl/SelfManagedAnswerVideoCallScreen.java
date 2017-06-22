@@ -106,6 +106,10 @@ public class SelfManagedAnswerVideoCallScreen extends StateCallback implements V
   }
 
   @Override
+  public void onRequestReadStoragePermission() {
+  }
+
+  @Override
   public String getCallId() {
     return callId;
   }

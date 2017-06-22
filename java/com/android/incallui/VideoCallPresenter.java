@@ -212,7 +212,8 @@ public class VideoCallPresenter
       return;
     }
 
-    if (isTransmissionEnabled(mPrimaryCall) &&
+    if (!QtiImsExtUtils.shallShowStaticImageUi(mPhoneId, mContext) &&
+        isTransmissionEnabled(mPrimaryCall) &&
         (showing || isActiveVideoCall(mPrimaryCall))) {
       // Set pause image only for ACTIVE calls going to background.
       // While coming to foreground, unset pause image for all calls.
@@ -226,11 +227,12 @@ public class VideoCallPresenter
     }
   }
 
-  private void setPauseImage() {
+  private void setPauseImage(VideoCall videoCall) {
     String uriStr = null;
     Uri uri = null;
 
-    if (!QtiImsExtUtils.shallTransmitStaticImage(mPhoneId, mContext) || mVideoCall == null) {
+    LogUtil.d("VideoCallPresenter.setPauseImage"," videoCall = " + videoCall);
+    if (!QtiImsExtUtils.shallTransmitStaticImage(mPhoneId, mContext) || videoCall == null) {
         return;
     }
 
@@ -242,13 +244,28 @@ public class VideoCallPresenter
     uri = uriStr != null ? Uri.parse(uriStr) : null;
     LogUtil.d("VideoCallPresenter.setPauseImage"," parsed uri = " + uri + " sUseDefaultImage = "
         + sUseDefaultImage);
-    mVideoCall.setPauseImage(uri);
+    videoCall.setPauseImage(uri);
   }
 
-  private boolean shallTransmitStaticImage() {
-      return sShallTransmitStaticImage;
+  @Override
+  public void setPauseImage() {
+    setPauseImage(mVideoCall);
   }
 
+  @Override
+  public boolean shallTransmitStaticImage() {
+    return sShallTransmitStaticImage;
+  }
+
+  @Override
+  public boolean isUseDefaultImage() {
+    return sUseDefaultImage;
+  }
+
+  @Override
+  public void setUseDefaultImage(boolean useDefaultImage) {
+    sUseDefaultImage = useDefaultImage;
+  }
   /**
    * Determines if the incoming video surface should be shown based on the current videoState and
    * callState. The video surface is shown when incoming video is not paused, the call is active or
@@ -460,6 +477,7 @@ public class VideoCallPresenter
     // happens after any call state changes but we're unregistering from InCallPresenter above so
     // we won't get any more call state changes. See b/32957114.
     if (mPrimaryCall != null) {
+      maybeUnsetPauseImage();
       updateCameraSelection(mPrimaryCall);
     }
 
@@ -652,6 +670,66 @@ public class VideoCallPresenter
     }
   }
 
+  /**
+   * Handles a change to the video call hide me selection
+   *
+   * @param shallTransmitStaticImage {@code true} if the app should show static image in preview,
+   * {@code false} otherwise.
+   */
+   @Override
+   public void onSendStaticImageStateChanged(boolean shallTransmitStaticImage) {
+    LogUtil.d("VideoCallPresenter.onSendStaticImageStateChanged"," shallTransmitStaticImage: "
+        + shallTransmitStaticImage + " mPrimaryCall: " + mPrimaryCall);
+
+    sShallTransmitStaticImage = shallTransmitStaticImage;
+
+    if (!isActiveVideoCall(mPrimaryCall)) {
+      LogUtil.w("VideoCallPresenter.onSendStaticImageStateChanged",
+          " received for non-active video call");
+      return;
+    }
+
+    if (mVideoCall == null || mVideoCallScreen == null) {
+      LogUtil.w("VideoCallPresenter.onSendStaticImageStateChanged",
+          " VideoCall/mVideoCallScreen is null");
+      return;
+    }
+
+    enableCamera(mVideoCall, isCameraRequired(mCurrentVideoState,
+        SessionModificationState.NO_REQUEST));
+
+    if (shallTransmitStaticImage) {
+      // Handle showing static image in preview based on external storage permissions
+      mVideoCallScreen.onRequestReadStoragePermission();
+    } else {
+      /* When not required to transmit static image, update video ui visibility
+         to reflect streaming video in preview */
+      showVideoUi(
+          mCurrentVideoState,
+          mCurrentCallState,
+          SessionModificationState.NO_REQUEST,
+          false /* isRemotelyHeld */);
+      mVideoCall.setPauseImage(null);
+    }
+  }
+
+  @Override
+  public void onReadStoragePermissionResponse(boolean isGranted) {
+    LogUtil.d("VideoCallPresenter.onReadStoragePermissionResponse"," granted = " + isGranted);
+
+    // Use default image when permissions are not granted
+    sUseDefaultImage = !isGranted;
+    if (!isGranted) {
+      QtiCallUtils.displayToast(mContext, R.string.qti_ims_defaultImage_fallback);
+    }
+
+    showVideoUi(
+        mCurrentVideoState,
+        mCurrentCallState,
+        SessionModificationState.NO_REQUEST,
+        false /* isRemotelyHeld */);
+  }
+
   private void checkForVideoStateChange(DialerCall call) {
     final boolean shouldShowVideoUi = shouldShowVideoUiForCall(call);
     final boolean hasVideoStateChanged = mCurrentVideoState != call.getVideoState();
@@ -674,23 +752,24 @@ public class VideoCallPresenter
       InCallPresenter.getInstance().wakeUpScreen();
     }
 
-    if (!QtiImsExtUtils.shallShowStaticImageUi(mPhoneId, mContext) &&
-        QtiImsExtUtils.shallTransmitStaticImage(mPhoneId, mContext) &&
-        mIsInBackground &&
-        shallTransmitStaticImage() &&
-        !isTransmissionEnabled(call) &&
-        mVideoCall != null) {
-      /* Unset the pause image when Tx is disabled for eg. when background video call
-         that is transmitting static image is downgraded to Rx or to voice */
-      mVideoCall.setPauseImage(null);
-    }
-
+    maybeUnsetPauseImage();
     updateCameraSelection(call);
 
     if (shouldShowVideoUi) {
       adjustVideoMode(call);
     } else if (isVideoMode()) {
       exitVideoMode();
+    }
+  }
+
+  private void maybeUnsetPauseImage() {
+    if (QtiImsExtUtils.shallTransmitStaticImage(mPhoneId, mContext) &&
+        shallTransmitStaticImage() &&
+        !isTransmissionEnabled(mPrimaryCall) &&
+        mVideoCall != null) {
+      /* Unset the pause image when Tx is disabled for eg. when video call
+         that is transmitting static image is downgraded to Rx or to voice */
+      mVideoCall.setPauseImage(null);
     }
   }
 
@@ -924,6 +1003,12 @@ public class VideoCallPresenter
       enableCamera(
           videoCall,
           isCameraRequired(newVideoState, call.getVideoTech().getSessionModificationState()));
+
+      if (shallTransmitStaticImage()) {
+        /* when call downgrades and later upgrades, mVideoCall can be null that prevents setting
+           pause image to lower layers so invoke setPauseImage with videocall obj as parameter */
+        setPauseImage(videoCall);
+      }
     }
     int previousVideoState = mCurrentVideoState;
     mCurrentVideoState = newVideoState;
@@ -993,10 +1078,10 @@ public class VideoCallPresenter
     enableCamera(mVideoCall, false);
     InCallPresenter.getInstance().setFullScreen(false);
 
-    if (mPrimaryCall != null && mVideoCall != null &&
-        QtiImsExtUtils.shallTransmitStaticImage(mPhoneId, mContext) &&
-        !QtiImsExtUtils.shallShowStaticImageUi(mPhoneId, mContext) &&
-        isTransmissionEnabled(mPrimaryCall)) {
+    if (mPrimaryCall != null &&
+        mVideoCall != null &&
+        isTransmissionEnabled(mPrimaryCall) &&
+        mPrimaryCall.getState() != DialerCall.State.ONHOLD) {
       LogUtil.v("VideoCallPresenter.exitVideoMode", "setPauseImage(null)");
       mVideoCall.setPauseImage(null);
     }
@@ -1025,12 +1110,14 @@ public class VideoCallPresenter
     boolean showOutgoingVideo = showOutgoingVideo(mContext, videoState, sessionModificationState);
     LogUtil.i(
         "VideoCallPresenter.showVideoUi",
-        "showIncoming: %b, showOutgoing: %b, isRemotelyHeld: %b",
+        "showIncoming: %b, showOutgoing: %b, isRemotelyHeld: %b shallTransmitStaticImage: %b",
         showIncomingVideo,
         showOutgoingVideo,
-        isRemotelyHeld);
+        isRemotelyHeld,
+        shallTransmitStaticImage());
     updateRemoteVideoSurfaceDimensions();
-    mVideoCallScreen.showVideoViews(showOutgoingVideo, showIncomingVideo, isRemotelyHeld);
+    mVideoCallScreen.showVideoViews(showOutgoingVideo && !shallTransmitStaticImage(),
+        showIncomingVideo, isRemotelyHeld);
 
     updateFullscreenAndGreenScreenMode(callState, sessionModificationState);
   }
@@ -1099,7 +1186,7 @@ public class VideoCallPresenter
     changePreviewDimensions(width, height);
 
     if (shallTransmitStaticImage()) {
-      setPauseImage();
+      setPauseImage(call.getVideoCall());
     }
 
     // Check if the preview surface is ready yet; if it is, set it on the {@code VideoCall}.

@@ -24,7 +24,9 @@ import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.graphics.Outline;
 import android.graphics.Point;
+import android.graphics.drawable.Drawable;
 import android.graphics.drawable.Animatable;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.SystemClock;
 import android.renderscript.Allocation;
@@ -90,6 +92,9 @@ import com.android.incallui.videosurface.bindings.VideoSurfaceBindings;
 import com.android.incallui.videosurface.protocol.VideoSurfaceTexture;
 import com.android.incallui.videotech.utils.VideoUtils;
 
+import org.codeaurora.ims.QtiImsException;
+import org.codeaurora.ims.utils.QtiImsExtUtils;
+
 /** Contains UI elements for a video call. */
 // LINT.IfChange
 public class VideoCallFragment extends Fragment
@@ -113,6 +118,7 @@ public class VideoCallFragment extends Fragment
   private static final float ASPECT_RATIO_MATCH_THRESHOLD = 0.2f;
 
   private static final int CAMERA_PERMISSION_REQUEST_CODE = 1;
+  private static final int PERMISSION_REQUEST_READ_EXTERNAL_STORAGE = 2;
   private static final String CAMERA_PERMISSION_DIALOG_FRAMENT_TAG =
       "CameraPermissionDialogFragment";
   private static final long CAMERA_PERMISSION_DIALOG_DELAY_IN_MILLIS = 2000L;
@@ -197,6 +203,15 @@ public class VideoCallFragment extends Fragment
     }
   }
 
+  /**
+   * Callback received when a permissions request has been completed.
+   *
+   * @param requestCode The request code passed in requestPermissions API
+   * @param permissions The requested permissions. Never null.
+   * @param grantResults The grant results for the corresponding permissions
+   *     which is either PackageManager#PERMISSION_GRANTED}
+   *     or PackageManager#PERMISSION_DENIED}. Never null.
+   */
   @Override
   public void onRequestPermissionsResult(
       int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
@@ -207,6 +222,10 @@ public class VideoCallFragment extends Fragment
       } else {
         LogUtil.i("VideoCallFragment.onRequestPermissionsResult", "Camera permission denied.");
       }
+    } else if (requestCode == PERMISSION_REQUEST_READ_EXTERNAL_STORAGE) {
+      // If request is cancelled, the result arrays are empty.
+      videoCallScreenDelegate.onReadStoragePermissionResponse(grantResults.length > 0 &&
+          grantResults[0] == PackageManager.PERMISSION_GRANTED);
     }
     super.onRequestPermissionsResult(requestCode, permissions, grantResults);
   }
@@ -727,6 +746,79 @@ public class VideoCallFragment extends Fragment
     enableScreenTimeout(!(shouldShowPreview || shouldShowRemote));
     updateVideoOffViews();
     updateRemoteVideoScaling();
+    maybeLoadPreConfiguredImageAsync();
+  }
+
+  private void maybeLoadPreConfiguredImageAsync() {
+    LogUtil.v("VideoCallFragment.maybeLoadPreConfiguredImageAsync", " shallTransmitStaticImage = "
+        + videoCallScreenDelegate.shallTransmitStaticImage());
+
+    /**
+     * Do not load static image if:
+     * 1. Preview is showing
+     * 2. UE is not transmitting static image
+     * 3. When not showing preview and not showing remote video, probably a voice call
+     */
+    if (shouldShowPreview || !videoCallScreenDelegate.shallTransmitStaticImage() ||
+        (!shouldShowPreview && !shouldShowRemote)) {
+      return;
+    }
+
+    if (videoCallScreenDelegate.isUseDefaultImage()) {
+      /* no need to display toast message here since user would've been
+         already altered of default image usage */
+      setPreviewImage(getDefaultImage());
+      videoCallScreenDelegate.setPauseImage();
+      return;
+    }
+
+    final AsyncTask<Void, Void, Bitmap> task = new AsyncTask<Void, Void, Bitmap>() {
+      // Decode image in background.
+      @Override
+      protected Bitmap doInBackground(Void... params) {
+        try {
+          return loadImage();
+        } catch (QtiImsException ex) {
+          LogUtil.e("VideoCallFragment.loadImage", " ex = " + ex);
+        }
+        return null;
+      }
+
+      // Once complete, set bitmap/pause image.
+      @Override
+      protected void onPostExecute(Bitmap bitmap) {
+        boolean useDefaultImage = bitmap == null;
+        LogUtil.d("VideoCallFragment.onPostExecute", "bitmap = " + bitmap);
+        videoCallScreenDelegate.setUseDefaultImage(useDefaultImage);
+
+        if (useDefaultImage) {
+          QtiCallUtils.displayToast(getContext(), R.string.qti_ims_defaultImage_fallback);
+          setPreviewImage(getDefaultImage());
+        } else {
+          setPreviewImage(bitmap);
+        }
+        videoCallScreenDelegate.setPauseImage();
+      }
+    };
+    task.execute();
+  }
+
+  private Bitmap loadImage() throws QtiImsException {
+    Point previewDimensions =
+        videoCallScreenDelegate.getLocalVideoSurfaceTexture().getSurfaceDimensions();
+
+    if (previewDimensions == null || getContext() == null) {
+      LogUtil.w("VideoCallFragment.loadImage"," previewDimensions/context is null");
+      return null;
+    }
+
+    LogUtil.d("VideoCallFragment.loadImage"," size: " + previewDimensions);
+    return QtiImsExtUtils.getStaticImage(getContext(), previewDimensions.x,
+        previewDimensions.y);
+  }
+
+  private Drawable getDefaultImage() {
+    return getResources().getDrawable(R.drawable.img_no_image_automirrored);
   }
 
   /**
@@ -809,6 +901,23 @@ public class VideoCallFragment extends Fragment
   @Override
   public Fragment getVideoCallScreenFragment() {
     return this;
+  }
+
+  @Override
+  public void onRequestReadStoragePermission() {
+    final Activity activity = getActivity();
+    if (activity == null) {
+      LogUtil.e("VideoCallFragment.onRequestReadStoragePermission"," Activity is null");
+      return;
+    }
+    if ((activity.checkSelfPermission(
+        permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED)) {
+      requestPermissions(new String[]{permission.READ_EXTERNAL_STORAGE},
+          PERMISSION_REQUEST_READ_EXTERNAL_STORAGE);
+    } else {
+      // permission already granted
+      videoCallScreenDelegate.onReadStoragePermissionResponse(true);
+    }
   }
 
   @Override
@@ -1153,12 +1262,15 @@ public class VideoCallFragment extends Fragment
     // Always hide the preview off and remote off views in green screen mode.
     boolean previewEnabled = isInGreenScreenMode || shouldShowPreview;
     previewOffOverlay.setVisibility(previewEnabled ? View.GONE : View.VISIBLE);
-    updateBlurredImageView(
-        previewTextureView,
-        previewOffBlurredImageView,
-        shouldShowPreview,
-        BLUR_PREVIEW_RADIUS,
-        BLUR_PREVIEW_SCALE_FACTOR);
+    if (shouldShowPreview && !videoCallScreenDelegate.shallTransmitStaticImage()) {
+      // Blur only if preview is shown when not transmitting static image
+      updateBlurredImageView(
+          previewTextureView,
+          previewOffBlurredImageView,
+          shouldShowPreview,
+          BLUR_PREVIEW_RADIUS,
+          BLUR_PREVIEW_SCALE_FACTOR);
+    }
 
     boolean remoteEnabled = isInGreenScreenMode || shouldShowRemote;
     boolean isResumed = remoteEnabled && !isRemotelyHeld;
@@ -1242,6 +1354,27 @@ public class VideoCallFragment extends Fragment
         "didBlur: %b, took %d millis",
         didBlur,
         (SystemClock.elapsedRealtime() - startTimeMillis));
+  }
+
+  public void setPreviewImage(Drawable previewDrawable) {
+    if (previewOffBlurredImageView == null) {
+      LogUtil.e("VideoCallFragment.setPreviewImage"," previewOffBlurredImageView is null");
+      return;
+    }
+
+    previewOffBlurredImageView.setScaleType(ImageView.ScaleType.CENTER_CROP);
+    previewOffBlurredImageView.setImageDrawable(previewDrawable);
+    previewOffBlurredImageView.setVisibility(View.VISIBLE);
+  }
+
+  public void setPreviewImage(Bitmap previewBitmap) {
+    if (previewOffBlurredImageView == null) {
+      LogUtil.e("VideoCallFragment.setPreviewImage"," previewOffBlurredImageView is null");
+      return;
+    }
+
+    previewOffBlurredImageView.setImageBitmap(previewBitmap);
+    previewOffBlurredImageView.setVisibility(View.VISIBLE);
   }
 
   private void updateOverlayBackground() {

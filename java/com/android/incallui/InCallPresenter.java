@@ -1223,6 +1223,17 @@ public class InCallPresenter implements CallList.Listener {
     }
   }
 
+   /**
+     * Called by the {@link BottomSheetHelper} to inform of a change in hide me selection.
+     *
+     * @param isEnabled {@code True} if entering hide me mode.
+     */
+    public void notifyStaticImageStateChanged(boolean isEnabled) {
+      for (InCallEventListener listener : mInCallEventListeners) {
+          listener.onSendStaticImageStateChanged(isEnabled);
+      }
+    }
+
   /**
    * For some disconnected causes, we show a dialog. This calls into the activity to show the dialog
    * if appropriate for the call.
@@ -1743,6 +1754,7 @@ public class InCallPresenter implements CallList.Listener {
   public interface InCallEventListener {
 
     void onFullscreenModeChanged(boolean isFullscreenMode);
+    void onSendStaticImageStateChanged(boolean isEnabled);
   }
 
   public interface InCallUiListener {
