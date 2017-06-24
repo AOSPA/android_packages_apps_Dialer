@@ -43,6 +43,7 @@ import android.support.annotation.Nullable;
 import android.os.Build.VERSION;
 import android.os.Build.VERSION_CODES;
 import android.os.Bundle;
+import android.provider.Settings;
 import android.telecom.Call.Details;
 import android.telecom.VideoProfile;
 
@@ -150,6 +151,7 @@ public class BottomSheetHelper implements InCallPresenter.InCallEventListener,
        maybeUpdateManageConferenceInMap();
        maybeUpdateOneWayVideoOptionsInMap();
        maybeUpdateModifyCallInMap();
+       maybeUpdatePipModeInMap();
      }
    }
 
@@ -186,6 +188,17 @@ public class BottomSheetHelper implements InCallPresenter.InCallEventListener,
      boolean visible = mCall.isVideoCall() && mCall.getState() == DialerCall.State.ACTIVE &&
          mCall.can(android.telecom.Call.Details.CAPABILITY_MANAGE_CONFERENCE);
      moreOptionsMap.put(mResources.getString(R.string.manageConferenceLabel), visible);
+   }
+
+   private void maybeUpdatePipModeInMap() {
+     /* show Pip mode option only for active video calls if the settings db property
+        "disable_pip_mode" is set */
+     if (!canDisablePipMode()) {
+        return;
+     }
+     final boolean visible = mCall.isVideoCall() && mCall.getState() == DialerCall.State.ACTIVE
+         && !mCall.hasReceivedVideoUpgradeRequest();
+     moreOptionsMap.put(mResources.getString(R.string.pipModeLabel), visible);
    }
 
    public boolean isManageConferenceVisible() {
@@ -245,6 +258,8 @@ public class BottomSheetHelper implements InCallPresenter.InCallEventListener,
        acceptIncomingCallOrUpgradeRequest(VideoProfile.STATE_RX_ENABLED);
      } else if (text.equals(mResources.getString(R.string.modify_call_label))) {
        displayModifyCallOptions();
+     } else if (text.equals(mResources.getString(R.string.pipModeLabel))) {
+       VideoCallPresenter.showPipModeMenu();
      }
      moreOptionsSheet = null;
    }
@@ -688,5 +703,14 @@ public class BottomSheetHelper implements InCallPresenter.InCallEventListener,
       final String PREFERRED_TTY_MODE = "preferred_tty_mode";
       return (android.provider.Settings.Secure.getInt(context.getContentResolver(),
           PREFERRED_TTY_MODE, TTY_MODE_OFF) != TTY_MODE_OFF);
+    }
+
+    public boolean canDisablePipMode() {
+      return (Settings.Global.getInt(
+          mContext.getContentResolver(), "disable_pip_mode", 0) != 0);
+    }
+
+    public PrimaryCallTracker getPrimaryCallTracker() {
+      return mPrimaryCallTracker;
     }
 }

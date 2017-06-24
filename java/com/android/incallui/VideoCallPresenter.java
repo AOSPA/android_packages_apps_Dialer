@@ -87,7 +87,8 @@ public class VideoCallPresenter
         InCallPresenter.InCallEventListener,
         VideoCallScreenDelegate,
         InCallUiStateNotifierListener,
-        VideoEventListener {
+        VideoEventListener,
+        PictureModeHelper.Listener {
 
   private static boolean mIsVideoMode = false;
 
@@ -142,14 +143,11 @@ public class VideoCallPresenter
   private int mPhoneId = -1;
 
   /**
-   * Property set to specify the size of the preview surface provided by the user/operator
-   */
-  private static final String LOCAL_PREVIEW_SURFACE_SIZE_SETTING = "local_preview_surface_size";
-
-  /**
    * Cache the size set in the "local_preview_surface_size" settings db property
    */
   private Point mFixedPreviewSurfaceSize;
+
+  private static PictureModeHelper mPictureModeHelper;
 
   /**
    * Determines if the incoming video is available. If the call session resume event has been
@@ -418,6 +416,7 @@ public class VideoCallPresenter
   @Override
   public void initVideoCallScreenDelegate(Context context, VideoCallScreen videoCallScreen) {
     mContext = context;
+    mPictureModeHelper = new PictureModeHelper(mContext);
     mVideoCallScreen = videoCallScreen;
     mIsAutoFullscreenEnabled =
         mContext.getResources().getBoolean(R.bool.video_call_auto_fullscreen);
@@ -453,6 +452,7 @@ public class VideoCallPresenter
 
     // Register for surface and video events from {@link InCallVideoCallListener}s.
     InCallVideoCallCallbackNotifier.getInstance().addSurfaceChangeListener(this);
+    mPictureModeHelper.setUp(this);
     mCurrentVideoState = VideoProfile.STATE_AUDIO_ONLY;
     mCurrentCallState = DialerCall.State.INVALID;
 
@@ -486,6 +486,7 @@ public class VideoCallPresenter
     InCallVideoCallCallbackNotifier.getInstance().removeSurfaceChangeListener(this);
     InCallUiStateNotifier.getInstance().removeListener(this);
     InCallVideoCallCallbackNotifier.getInstance().removeVideoEventListener(this);
+    mPictureModeHelper.tearDown(this);
 
     // Ensure that the call's camera direction is updated (most likely to UNKNOWN). Normally this
     // happens after any call state changes but we're unregistering from InCallPresenter above so
@@ -1132,8 +1133,14 @@ public class VideoCallPresenter
     updateRemoteVideoSurfaceDimensions();
     mVideoCallScreen.showVideoViews(showOutgoingVideo && !shallTransmitStaticImage(),
         showIncomingVideo, isRemotelyHeld);
+    if (BottomSheetHelper.getInstance().canDisablePipMode() && mPictureModeHelper != null) {
+      mPictureModeHelper.setPreviewVideoLayoutParams();
+    }
 
     updateFullscreenAndGreenScreenMode(callState, sessionModificationState);
+    if (BottomSheetHelper.getInstance().canDisablePipMode() && mPictureModeHelper != null) {
+      mPictureModeHelper.maybeHideVideoViews();
+    }
   }
 
   /**
@@ -1430,7 +1437,7 @@ public class VideoCallPresenter
       LogUtil.i("VideoCallPresenter.onSurfaceClick", "");
       if (shallTransmitStaticImage()) {
         VideoCallPresenter.this.onSurfaceClick();
-      } else {
+      } else if (mPictureModeHelper != null && mPictureModeHelper.canShowPreviewVideoView()) {
         // Set fullscreen to true when showing the zoom controls as the
         // buttons on the left panel conflict with the zoom control bar.
         cancelAutoFullScreen();
@@ -1551,23 +1558,54 @@ public class VideoCallPresenter
    * Reads the fixed preview size from global settings and caches it
    */
   private void setFixedPreviewSurfaceSize() {
-    final String previewSurfaceSize = Settings.Global.getString(
-        mContext.getContentResolver(), LOCAL_PREVIEW_SURFACE_SIZE_SETTING);
+    if (mPictureModeHelper != null) {
+      mFixedPreviewSurfaceSize = mPictureModeHelper.getPreviewSizeFromSetting(mContext);
+    }
+  }
 
-    if (previewSurfaceSize == null) {
-      mFixedPreviewSurfaceSize = null;
+  /**
+   * Gets called when preview video selection changes
+   * @param boolean previewVideoSelection - New value for preview video selection
+   */
+  @Override
+  public void onPreviewVideoSelectionChanged() {
+    if (mPrimaryCall == null) {
       return;
     }
+    setFixedPreviewSurfaceSize();
+    if (mFixedPreviewSurfaceSize != null) {
+      changePreviewDimensions(mFixedPreviewSurfaceSize.x, mFixedPreviewSurfaceSize.y);
+    }
+    showVideoUi(
+        mPrimaryCall.getVideoState(),
+        mPrimaryCall.getState(),
+        mPrimaryCall.getVideoTech().getSessionModificationState(),
+        mPrimaryCall.isRemotelyHeld());
+  }
 
-    try {
-      final String[] sizeDimensions = previewSurfaceSize.split("x");
-      final int width = Integer.parseInt(sizeDimensions[0]);
-      final int height = Integer.parseInt(sizeDimensions[1]);
-      mFixedPreviewSurfaceSize = new Point(width, height);
-    } catch (Exception ex) {
-      LogUtil.e("VideoCallPresenter.setFixedPreviewSurfaceSize", "Exception in parsing " +
-          LOCAL_PREVIEW_SURFACE_SIZE_SETTING + " - " + ex);
-      mFixedPreviewSurfaceSize = null;
+  /**
+   * Gets called when incoming video selection changes
+   * @param boolean incomingVideoSelection - New value for incoming video selection
+   */
+  @Override
+  public void onIncomingVideoSelectionChanged() {
+    if (mPrimaryCall == null) {
+      return;
+    }
+    showVideoUi(
+        mPrimaryCall.getVideoState(),
+        mPrimaryCall.getState(),
+        mPrimaryCall.getVideoTech().getSessionModificationState(),
+        mPrimaryCall.isRemotelyHeld());
+  }
+
+  public static PictureModeHelper getPictureModeHelper() {
+    return mPictureModeHelper;
+  }
+
+  public static void showPipModeMenu() {
+    if (mPictureModeHelper != null) {
+      mPictureModeHelper.createAndShowDialog();
     }
   }
 
