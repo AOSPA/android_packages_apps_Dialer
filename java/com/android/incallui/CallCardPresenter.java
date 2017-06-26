@@ -429,7 +429,9 @@ public class CallCardPresenter
       return false;
     }
     return primaryChanged
-        || mInCallScreen.isManageConferenceVisible() != shouldShowManageConference();
+        || mInCallScreen.isManageConferenceVisible() != shouldShowManageConference()
+        || (mPrimaryContactInfo != null && !TextUtils.equals(mPrimaryContactInfo.number,
+        mPrimary.getNumber()));
   }
 
   private String getPrimaryInfoLocation(ContactCacheEntry contactInfo) {
