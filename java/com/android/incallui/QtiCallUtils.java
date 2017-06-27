@@ -40,6 +40,7 @@ import android.telephony.TelephonyManager;
 import android.widget.Toast;
 
 import com.android.dialer.common.LogUtil;
+import com.android.dialer.util.PermissionsUtil;
 
 import java.lang.reflect.*;
 
@@ -56,17 +57,20 @@ import com.android.incallui.call.DialerCall;
 public class QtiCallUtils {
 
     private static String LOG_TAG = "QtiCallUtils";
+    private static IExtTelephony sIExtTelephony = null;
 
     /**
      * Returns IExtTelephony handle
      */
     public static IExtTelephony getIExtTelephony() {
-        IExtTelephony mExtTelephony = null;
+        if (sIExtTelephony != null) {
+            return sIExtTelephony;
+        }
         try {
             Class c = Class.forName("android.os.ServiceManager");
             Method m = c.getMethod("getService",new Class[]{String.class});
 
-            mExtTelephony =
+            sIExtTelephony =
                 IExtTelephony.Stub.asInterface((IBinder)m.invoke(null, "extphone"));
         } catch (ClassNotFoundException e) {
             Log.e(LOG_TAG, " ex: " + e);
@@ -81,7 +85,7 @@ public class QtiCallUtils {
         } catch (NoSuchMethodException e) {
             Log.e(LOG_TAG, " ex: " + e);
         }
-        return mExtTelephony;
+        return sIExtTelephony;
     }
 
     /**
@@ -120,13 +124,16 @@ public class QtiCallUtils {
     * if true, conference dialer  is enabled.
     */
     public static boolean isConferenceUriDialerEnabled(Context context) {
+        if (!PermissionsUtil.hasPhonePermissions(context)) {
+            return false;
+        }
         boolean isEnhanced4gLteModeSettingEnabled = false;
         TelephonyManager telephonyManager =
                 (TelephonyManager) context.getSystemService(Context.TELEPHONY_SERVICE);
-            for (int i = 0; i < telephonyManager.getPhoneCount(); i++) {
-                isEnhanced4gLteModeSettingEnabled |= ImsManager.getInstance(context, i)
-                        .isEnhanced4gLteModeSettingEnabledByUserForSlot();
-            }
+        for (int i = 0; i < telephonyManager.getPhoneCount(); i++) {
+            isEnhanced4gLteModeSettingEnabled |= ImsManager.getInstance(context, i)
+                    .isEnhanced4gLteModeSettingEnabledByUserForSlot();
+        }
         return isEnhanced4gLteModeSettingEnabled && ImsManager.isVolteEnabledByPlatform(context);
     }
 
@@ -134,16 +141,19 @@ public class QtiCallUtils {
     * if true, conference dialer is enabled.
     */
     public static boolean isConferenceDialerEnabled(Context context) {
+        if (!PermissionsUtil.hasPhonePermissions(context)) {
+            return false;
+        }
         boolean isEnhanced4gLteModeSettingEnabled = false;
         TelephonyManager telephonyManager =
                 (TelephonyManager) context.getSystemService(Context.TELEPHONY_SERVICE);
-            for (int i = 0; i < telephonyManager.getPhoneCount(); i++) {
-                if (QtiImsExtUtils.isCarrierConfigEnabled(i, context,
-                        "config_enable_conference_dialer")) {
-                    isEnhanced4gLteModeSettingEnabled |= ImsManager.getInstance(context, i)
-                            .isEnhanced4gLteModeSettingEnabledByUserForSlot();
-                }
+        for (int i = 0; i < telephonyManager.getPhoneCount(); i++) {
+            if (QtiImsExtUtils.isCarrierConfigEnabled(i, context,
+                    "config_enable_conference_dialer")) {
+                isEnhanced4gLteModeSettingEnabled |= ImsManager.getInstance(context, i)
+                        .isEnhanced4gLteModeSettingEnabledByUserForSlot();
             }
+        }
         return isEnhanced4gLteModeSettingEnabled && ImsManager.isVolteEnabledByPlatform(context);
     }
 
