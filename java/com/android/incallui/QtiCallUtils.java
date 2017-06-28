@@ -49,6 +49,7 @@ import org.codeaurora.internal.IExtTelephony;
 import org.codeaurora.ims.utils.QtiImsExtUtils;
 
 import com.android.ims.ImsManager;
+import com.android.incallui.call.CallList;
 import com.android.incallui.call.DialerCall;
 
 /**
@@ -320,6 +321,54 @@ public class QtiCallUtils {
                 return R.string.camera_ready;
             default:
                 return R.string.unknown_call_session_event;
+        }
+    }
+
+    public static CharSequence getLabelForIncomingWifiVideoCall(Context context) {
+        final DialerCall call = getIncomingOrActiveCall();
+
+        if (call == null) {
+            return context.getString(R.string.contact_grid_incoming_wifi_video_call);
+        }
+
+        final int requestedVideoState = call.getVideoTech().getRequestedVideoState();
+
+        if (QtiCallUtils.isVideoRxOnly(call)
+            || requestedVideoState == VideoProfile.STATE_RX_ENABLED) {
+            return context.getString(R.string.incoming_wifi_video_rx_call);
+        } else if (QtiCallUtils.isVideoTxOnly(call)
+            || requestedVideoState == VideoProfile.STATE_TX_ENABLED) {
+            return context.getString(R.string.incoming_wifi_video_tx_call);
+        } else {
+            return context.getString(R.string.contact_grid_incoming_wifi_video_call);
+        }
+    }
+
+    public static CharSequence getLabelForIncomingVideoCall(Context context) {
+        final DialerCall call = getIncomingOrActiveCall();
+        if (call == null) {
+            return context.getString(R.string.contact_grid_incoming_video_call);
+        }
+
+        final int requestedVideoState = call.getVideoTech().getRequestedVideoState();
+
+        if (QtiCallUtils.isVideoRxOnly(call)
+            || requestedVideoState == VideoProfile.STATE_RX_ENABLED) {
+            return context.getString(R.string.incoming_video_rx_call);
+        } else if (QtiCallUtils.isVideoTxOnly(call)
+            || requestedVideoState == VideoProfile.STATE_TX_ENABLED) {
+            return context.getString(R.string.incoming_video_tx_call);
+        } else {
+            return context.getString(R.string.contact_grid_incoming_video_call);
+        }
+    }
+
+    private static DialerCall getIncomingOrActiveCall() {
+        CallList callList = InCallPresenter.getInstance().getCallList();
+        if (callList == null) {
+           return null;
+        } else {
+           return callList.getIncomingOrActive();
         }
     }
 }

@@ -67,7 +67,7 @@ public class NotificationBroadcastReceiver extends BroadcastReceiver {
 
     // TODO: Commands of this nature should exist in the CallList.
     if (action.equals(ACTION_ANSWER_VIDEO_INCOMING_CALL)) {
-      answerIncomingCall(context, VideoProfile.STATE_BIDIRECTIONAL);
+      answerIncomingCall(context);
     } else if (action.equals(ACTION_ANSWER_VOICE_INCOMING_CALL)) {
       answerIncomingCall(context, VideoProfile.STATE_AUDIO_ONLY);
     } else if (action.equals(ACTION_DECLINE_INCOMING_CALL)) {
@@ -142,6 +142,19 @@ public class NotificationBroadcastReceiver extends BroadcastReceiver {
         call.answer(videoState);
         InCallPresenter.getInstance()
             .showInCall(false /* showDialpad */, false /* newOutgoingCall */);
+      }
+    }
+  }
+
+  private void answerIncomingCall(Context context) {
+    CallList callList = InCallPresenter.getInstance().getCallList();
+    if (callList == null) {
+      StatusBarNotifier.clearAllCallNotifications(context);
+      LogUtil.e("NotificationBroadcastReceiver.answerIncomingCall", "call list is empty");
+    } else {
+      DialerCall call = callList.getIncomingCall();
+      if (call != null) {
+        answerIncomingCall(context, call.getVideoState());
       }
     }
   }
