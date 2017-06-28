@@ -189,8 +189,7 @@ public class InCallMessageController implements InCallSubstateListener, VideoEve
             Log.e(this, "onVideoQualityChanged - Context is null/not primary call.");
             return;
         }
-        if (QtiImsExtUtils.isCarrierConfigEnabled(mContext,
-                QtiCarrierConfigs.SHOW_VIDEO_QUALITY_TOAST)) {
+        if (QtiCallUtils.shallShowVideoQualityToast(mContext)) {
             final Resources resources = mContext.getResources();
             final String videoQualityChangedText = resources.getString(
                     R.string.video_quality_changed) + resources.getString(
@@ -211,8 +210,7 @@ public class InCallMessageController implements InCallSubstateListener, VideoEve
             Log.e(this, "onCallSessionEvent - Context is null.");
             return;
         }
-        if (QtiImsExtUtils.isCarrierConfigEnabled(mContext,
-                QtiCarrierConfigs.SHOW_CALL_SESSION_EVENT_TOAST)) {
+        if (QtiCallUtils.shallShowCallSessionEventToast(mContext)) {
             QtiCallUtils.displayToast(mContext, QtiCallUtils.getCallSessionResourceId(event));
         }
     }
@@ -251,8 +249,7 @@ public class InCallMessageController implements InCallSubstateListener, VideoEve
         }
 
 
-        if (QtiImsExtUtils.isCarrierConfigEnabled(mContext,
-                QtiCarrierConfigs.SHOW_DATA_USAGE_TOAST)) {
+        if (QtiCallUtils.shallShowDataUsageToast(mContext)) {
             final String dataUsageChangedText = mContext.getResources().getString(
                     R.string.wlan_data_usage_label) + wlanUsage;
             QtiCallUtils.displayToast(mContext, dataUsageChangedText);
@@ -266,8 +263,7 @@ public class InCallMessageController implements InCallSubstateListener, VideoEve
     @Override
     public void onCallDataUsageChange(final long dataUsage) {
         Log.d(this, "onCallDataUsageChange: dataUsage = " + dataUsage);
-        if (QtiImsExtUtils.isCarrierConfigEnabled(mContext,
-                QtiCarrierConfigs.SHOW_DATA_USAGE_TOAST)) {
+        if (QtiCallUtils.shallShowDataUsageToast(mContext)) {
             final String dataUsageChangedText = mContext.getResources().getString(
                     R.string.lte_data_usage_label) + dataUsage;
             QtiCallUtils.displayToast(mContext, dataUsageChangedText);
