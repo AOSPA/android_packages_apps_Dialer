@@ -134,7 +134,11 @@ public class CallLogNotificationsService extends IntentService {
         MissedCallNotifier.getIstance(this).insertPostCallNotification(phoneNumber, note);
         break;
       case ACTION_MARK_NEW_MISSED_CALLS_AS_OLD:
-        CallLogNotificationsQueryHelper.removeMissedCallNotifications(this, intent.getData());
+        if (PermissionsUtil.hasCallLogWritePermissions(this)) {
+          CallLogNotificationsQueryHelper.removeMissedCallNotifications(this, intent.getData());
+        } else {
+          LogUtil.d("CallLogNotificationsService.onHandleIntent", "no call log write permissions.");
+        }
         TelecomUtil.cancelMissedCallsNotification(this);
         break;
       case ACTION_CALL_BACK_FROM_MISSED_CALL_NOTIFICATION:
