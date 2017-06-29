@@ -17,7 +17,12 @@ import android.app.ActionBar;
 import android.content.Context;
 import android.content.Intent;
 import android.content.res.Resources;
+import android.telecom.PhoneAccountHandle;
+import android.telephony.SubscriptionInfo;
+import android.telephony.SubscriptionManager;
+import android.telephony.TelephonyManager;
 import android.text.TextUtils;
+import java.util.List;
 
 /**
  * Helper for manipulating intents or components with subscription-related information.
@@ -31,37 +36,47 @@ public class SubscriptionInfoHelper {
 
   // Extra on intent containing the id of a subscription.
   public static final String SUB_ID_EXTRA =
-      "com.android.voicemailomtp.settings.SubscriptionInfoHelper.SubscriptionId";
+      "com.android.phone.settings.SubscriptionInfoHelper.SubscriptionId";
   // Extra on intent containing the label of a subscription.
   private static final String SUB_LABEL_EXTRA =
-      "com.android.voicemailomtp.settings.SubscriptionInfoHelper.SubscriptionLabel";
+      "com.android.phone.settings.SubscriptionInfoHelper.SubscriptionLabel";
 
   private static Context mContext;
 
-  private static int mSubId = NO_SUB_ID;
-  private static String mSubLabel;
+  private int mSubId = NO_SUB_ID;
+  private String mSubLabel;
+  private PhoneAccountHandle mPhoneAccountHandle;
 
-  /** Instantiates the helper, by extracting the subscription id and label from the intent. */
-  public SubscriptionInfoHelper(Context context, Intent intent) {
+  /** Instantiates the helper, by parsing the subscription id and label from the phone account. */
+  public SubscriptionInfoHelper(Context context, PhoneAccountHandle phoneAccountHandle) {
     mContext = context;
-    mSubId = intent.getIntExtra(SUB_ID_EXTRA, NO_SUB_ID);
-    mSubLabel = intent.getStringExtra(SUB_LABEL_EXTRA);
+    SubscriptionManager sm = SubscriptionManager.from(mContext);
+    List<SubscriptionInfo> subInfoList = sm.getActiveSubscriptionInfoList();
+    if (phoneAccountHandle != null && !TextUtils.isEmpty(phoneAccountHandle.getId())
+        && subInfoList != null) {
+      for (SubscriptionInfo subInfo : subInfoList) {
+        if (phoneAccountHandle.getId().startsWith(subInfo.getIccId())) {
+          mSubId = subInfo.getSubscriptionId();
+          mSubLabel = subInfo.getDisplayName().toString();
+          break;
+        }
+      }
+    }
   }
 
-  /**
-   * Sets the action bar title to the string specified by the given resource id, formatting it with
-   * the subscription label. This assumes the resource string is formattable with a string-type
-   * specifier.
-   *
-   * <p>If the subscription label does not exists, leave the existing title.
-   */
-  public void setActionBarTitle(ActionBar actionBar, Resources res, int resId) {
-    if (actionBar == null || TextUtils.isEmpty(mSubLabel)) {
-      return;
+  public Intent getConfiguringVoiceMailIntent() {
+    Intent intent = new Intent(TelephonyManager.ACTION_CONFIGURE_VOICEMAIL);
+    if (hasSubId()) {
+      intent.putExtra(SUB_ID_EXTRA, mSubId);
+      if (!TextUtils.isEmpty(mSubLabel)) {
+        intent.putExtra(SUB_LABEL_EXTRA, mSubLabel);
+      }
     }
+    return intent;
+  }
 
-    String title = String.format(res.getString(resId), mSubLabel);
-    actionBar.setTitle(title);
+  public boolean hasSubId() {
+    return mSubId != NO_SUB_ID;
   }
 
   public int getSubId() {
