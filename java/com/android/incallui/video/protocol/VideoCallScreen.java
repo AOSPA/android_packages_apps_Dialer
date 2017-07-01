@@ -38,5 +38,7 @@ public interface VideoCallScreen {
 
   Fragment getVideoCallScreenFragment();
 
+  void onRequestReadStoragePermission();
+
   String getCallId();
 }

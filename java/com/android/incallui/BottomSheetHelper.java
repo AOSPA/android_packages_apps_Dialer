@@ -55,6 +55,7 @@ import com.android.incallui.call.DialerCall;
 import com.android.dialer.common.LogUtil;
 import com.android.dialer.util.IntentUtil;
 import com.android.incallui.videotech.ims.ImsVideoTech;
+import com.android.incallui.videotech.utils.VideoUtils;
 
 import java.lang.reflect.*;
 import java.util.Arrays;
@@ -72,6 +73,7 @@ public class BottomSheetHelper implements InCallPresenter.InCallEventListener {
    private ConcurrentHashMap<String,Boolean> moreOptionsMap;
    private ExtBottomSheetFragment moreOptionsSheet;
    private int voiceNetworkType;
+   private boolean mIsHideMe = false;
    private Context mContext;
    private DialerCall mCall;
    private PrimaryCallTracker mPrimaryCallTracker;
@@ -129,6 +131,7 @@ public class BottomSheetHelper implements InCallPresenter.InCallEventListener {
      InCallPresenter.getInstance().removeListener(mPrimaryCallTracker);
      InCallPresenter.getInstance().removeIncomingCallListener(mPrimaryCallTracker);
      InCallPresenter.getInstance().removeInCallEventListener(this);
+     mIsHideMe = false;
      mPrimaryCallTracker = null;
      mContext = null;
      mResources = null;
@@ -143,6 +146,7 @@ public class BottomSheetHelper implements InCallPresenter.InCallEventListener {
        maybeUpdateDeflectInMap();
        maybeUpdateAddParticipantInMap();
        maybeUpdateTransferInMap();
+       maybeUpdateHideMeInMap();
        maybeUpdateManageConferenceInMap();
        maybeUpdateOneWayVideoOptionsInMap();
        maybeUpdateModifyCallInMap();
@@ -229,6 +233,9 @@ public class BottomSheetHelper implements InCallPresenter.InCallEventListener {
        transferCall();
      } else if (text.equals(mResources.getString(R.string.manageConferenceLabel))) {
        manageConferenceCall();
+     } else if (text.equals(mResources.getString(R.string.qti_ims_hideMeText_unselected)) ||
+         text.equals(mResources.getString(R.string.qti_ims_hideMeText_selected))) {
+       hideMeClicked(text.equals(mResources.getString(R.string.qti_ims_hideMeText_unselected)));
      } else if (text.equals(mResources.getString(R.string.video_tx_label))) {
        acceptIncomingCallOrUpgradeRequest(VideoProfile.STATE_TX_ENABLED);
      } else if (text.equals(mResources.getString(R.string.video_rx_label))) {
@@ -455,6 +462,49 @@ public class BottomSheetHelper implements InCallPresenter.InCallEventListener {
          getCallTransferCapabilities() != 0 && !mCall.hasReceivedVideoUpgradeRequest());
    }
 
+   private void maybeUpdateHideMeInMap() {
+     if (!QtiImsExtUtils.shallShowStaticImageUi(getPhoneId(), mContext) ||
+         !VideoUtils.hasCameraPermissionAndAllowedByUser(mContext)) {
+       return;
+     }
+
+     LogUtil.v("BottomSheetHelper.maybeUpdateHideMeInMap", " mIsHideMe = " + mIsHideMe);
+     String hideMeText = mIsHideMe ? mResources.getString(R.string.qti_ims_hideMeText_selected) :
+         mResources.getString(R.string.qti_ims_hideMeText_unselected);
+     moreOptionsMap.put(hideMeText, mCall.isVideoCall()
+         && mCall.getState() == DialerCall.State.ACTIVE
+         && !mCall.hasReceivedVideoUpgradeRequest());
+   }
+
+   /**
+    * Handles click on hide me button
+    * @param isHideMe True if user selected hide me option else false
+    */
+   private void hideMeClicked(boolean isHideMe) {
+     LogUtil.d("BottomSheetHelper.hideMeClicked", " isHideMe = " + isHideMe);
+     mIsHideMe = isHideMe;
+     if (isHideMe) {
+       // Replace "Hide Me" string with "Show Me"
+       moreOptionsMap.remove(mResources.getString(R.string.qti_ims_hideMeText_unselected));
+       moreOptionsMap.put(mResources.getString(R.string.qti_ims_hideMeText_selected), isHideMe);
+     } else {
+       // Replace "Show Me" string with "Hide Me"
+       moreOptionsMap.remove(mResources.getString(R.string.qti_ims_hideMeText_selected));
+       moreOptionsMap.put(mResources.getString(R.string.qti_ims_hideMeText_unselected), !isHideMe);
+     }
+
+     /* Click on hideme shall change the static image state i.e. decision
+        is made in VideoCallPresenter whether to replace preview video with
+        static image or whether to resume preview video streaming */
+     InCallPresenter.getInstance().notifyStaticImageStateChanged(isHideMe);
+   }
+
+   // Returns TRUE if UE is in hide me mode else returns FALSE
+   public boolean isHideMeSelected() {
+     LogUtil.v("BottomSheetHelper.isHideMeSelected", "mIsHideMe: " + mIsHideMe);
+     return mIsHideMe;
+   }
+
    private void manageConferenceCall() {
      final InCallActivity inCallActivity = InCallPresenter.getInstance().getActivity();
      if (inCallActivity == null) {
@@ -645,6 +695,11 @@ public class BottomSheetHelper implements InCallPresenter.InCallEventListener {
      */
     private void changeToVideoClicked(DialerCall call, int videoState) {
       call.getVideoTech().upgradeToVideo(videoState);
+    }
+
+    @Override
+    public void onSendStaticImageStateChanged(boolean isEnabled) {
+      //No-op
     }
 
     /**
