@@ -1124,8 +1124,15 @@ public class VideoCallFragment extends Fragment
 
   @Override
   public void onInCallScreenDialpadVisibilityChange(boolean isShowing) {
-    LogUtil.i("VideoCallFragment.onInCallScreenDialpadVisibilityChange","showing: "+isShowing);
-    moreOptionsMenuButton.setVisibility(!isShowing ? View.VISIBLE : View.GONE);
+    LogUtil.i("VideoCallFragment.onInCallScreenDialpadVisibilityChange", null);
+  }
+
+  @Override
+  public void onInCallShowDialpad(boolean isShown) {
+    LogUtil.i("VideoCallFragment.onInCallShowDialpad","isShown: "+isShown);
+    boolean shouldShowMoreButton = !isShown
+      && BottomSheetHelper.getInstance().shallShowMoreButton(getActivity());
+    moreOptionsMenuButton.setVisibility(shouldShowMoreButton ? View.VISIBLE : View.GONE);
   }
 
   @Override

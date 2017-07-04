@@ -303,6 +303,7 @@ public class InCallActivity extends TransactionSafeFragmentActivity
       // repositions itself.
       getInCallScreen().onInCallScreenDialpadVisibilityChange(show);
     }
+    getInCallScreen().onInCallShowDialpad(show);
     return didChange;
   }
 

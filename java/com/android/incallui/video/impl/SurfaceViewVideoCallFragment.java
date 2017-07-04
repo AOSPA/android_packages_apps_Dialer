@@ -921,6 +921,11 @@ public class SurfaceViewVideoCallFragment extends Fragment
   }
 
   @Override
+  public void onInCallShowDialpad(boolean isShown) {
+    LogUtil.i("SurfaceViewVideoCallFragment.onInCallShowDialpad", null);
+  }
+
+  @Override
   public int getAnswerAndDialpadContainerResourceId() {
     return 0;
   }
