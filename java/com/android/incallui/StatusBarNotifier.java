@@ -119,6 +119,7 @@ public class StatusBarNotifier
   @Nullable private ContactsPreferences mContactsPreferences;
   private int mCurrentNotification = NOTIFICATION_NONE;
   private int mCallState = DialerCall.State.INVALID;
+  private int mVideoState = VideoProfile.STATE_AUDIO_ONLY;
   private int mSavedIcon = 0;
   private String mSavedContent = null;
   private Bitmap mSavedLargeIcon;
@@ -351,6 +352,7 @@ public class StatusBarNotifier
         largeIcon,
         contentTitle,
         callState,
+        call.getVideoState(),
         notificationType,
         contactInfo.contactRingtoneUri)) {
       return;
@@ -537,6 +539,7 @@ public class StatusBarNotifier
       Bitmap largeIcon,
       String contentTitle,
       int state,
+      int videoState,
       int notificationType,
       Uri ringtone) {
 
@@ -555,6 +558,7 @@ public class StatusBarNotifier
         (mSavedIcon != icon)
             || !Objects.equals(mSavedContent, content)
             || (mCallState != state)
+            || (mVideoState != videoState)
             || largeIconChanged
             || contentTitleChanged
             || !Objects.equals(mRingtone, ringtone);
@@ -572,6 +576,7 @@ public class StatusBarNotifier
     mSavedIcon = icon;
     mSavedContent = content;
     mCallState = state;
+    mVideoState = videoState;
     mSavedLargeIcon = largeIcon;
     mSavedContentTitle = contentTitle;
     mRingtone = ringtone;
