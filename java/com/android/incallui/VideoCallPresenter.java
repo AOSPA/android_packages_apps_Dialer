@@ -126,6 +126,10 @@ public class VideoCallPresenter
    * Determines if the countdown is currently running to automatically enter full screen video mode.
    */
   private boolean mAutoFullScreenPending = false;
+
+  /** Stores current orientation mode for primary call.*/
+  private int mCurrentOrientationMode = ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED;
+
   /** Whether if the call is remotely held. */
   private boolean mIsRemotelyHeld = false;
 
@@ -234,6 +238,7 @@ public class VideoCallPresenter
     if (showing) {
       maybeEnableCamera();
     } else if (mPreviewSurfaceState != PreviewSurfaceState.NONE) {
+      checkForOrientationAllowedChange(mPrimaryCall);
       enableCamera(mVideoCall, false);
     }
   }
@@ -906,13 +911,12 @@ public class VideoCallPresenter
   }
 
   private void checkForOrientationAllowedChange(@Nullable DialerCall call) {
-    if(!OrientationModeHandler.getInstance().isOrientationDynamic()) {
-      return;
+    LogUtil.d("VideoCallPresenter.checkForOrientationAllowedChange","call : "+ call);
+    int orientation = OrientationModeHandler.getInstance().getOrientation(call);
+    if (orientation != mCurrentOrientationMode) {
+      mCurrentOrientationMode = orientation;
+      InCallPresenter.getInstance().setInCallAllowsOrientationChange(mCurrentOrientationMode);
     }
-    InCallPresenter.getInstance()
-      .setInCallAllowsOrientationChange(isVideoCall(call) || isVideoUpgrade(call) ?
-          InCallOrientationEventListener.ACTIVITY_PREFERENCE_ALLOW_ROTATION :
-          InCallOrientationEventListener.ACTIVITY_PREFERENCE_DISALLOW_ROTATION);
   }
 
   private void updateFullscreenAndGreenScreenMode(
@@ -1091,6 +1095,7 @@ public class VideoCallPresenter
         false /* isRemotelyHeld */);
     enableCamera(mVideoCall, false);
     InCallPresenter.getInstance().setFullScreen(false);
+    checkForOrientationAllowedChange(mPrimaryCall);
 
     if (mPrimaryCall != null &&
         mVideoCall != null &&
