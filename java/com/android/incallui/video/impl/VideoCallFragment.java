@@ -969,7 +969,7 @@ public class VideoCallFragment extends Fragment
   @Override
   public void enableButton(@InCallButtonIds int buttonId, boolean enable) {
     LogUtil.v(
-        "VideoCallFragment.setEnabled",
+        "VideoCallFragment.enableButton",
         "buttonId: %s, enable: %b",
         InCallButtonIdsExtension.toString(buttonId),
         enable);
@@ -997,6 +997,9 @@ public class VideoCallFragment extends Fragment
     muteButton.setEnabled(enabled);
     cameraOffButton.setEnabled(enabled);
     switchOnHoldCallController.setEnabled(enabled);
+    addCallButton.setEnabled(enabled);
+    mergeCallButton.setEnabled(enabled);
+    holdButton.setEnabled(enabled);
   }
 
   @Override
