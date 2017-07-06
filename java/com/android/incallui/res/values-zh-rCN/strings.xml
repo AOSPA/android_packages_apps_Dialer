@@ -151,4 +151,15 @@
     <!-- Title displayed in the overlay for incoming conference calls which include the name of the provider.
          [CHAR LIMIT=40] -->
     <string name="incoming_conf_via_template">"通过 <xliff:g id="provider_name">%s</xliff:g>会议来电"</string>
+    <string name="add_participant_option_msg">添加参与者</string>
+    <string name="video_rx_label">视频接收</string>
+    <string name="video_tx_label">视频发送</string>
+    <string name="modify_call_label">更改通话类型</string>
+    <string name="notification_requesting_video_tx_call">"呼入视频发送请求"</string>
+    <string name="notification_requesting_video_rx_call">"呼入视频接收请求"</string>
+    <string name="modify_call_option_title">何种通话类型?</string>
+    <string name="modify_call_option_vt">双向视频</string>
+    <string name="modify_call_option_vt_tx">视频发送</string>
+    <string name="modify_call_option_vt_rx">视频接收</string>
+    <string name="modify_call_option_voice">仅语音</string>
 </resources>
