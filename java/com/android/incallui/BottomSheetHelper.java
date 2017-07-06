@@ -167,11 +167,12 @@ public class BottomSheetHelper implements InCallPresenter.InCallEventListener,
    private boolean isOneWayVideoOptionsVisible() {
      final int primaryCallState = mCall.getState();
      final int requestedVideoState = mCall.getVideoTech().getRequestedVideoState();
-
      return (QtiCallUtils.useExt(mContext) && mCall.hasReceivedVideoUpgradeRequest()
+       && VideoProfile.isAudioOnly(mCall.getVideoState())
        && VideoProfile.isBidirectional(requestedVideoState))
        || ((DialerCall.State.INCOMING == primaryCallState
-       || DialerCall.State.CALL_WAITING == primaryCallState) && mCall.isVideoCall());
+       || DialerCall.State.CALL_WAITING == primaryCallState)
+       && QtiCallUtils.isVideoBidirectional(mCall));
    }
 
    private boolean isModifyCallOptionsVisible() {
