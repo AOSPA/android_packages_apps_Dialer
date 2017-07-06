@@ -420,8 +420,15 @@ public class InCallFragment extends Fragment
     if (inCallButtonGridFragment != null) {
       // Update the Android Button's state to isShowing.
       inCallButtonGridFragment.onInCallScreenDialpadVisibilityChange(isShowing);
-      moreOptionsMenuButton.setVisibility(!isShowing ? View.VISIBLE : View.GONE);
     }
+  }
+
+  @Override
+  public void onInCallShowDialpad(boolean isShown) {
+    LogUtil.i("InCallFragment.onInCallShowDialpad","isShown: "+isShown);
+    boolean shouldShowMoreButton = !isShown
+      && BottomSheetHelper.getInstance().shallShowMoreButton(getActivity());
+    moreOptionsMenuButton.setVisibility(shouldShowMoreButton ? View.VISIBLE : View.GONE);
   }
 
   @Override
