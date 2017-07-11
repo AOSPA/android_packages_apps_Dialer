@@ -363,7 +363,7 @@ public class QtiCallUtils {
         }
     }
 
-    private static DialerCall getIncomingOrActiveCall() {
+    public static DialerCall getIncomingOrActiveCall() {
         CallList callList = InCallPresenter.getInstance().getCallList();
         if (callList == null) {
            return null;

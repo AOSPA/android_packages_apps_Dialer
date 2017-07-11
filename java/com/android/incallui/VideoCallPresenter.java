@@ -187,6 +187,7 @@ public class VideoCallPresenter
 
   private boolean isCameraRequired(int videoState, int sessionModificationState) {
     return !mIsInBackground && !shallTransmitStaticImage() &&
+        !isModifyToVideoRxType(mPrimaryCall) &&
         (VideoProfile.isBidirectional(videoState)
         || VideoProfile.isTransmissionEnabled(videoState)
         || isVideoUpgrade(sessionModificationState));
@@ -689,6 +690,11 @@ public class VideoCallPresenter
     }
   }
 
+  @Override
+  public void onSessionModificationStateChange(DialerCall call) {
+    //No-op
+  }
+
   /**
    * Handles a change to the video call hide me selection
    *
@@ -923,12 +929,25 @@ public class VideoCallPresenter
   private void updateFullscreenAndGreenScreenMode(
       int callState, @SessionModificationState int sessionModificationState) {
     if (mVideoCallScreen != null) {
+      boolean hasVideoCallSentVideoUpgradeRequest =
+          isVideoCall(mPrimaryCall)
+          && VideoUtils.hasSentVideoUpgradeRequest(sessionModificationState);
+
       boolean shouldShowFullscreen = InCallPresenter.getInstance().isFullscreen();
+
+      /*
+       * Do not enter green screen mode:
+       * 1. For VoLTE to VT-RX upgrade
+       * 2. If a video call is waiting for upgrade to video response
+       *    for eg. VT->VT-RX/VT-TX or VT-TX/VT-RX->VT etc.,
+       */
       boolean shouldShowGreenScreen =
           callState == State.DIALING
               || callState == State.CONNECTING
               || callState == State.INCOMING
-              || isVideoUpgrade(sessionModificationState);
+              || (!hasVideoCallSentVideoUpgradeRequest
+              && !isModifyToVideoRxType(mPrimaryCall)
+              && isVideoUpgrade(sessionModificationState));
       mVideoCallScreen.updateFullscreenAndGreenScreenMode(
           shouldShowFullscreen, shouldShowGreenScreen);
     }
@@ -1132,14 +1151,16 @@ public class VideoCallPresenter
     boolean showOutgoingVideo = showOutgoingVideo(mContext, videoState, sessionModificationState);
     LogUtil.i(
         "VideoCallPresenter.showVideoUi",
-        "showIncoming: %b, showOutgoing: %b, isRemotelyHeld: %b shallTransmitStaticImage: %b",
+        "showIncoming: %b, showOutgoing: %b, isRemotelyHeld: %b shallTransmitStaticImage: %b" +
+         " isModifyToVideoRx: %b",
         showIncomingVideo,
         showOutgoingVideo,
         isRemotelyHeld,
-        shallTransmitStaticImage());
+        shallTransmitStaticImage(),
+        isModifyToVideoRxType(mPrimaryCall));
     updateRemoteVideoSurfaceDimensions();
-    mVideoCallScreen.showVideoViews(showOutgoingVideo && !shallTransmitStaticImage(),
-        showIncomingVideo, isRemotelyHeld);
+    mVideoCallScreen.showVideoViews(showOutgoingVideo && !shallTransmitStaticImage() &&
+        !isModifyToVideoRxType(mPrimaryCall), showIncomingVideo, isRemotelyHeld);
     if (BottomSheetHelper.getInstance().canDisablePipMode() && mPictureModeHelper != null) {
       mPictureModeHelper.setPreviewVideoLayoutParams();
     }
@@ -1559,6 +1580,16 @@ public class VideoCallPresenter
     return CompatUtils.isVideoCompatible()
         && (VideoProfile.isTransmissionEnabled(videoState)
             || VideoProfile.isReceptionEnabled(videoState));
+  }
+
+  private static boolean isModifyToVideoRxType(DialerCall call) {
+    if (!CompatUtils.isVideoCompatible()) {
+      return false;
+    }
+
+    return call != null
+        && (call.getVideoTech().getUpgradeToVideoState() == VideoProfile.STATE_RX_ENABLED ||
+        call.getVideoTech().getRequestedVideoState() == VideoProfile.STATE_RX_ENABLED);
   }
 
   /**

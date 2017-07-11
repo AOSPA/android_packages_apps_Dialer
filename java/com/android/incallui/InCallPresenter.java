@@ -791,6 +791,7 @@ public class InCallPresenter implements CallList.Listener {
       // Re-evaluate which fragment is being shown.
       mInCallActivity.onPrimaryCallStateChanged();
     }
+    notifySessionModificationStateChange(call);
   }
 
   /**
@@ -1210,6 +1211,12 @@ public class InCallPresenter implements CallList.Listener {
    */
   public boolean isFullscreen() {
     return mIsFullScreen;
+  }
+
+  public void notifySessionModificationStateChange(DialerCall call) {
+   for (InCallEventListener listener : mInCallEventListeners) {
+     listener.onSessionModificationStateChange(call);
+   }
   }
 
   /**
@@ -1752,7 +1759,7 @@ public class InCallPresenter implements CallList.Listener {
    * UI. Used as a means of communicating between fragments that make up the UI.
    */
   public interface InCallEventListener {
-
+    void onSessionModificationStateChange(DialerCall call);
     void onFullscreenModeChanged(boolean isFullscreenMode);
     void onSendStaticImageStateChanged(boolean isEnabled);
   }

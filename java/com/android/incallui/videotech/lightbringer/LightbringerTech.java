@@ -101,6 +101,11 @@ public class LightbringerTech implements VideoTech, LightbringerListener {
   }
 
   @Override
+  public int getUpgradeToVideoState() {
+    return -1;
+  }
+
+  @Override
   public void acceptVideoRequest() {
     throw Assert.createUnsupportedOperationFailException();
   }

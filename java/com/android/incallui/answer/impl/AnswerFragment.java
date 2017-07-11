@@ -37,6 +37,7 @@ import android.support.annotation.StringRes;
 import android.support.annotation.VisibleForTesting;
 import android.support.v4.app.Fragment;
 import android.telecom.CallAudioState;
+import android.telecom.VideoProfile;
 import android.text.TextUtils;
 import android.transition.TransitionManager;
 import android.view.LayoutInflater;
@@ -61,6 +62,8 @@ import com.android.dialer.multimedia.MultimediaData;
 import com.android.dialer.util.ViewUtil;
 import com.android.incallui.BottomSheetHelper;
 import com.android.incallui.ExtBottomSheetFragment.ExtBottomSheetActionCallback;
+import  com.android.incallui.VideoCallPresenter;
+import com.android.incallui.QtiCallUtils;
 import com.android.incallui.answer.impl.CreateCustomSmsDialogFragment.CreateCustomSmsHolder;
 import com.android.incallui.answer.impl.SmsBottomSheetFragment.SmsSheetHolder;
 import com.android.incallui.answer.impl.affordance.SwipeButtonHelper.Callback;
@@ -72,6 +75,7 @@ import com.android.incallui.answer.impl.utils.Interpolators;
 import com.android.incallui.answer.protocol.AnswerScreen;
 import com.android.incallui.answer.protocol.AnswerScreenDelegate;
 import com.android.incallui.answer.protocol.AnswerScreenDelegateFactory;
+import com.android.incallui.call.DialerCall;
 import com.android.incallui.call.DialerCall.State;
 import com.android.incallui.contactgrid.ContactGridManager;
 import com.android.incallui.incall.protocol.ContactPhotoType;
@@ -744,7 +748,15 @@ public class AnswerFragment extends Fragment
     }
     view.setSystemUiVisibility(flags);
     if (isVideoCall() || isVideoUpgradeRequest()) {
-      if (VideoUtils.hasCameraPermissionAndAllowedByUser(getContext())) {
+      final DialerCall call = QtiCallUtils.getIncomingOrActiveCall();
+      int requestedVideoState = VideoProfile.STATE_AUDIO_ONLY;
+      if (call != null) {
+        requestedVideoState = call.getVideoTech().getRequestedVideoState();
+      }
+
+      if (VideoUtils.hasCameraPermissionAndAllowedByUser(getContext()) &&
+          (VideoCallPresenter.isTransmissionEnabled(call) ||
+          VideoProfile.isTransmissionEnabled(requestedVideoState))) {
         if (isSelfManagedCamera()) {
           answerVideoCallScreen = new SelfManagedAnswerVideoCallScreen(getCallId(), this, view);
         } else {

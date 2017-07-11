@@ -57,6 +57,8 @@ public interface VideoTech {
 
   int getRequestedVideoState();
 
+  int getUpgradeToVideoState();
+
   void declineVideoRequest();
 
   boolean isTransmitting();
