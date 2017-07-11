@@ -49,6 +49,8 @@ public interface InCallScreen {
 
   void onInCallScreenDialpadVisibilityChange(boolean isShowing);
 
+  void onInCallShowDialpad(boolean isShown);
+
   int getAnswerAndDialpadContainerResourceId();
 
   void showLocationUi(Fragment locationUi);

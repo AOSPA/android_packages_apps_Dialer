@@ -108,6 +108,10 @@ public class OrientationModeHandler implements InCallDetailsListener, InCallUiLi
           Log.e(this, "onDetailsChanged: details is null");
           return;
         }
+        if (!mPrimaryCallTracker.isPrimaryCall(call)) {
+          Log.e(this, "onDetailsChanged: call is non-primary call");
+          return;
+        }
         mayBeUpdateOrientationMode(call, details.getExtras());
     }
 
@@ -162,7 +166,6 @@ public class OrientationModeHandler implements InCallDetailsListener, InCallUiLi
     private void onScreenOrientationChanged(DialerCall call, int orientation) {
         Log.d(this, "onScreenOrientationChanged: Call : " + call + " screen orientation = " +
                 orientation);
-
         if (!mPrimaryCallTracker.isPrimaryCall(call)) {
             Log.e(this, "Can't set requested orientation on a non-primary call");
             return;
@@ -182,7 +185,9 @@ public class OrientationModeHandler implements InCallDetailsListener, InCallUiLi
      * @param call The current call.
      */
     public int getOrientation(DialerCall call) {
-        if (isVideoOrUpgrade(call)) {
+        // When VT call is put on hold, user is presented with VoLTE UI.
+        // Hence, restricting held VT call to change orientation.
+        if (isVideoOrUpgrade(call) && (call.getActualState() != DialerCall.State.ONHOLD)) {
             return (mOrientationMode == QtiCallConstants.ORIENTATION_MODE_UNSPECIFIED) ?
                     InCallOrientationEventListener.ACTIVITY_PREFERENCE_ALLOW_ROTATION :
                     QtiCallUtils.toScreenOrientation(mOrientationMode);
@@ -205,7 +210,7 @@ public class OrientationModeHandler implements InCallDetailsListener, InCallUiLi
             return;
         }
         mVideoState = call.getVideoState();
-        onScreenOrientationChanged(call, QtiCallUtils.toScreenOrientation(mOrientationMode));
+        onScreenOrientationChanged(call, getOrientation(call));
     }
 
     public boolean isOrientationDynamic() {

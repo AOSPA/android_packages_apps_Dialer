@@ -23,6 +23,7 @@ import android.text.TextUtils;
 import com.android.dialer.common.Assert;
 import com.android.incallui.call.DialerCall.State;
 import com.android.incallui.incall.protocol.PrimaryCallState;
+import com.android.incallui.QtiCallUtils;
 import com.android.incallui.videotech.utils.SessionModificationState;
 import com.android.incallui.videotech.utils.VideoUtils;
 
@@ -117,11 +118,8 @@ public class TopRow {
   }
 
   private static CharSequence getLabelForIncomingVideo(Context context, boolean isWifi) {
-    if (isWifi) {
-      return context.getString(R.string.contact_grid_incoming_wifi_video_call);
-    } else {
-      return context.getString(R.string.contact_grid_incoming_video_call);
-    }
+      return isWifi ? QtiCallUtils.getLabelForIncomingWifiVideoCall(context) :
+          QtiCallUtils.getLabelForIncomingVideoCall(context);
   }
 
   private static CharSequence getLabelForDialing(Context context, PrimaryCallState state) {

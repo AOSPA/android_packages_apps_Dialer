@@ -51,6 +51,9 @@
     <!-- Text for the onscreen "consultative transfer" button -->
     <string name="qti_ims_onscreenConsultativeTransfer">Consultative Transfer</string>
 
+    <string name="qti_ims_hideMeText_unselected">Hide Me</string>
+    <string name="qti_ims_hideMeText_selected">Show Me</string>
+    <string name="qti_ims_defaultImage_fallback">Using default image</string>
 
     <string name="video_rx_label">Video Rx</string>
     <string name="video_tx_label">Video Tx</string>
@@ -58,6 +61,8 @@
     <string name="notification_requesting_video_tx_call">"Incoming video tx request"</string>
     <string name="notification_requesting_video_rx_call">"Incoming video rx request"</string>
 
+    <!-- Text for the PIP mode button -->
+    <string name="pipModeLabel">PIP Mode</string>
     <!--Bottom Sheet resources.String arrays with same format should be introduced
         for each feature/option to be shown on the bottomsheet -->
     <!--
@@ -74,12 +79,23 @@
        <item>false</item>
     </string-array>
 
+    <string-array name="pipMode">
+       <item>@string/pipModeLabel</item>
+       <item>false</item>
+    </string-array>
+
     <string-array name="deflect">
        <item>@string/qti_description_target_deflect</item>
        <item>false</item>
     </string-array>
+
     <string-array name="transfer">
        <item>@string/qti_description_transfer</item>
+       <item>false</item>
+    </string-array>
+
+    <string-array name="hide_me">
+       <item>@string/qti_ims_hideMeText_unselected</item>
        <item>false</item>
     </string-array>
 
@@ -104,9 +120,11 @@
        <item>@array/manageConference</item>
        <item>@array/deflect</item>
        <item>@array/transfer</item>
+       <item>@array/hide_me</item>
        <item>@array/video_rx</item>
        <item>@array/video_tx</item>
        <item>@array/modify_call</item>
+       <item>@array/pipMode</item>
     </array>
 
     <!-- In-call screen: Modify Call Options for IMS call -->
@@ -123,6 +141,38 @@
     <string name="call_state_disconnecting">Disconnecting</string>
     <string name="call_state_disconnected">Disconnected</string>
 
+
     <!-- Message indicating video calls not allowed if user enabled TTY Mode -->
     <string name="video_call_not_allowed_if_tty_enabled">Please disable TTY Mode to upgrade to video calls.</string>
+
+    <!-- Displayed in the answer call screen for incoming video rx calls. -->
+    <string name="incoming_video_rx_call">Video Receive call from</string>
+
+    <!-- Displayed in the answer call screen for incoming video rx calls over Wi-F. -->
+    <string name="incoming_wifi_video_rx_call">Wi-Fi video receive call from</string>
+
+    <!-- Displayed in the answer call screen for incoming video tx calls. -->
+    <string name="incoming_video_tx_call">Video Transmit call from</string>
+
+    <!-- Displayed in the answer call screen for incoming video tx calls over Wi-F. -->
+    <string name="incoming_wifi_video_tx_call">Wi-Fi video transmit call from</string>
+
+    <!-- Message indicating that Video Started flowing for IMS-VT calls -->
+    <string name="player_started">Player Started</string>
+    <!-- Message indicating that Video Stopped flowing for IMS-VT calls -->
+    <string name="player_stopped">Player Stopped</string>
+    <!-- Message indicating that camera failure has occurred for the selected camera and
+         as result camera is not ready -->
+    <string name="camera_not_ready">Camera not ready</string>
+    <!-- Message indicating that camera is ready/available -->
+    <string name="camera_ready">Camera ready</string>
+    <!-- Message indicating unknown call session event -->
+    <string name="unknown_call_session_event">"Unknown call session event"</string>
+
+    <!-- Pop up menu options for picture mode -->
+    <string name="video_call_picture_mode_menu_title">Choose Picture Mode</string>
+    <string name="video_call_picture_mode_preview_video">Camera Preview</string>
+    <string name="video_call_picture_mode_incoming_video">Incoming Video</string>
+    <string name="video_call_picture_mode_cancel_option">Cancel</string>
+    <string name="video_call_picture_mode_save_option">Save</string>
 </resources>

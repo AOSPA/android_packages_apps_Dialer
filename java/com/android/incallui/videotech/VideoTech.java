@@ -89,5 +89,7 @@ public interface VideoTech {
     void onVideoUpgradeRequestReceived();
 
     void onUpgradedToVideo(boolean switchToSpeaker);
+
+    void onCallSessionEvent(int event);
   }
 }

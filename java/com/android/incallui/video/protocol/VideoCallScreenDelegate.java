@@ -41,6 +41,16 @@ public interface VideoCallScreenDelegate {
 
   void onCameraPermissionDialogShown();
 
+  void onReadStoragePermissionResponse(boolean isGranted);
+
+  void setPauseImage();
+
+  boolean shallTransmitStaticImage();
+
+  boolean isUseDefaultImage();
+
+  void setUseDefaultImage(boolean useDefaultImage);
+
   VideoSurfaceTexture getLocalVideoSurfaceTexture();
 
   VideoSurfaceTexture getRemoteVideoSurfaceTexture();

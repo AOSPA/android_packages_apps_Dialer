@@ -661,6 +661,9 @@ public class AnswerFragment extends Fragment
   public void onInCallScreenDialpadVisibilityChange(boolean isShowing) {}
 
   @Override
+  public void onInCallShowDialpad(boolean isShown) {}
+
+  @Override
   public int getAnswerAndDialpadContainerResourceId() {
     throw Assert.createUnsupportedOperationFailException();
   }

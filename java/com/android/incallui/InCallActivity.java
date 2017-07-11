@@ -303,6 +303,7 @@ public class InCallActivity extends TransactionSafeFragmentActivity
       // repositions itself.
       getInCallScreen().onInCallScreenDialpadVisibilityChange(show);
     }
+    getInCallScreen().onInCallShowDialpad(show);
     return didChange;
   }
 
@@ -493,19 +494,6 @@ public class InCallActivity extends TransactionSafeFragmentActivity
     common.showInternationalCallOnWifiDialog(call);
   }
 
-  public void setAllowOrientationChange(boolean allowOrientationChange) {
-    if (!OrientationModeHandler.getInstance().isOrientationDynamic()) {
-      return;
-    }
-
-    if (!allowOrientationChange) {
-      setRequestedOrientation(InCallOrientationEventListener.ACTIVITY_PREFERENCE_DISALLOW_ROTATION);
-    } else {
-      setRequestedOrientation(InCallOrientationEventListener.ACTIVITY_PREFERENCE_ALLOW_ROTATION);
-    }
-    enableInCallOrientationEventListener(allowOrientationChange);
-  }
-
   public void hideMainInCallFragment() {
     LogUtil.i("InCallActivity.hideMainInCallFragment", "");
     if (didShowInCallScreen || didShowVideoCallScreen) {
@@ -542,8 +530,6 @@ public class InCallActivity extends TransactionSafeFragmentActivity
         didShowAnswerScreen,
         didShowInCallScreen,
         didShowVideoCallScreen);
-    // Only video call ui allows orientation change.
-    setAllowOrientationChange(shouldShowVideoUi.shouldShow);
 
     FragmentTransaction transaction = getSupportFragmentManager().beginTransaction();
     boolean didChangeInCall;

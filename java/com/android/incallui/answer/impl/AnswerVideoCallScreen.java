@@ -103,6 +103,10 @@ public class AnswerVideoCallScreen implements VideoCallScreen {
     return fragment;
   }
 
+  @Override
+  public void onRequestReadStoragePermission() {
+  }
+
   @NonNull
   @Override
   public String getCallId() {

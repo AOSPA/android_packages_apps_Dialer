@@ -815,6 +815,10 @@ public class DialerCall implements VideoTechListener {
     return VideoUtils.hasSentVideoUpgradeRequest(getVideoTech().getSessionModificationState());
   }
 
+  public boolean hasVideoUpgadeRequestFailed() {
+    return VideoUtils.hasVideoUpgradeRequestFailed(getVideoTech().getSessionModificationState());
+  }
+
   /**
    * Determines if the call handle is an emergency number or not and caches the result to avoid
    * repeated calls to isEmergencyNumber.
@@ -1173,6 +1177,11 @@ public class DialerCall implements VideoTechListener {
   @Override
   public void onPeerDimensionsChanged(int width, int height) {
     InCallVideoCallCallbackNotifier.getInstance().peerDimensionsChanged(this, width, height);
+  }
+
+  @Override
+  public void onCallSessionEvent(int event) {
+    InCallVideoCallCallbackNotifier.getInstance().callSessionEvent(event);
   }
 
   @Override

@@ -176,12 +176,12 @@ public class InCallActivityCommon {
         WindowManager.LayoutParams.FLAG_SHOW_WHEN_LOCKED
             | WindowManager.LayoutParams.FLAG_TURN_SCREEN_ON
             | WindowManager.LayoutParams.FLAG_IGNORE_CHEEK_PRESSES;
-
+    Intent intent = inCallActivity.getIntent();
     inCallActivity.getWindow().addFlags(flags);
 
     inCallActivity.setContentView(R.layout.incall_screen);
 
-    internalResolveIntent(inCallActivity.getIntent());
+    internalResolveIntent(intent);
 
     boolean isLandscape =
         inCallActivity.getResources().getConfiguration().orientation
@@ -214,15 +214,16 @@ public class InCallActivityCommon {
           }
         });
 
+    if (intent.hasExtra(INTENT_EXTRA_SHOW_DIALPAD)) {
+        boolean showDialpad = intent.getBooleanExtra(INTENT_EXTRA_SHOW_DIALPAD, false);
+        showDialpadRequest = showDialpad ? DIALPAD_REQUEST_SHOW : DIALPAD_REQUEST_HIDE;
+        animateDialpadOnShow = false;
+    }
+
     if (icicle != null) {
       // If the dialpad was shown before, set variables indicating it should be shown and
       // populated with the previous DTMF text.  The dialpad is actually shown and populated
       // in onResume() to ensure the hosting fragment has been inflated and is ready to receive it.
-      if (icicle.containsKey(INTENT_EXTRA_SHOW_DIALPAD)) {
-        boolean showDialpad = icicle.getBoolean(INTENT_EXTRA_SHOW_DIALPAD);
-        showDialpadRequest = showDialpad ? DIALPAD_REQUEST_SHOW : DIALPAD_REQUEST_HIDE;
-        animateDialpadOnShow = false;
-      }
       dtmfTextToPreopulate = icicle.getString(DIALPAD_TEXT_KEY);
 
       SelectPhoneAccountDialogFragment dialogFragment =
