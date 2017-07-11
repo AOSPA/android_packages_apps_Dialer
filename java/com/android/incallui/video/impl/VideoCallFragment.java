@@ -403,8 +403,8 @@ public class VideoCallFragment extends Fragment
   @Override
   public void onVideoScreenStop() {
     getView().removeCallbacks(cameraPermissionDialogRunnable);
-    videoCallScreenDelegate.onVideoCallScreenUiUnready();
     videoCallScreenDelegate.onUiShowing(false);
+    videoCallScreenDelegate.onVideoCallScreenUiUnready();
   }
 
   private void exitFullscreenMode() {
