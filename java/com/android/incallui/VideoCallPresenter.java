@@ -1444,7 +1444,8 @@ public class VideoCallPresenter
       LogUtil.i("VideoCallPresenter.onSurfaceClick", "");
       if (shallTransmitStaticImage()) {
         VideoCallPresenter.this.onSurfaceClick();
-      } else if (mPictureModeHelper != null && mPictureModeHelper.canShowPreviewVideoView()) {
+      } else if (mPictureModeHelper != null && mPictureModeHelper.canShowPreviewVideoView()
+          && isActiveVideoCall(mPrimaryCall) && isTransmissionEnabled(mPrimaryCall)) {
         // Set fullscreen to true when showing the zoom controls as the
         // buttons on the left panel conflict with the zoom control bar.
         cancelAutoFullScreen();
