@@ -289,7 +289,7 @@ public class ImsVideoTech implements VideoTech {
   private boolean canPause() {
     return call.getDetails().can(Details.CAPABILITY_CAN_PAUSE_VIDEO)
         && call.getState() == Call.STATE_ACTIVE
-        && isTransmitting();
+        && isTransmittingOrReceiving();
   }
 
   public static int getUnpausedVideoState(int videoState) {
