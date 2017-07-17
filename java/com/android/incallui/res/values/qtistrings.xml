@@ -157,18 +157,6 @@
     <!-- Displayed in the answer call screen for incoming video tx calls over Wi-F. -->
     <string name="incoming_wifi_video_tx_call">Wi-Fi video transmit call from</string>
 
-    <!-- Message indicating that Video Started flowing for IMS-VT calls -->
-    <string name="player_started">Player Started</string>
-    <!-- Message indicating that Video Stopped flowing for IMS-VT calls -->
-    <string name="player_stopped">Player Stopped</string>
-    <!-- Message indicating that camera failure has occurred for the selected camera and
-         as result camera is not ready -->
-    <string name="camera_not_ready">Camera not ready</string>
-    <!-- Message indicating that camera is ready/available -->
-    <string name="camera_ready">Camera ready</string>
-    <!-- Message indicating unknown call session event -->
-    <string name="unknown_call_session_event">"Unknown call session event"</string>
-
     <!-- Pop up menu options for picture mode -->
     <string name="video_call_picture_mode_menu_title">Choose Picture Mode</string>
     <string name="video_call_picture_mode_preview_video">Camera Preview</string>

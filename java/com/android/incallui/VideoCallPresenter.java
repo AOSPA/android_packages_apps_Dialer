@@ -1684,7 +1684,6 @@ public class VideoCallPresenter
         sb.append(event);
         break;
     }
-    QtiCallUtils.displayToast(mContext, QtiCallUtils.getCallSessionEventResId(event));
     LogUtil.i("VideoCallPresenter.onCallSessionEvent", sb.toString());
   }
 }
