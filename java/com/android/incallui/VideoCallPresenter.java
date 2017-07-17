@@ -106,7 +106,7 @@ public class VideoCallPresenter
    */
   private VideoCall mVideoCall;
   /** Determines if the current UI state represents a video call. */
-  private int mCurrentVideoState;
+  private int mCurrentVideoState = VideoProfile.STATE_AUDIO_ONLY;
   /** DialerCall's current state */
   private int mCurrentCallState = DialerCall.State.INVALID;
   /** Determines the device orientation (portrait/lanscape). */
@@ -143,8 +143,6 @@ public class VideoCallPresenter
   private static boolean sUseDefaultImage = false;
   // Holds TRUE if static image needs to be transmitted instead of video preview stream
   private static boolean sShallTransmitStaticImage = false;
-
-  private int mPhoneId = -1;
 
   /**
    * Cache the size set in the "local_preview_surface_size" settings db property
@@ -216,7 +214,9 @@ public class VideoCallPresenter
 
     mIsInBackground = !showing;
 
-    if (!QtiImsExtUtils.shallShowStaticImageUi(mPhoneId, mContext)) {
+    int phoneId = BottomSheetHelper.getInstance().getPhoneId();
+    if (!QtiImsExtUtils.shallShowStaticImageUi(phoneId, mContext) &&
+        QtiImsExtUtils.shallTransmitStaticImage(phoneId, mContext)) {
       sShallTransmitStaticImage = sUseDefaultImage = mIsInBackground;
     }
 
@@ -225,7 +225,8 @@ public class VideoCallPresenter
       return;
     }
 
-    if (!QtiImsExtUtils.shallShowStaticImageUi(mPhoneId, mContext) &&
+    if (!QtiImsExtUtils.shallShowStaticImageUi(phoneId, mContext) &&
+        QtiImsExtUtils.shallTransmitStaticImage(phoneId, mContext) &&
         isTransmissionEnabled(mPrimaryCall) &&
         (showing || isActiveVideoCall(mPrimaryCall))) {
       // Set pause image only for ACTIVE calls going to background.
@@ -246,7 +247,9 @@ public class VideoCallPresenter
     Uri uri = null;
 
     LogUtil.d("VideoCallPresenter.setPauseImage"," videoCall = " + videoCall);
-    if (!QtiImsExtUtils.shallTransmitStaticImage(mPhoneId, mContext) || videoCall == null) {
+    if (!QtiImsExtUtils.shallTransmitStaticImage(
+            BottomSheetHelper.getInstance().getPhoneId(), mContext)
+        || videoCall == null) {
         return;
     }
 
@@ -442,7 +445,6 @@ public class VideoCallPresenter
       return;
     }
 
-    mPhoneId = BottomSheetHelper.getInstance().getPhoneId();
     mDeviceOrientation = InCallOrientationEventListener.getCurrentOrientation();
 
     // Register for call state changes last
@@ -458,8 +460,6 @@ public class VideoCallPresenter
     // Register for surface and video events from {@link InCallVideoCallListener}s.
     InCallVideoCallCallbackNotifier.getInstance().addSurfaceChangeListener(this);
     mPictureModeHelper.setUp(this);
-    mCurrentVideoState = VideoProfile.STATE_AUDIO_ONLY;
-    mCurrentCallState = DialerCall.State.INVALID;
 
     InCallPresenter.InCallState inCallState = InCallPresenter.getInstance().getInCallState();
     onStateChange(inCallState, inCallState, CallList.getInstance());
@@ -501,7 +501,6 @@ public class VideoCallPresenter
       updateCameraSelection(mPrimaryCall);
     }
 
-    mPhoneId = -1;
     isVideoCallScreenUiReady = false;
   }
 
@@ -783,7 +782,8 @@ public class VideoCallPresenter
   }
 
   private void maybeUnsetPauseImage() {
-    if (QtiImsExtUtils.shallTransmitStaticImage(mPhoneId, mContext) &&
+    if (QtiImsExtUtils.shallTransmitStaticImage(
+            BottomSheetHelper.getInstance().getPhoneId(), mContext) &&
         shallTransmitStaticImage() &&
         !isTransmissionEnabled(mPrimaryCall) &&
         mVideoCall != null) {
@@ -1100,6 +1100,8 @@ public class VideoCallPresenter
 
     if (mPrimaryCall != null &&
         mVideoCall != null &&
+        QtiImsExtUtils.shallTransmitStaticImage(
+            BottomSheetHelper.getInstance().getPhoneId(), mContext) &&
         isTransmissionEnabled(mPrimaryCall) &&
         mPrimaryCall.getState() != DialerCall.State.ONHOLD) {
       LogUtil.v("VideoCallPresenter.exitVideoMode", "setPauseImage(null)");
