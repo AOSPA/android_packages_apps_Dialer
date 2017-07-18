@@ -21,7 +21,6 @@ import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentStatePagerAdapter;
 import android.support.v4.view.PagerAdapter;
-import android.text.TextUtils;
 import com.android.dialer.multimedia.MultimediaData;
 import com.android.incallui.sessiondata.MultimediaFragment;
 
@@ -40,15 +39,14 @@ public class InCallPagerAdapter extends FragmentStatePagerAdapter {
     if (position == getButtonGridPosition()) {
       return InCallButtonGridFragment.newInstance();
     } else {
-      // TODO: handle fragment invalidation for when the data changes.
+      // TODO(calderwoodra): handle fragment invalidation for when the data changes.
       return MultimediaFragment.newInstance(attachments, true, false, false);
     }
   }
 
   @Override
   public int getCount() {
-    if (attachments != null
-        && (!TextUtils.isEmpty(attachments.getText()) || attachments.hasImageData())) {
+    if (attachments != null && attachments.hasData()) {
       return 2;
     }
     return 1;

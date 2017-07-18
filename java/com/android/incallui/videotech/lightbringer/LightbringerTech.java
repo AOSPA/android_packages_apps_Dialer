@@ -17,10 +17,17 @@
 package com.android.incallui.videotech.lightbringer;
 
 import android.content.Context;
+import android.os.Build;
 import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 import android.telecom.Call;
+<<<<<<< HEAD
 import android.telecom.InCallService.VideoCall;
+=======
+import com.android.contacts.common.compat.telecom.TelecomManagerCompat;
+>>>>>>> 442c9b88edcdf780933c4c1f274021a3b48d2a4a
 import com.android.dialer.common.Assert;
+import com.android.dialer.configprovider.ConfigProviderBindings;
 import com.android.dialer.lightbringer.Lightbringer;
 import com.android.dialer.lightbringer.LightbringerListener;
 import com.android.incallui.video.protocol.VideoCallScreen;
@@ -31,15 +38,18 @@ import com.android.incallui.videotech.utils.SessionModificationState;
 public class LightbringerTech implements VideoTech, LightbringerListener {
   private final Lightbringer lightbringer;
   private final VideoTechListener listener;
+  private final Call call;
   private final String callingNumber;
   private int callState = Call.STATE_NEW;
 
   public LightbringerTech(
       @NonNull Lightbringer lightbringer,
       @NonNull VideoTechListener listener,
+      @NonNull Call call,
       @NonNull String callingNumber) {
     this.lightbringer = Assert.isNotNull(lightbringer);
     this.listener = Assert.isNotNull(listener);
+    this.call = Assert.isNotNull(call);
     this.callingNumber = Assert.isNotNull(callingNumber);
 
     lightbringer.registerListener(this);
@@ -47,7 +57,11 @@ public class LightbringerTech implements VideoTech, LightbringerListener {
 
   @Override
   public boolean isAvailable(Context context) {
-    return callState == Call.STATE_ACTIVE && lightbringer.isReachable(context, callingNumber);
+    return Build.VERSION.SDK_INT >= Build.VERSION_CODES.O
+        && ConfigProviderBindings.get(context).getBoolean("enable_lightbringer_video_upgrade", true)
+        && callState == Call.STATE_ACTIVE
+        && lightbringer.supportsUpgrade(context, callingNumber)
+        && TelecomManagerCompat.supportsHandover();
   }
 
   @Override
@@ -81,13 +95,16 @@ public class LightbringerTech implements VideoTech, LightbringerListener {
   }
 
   @Override
+  public void onRemovedFromCallList() {}
+
+  @Override
   public int getSessionModificationState() {
     return SessionModificationState.NO_REQUEST;
   }
 
   @Override
   public void upgradeToVideo() {
-    // TODO: upgrade to a video call
+    lightbringer.requestUpgrade(call);
   }
 
   @Override
@@ -136,17 +153,13 @@ public class LightbringerTech implements VideoTech, LightbringerListener {
   }
 
   @Override
-  public void pause() {
-    throw Assert.createUnsupportedOperationFailException();
-  }
+  public void pause() {}
 
   @Override
-  public void unpause() {
-    throw Assert.createUnsupportedOperationFailException();
-  }
+  public void unpause() {}
 
   @Override
-  public void setCamera(String cameraId) {
+  public void setCamera(@Nullable String cameraId) {
     throw Assert.createUnsupportedOperationFailException();
   }
 

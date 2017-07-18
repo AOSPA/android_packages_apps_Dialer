@@ -28,7 +28,6 @@ import static com.android.incallui.NotificationBroadcastReceiver.ACTION_HANG_UP_
 import android.Manifest;
 import android.app.ActivityManager;
 import android.app.Notification;
-import android.app.Notification.Builder;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.content.Context;
@@ -65,16 +64,16 @@ import com.android.contacts.common.ContactsUtils;
 import com.android.contacts.common.ContactsUtils.UserType;
 import com.android.contacts.common.GeoUtil;
 import com.android.contacts.common.lettertiles.LetterTileDrawable;
+import com.android.contacts.common.lettertiles.LetterTileDrawable.ContactType;
 import com.android.contacts.common.preference.ContactsPreferences;
 import com.android.contacts.common.util.BitmapUtil;
 import com.android.contacts.common.util.ContactDisplayUtils;
 import com.android.dialer.common.LogUtil;
-import com.android.dialer.enrichedcall.EnrichedCallComponent;
+import com.android.dialer.configprovider.ConfigProviderBindings;
 import com.android.dialer.enrichedcall.EnrichedCallManager;
 import com.android.dialer.enrichedcall.Session;
 import com.android.dialer.multimedia.MultimediaData;
-import com.android.dialer.notification.NotificationChannelManager;
-import com.android.dialer.notification.NotificationChannelManager.Channel;
+import com.android.dialer.notification.NotificationChannelId;
 import com.android.dialer.oem.MotorolaUtils;
 import com.android.dialer.util.DrawableConverter;
 import com.android.incallui.ContactInfoCache.ContactCacheEntry;
@@ -95,6 +94,9 @@ import java.util.Objects;
 /** This class adds Notifications to the status bar for the in-call experience. */
 public class StatusBarNotifier
     implements InCallPresenter.InCallStateListener, EnrichedCallManager.StateChangedListener {
+
+  private static final String NOTIFICATION_TAG = "STATUS_BAR_NOTIFIER";
+  private static final int NOTIFICATION_ID = 1;
 
   // Notification types
   // Indicates that no notification is currently showing.
@@ -151,7 +153,7 @@ public class StatusBarNotifier
 
     NotificationManager notificationManager =
         backupContext.getSystemService(NotificationManager.class);
-    notificationManager.cancel(R.id.notification_ongoing_call);
+    notificationManager.cancel(NOTIFICATION_TAG, NOTIFICATION_ID);
   }
 
   private static int getWorkStringFromPersonalString(int resId) {
@@ -175,12 +177,6 @@ public class StatusBarNotifier
   private static PendingIntent createNotificationPendingIntent(Context context, String action) {
     final Intent intent = new Intent(action, null, context, NotificationBroadcastReceiver.class);
     return PendingIntent.getBroadcast(context, 0, intent, 0);
-  }
-
-  private static void setColorized(@NonNull Builder builder) {
-    if (BuildCompat.isAtLeastO()) {
-      builder.setColorized(true);
-    }
   }
 
   /** Creates notifications according to the state we receive from {@link InCallPresenter}. */
@@ -230,7 +226,7 @@ public class StatusBarNotifier
     }
     if (mCurrentNotification != NOTIFICATION_NONE) {
       LogUtil.i("StatusBarNotifier.cancelNotification", "cancel");
-      mNotificationManager.cancel(R.id.notification_ongoing_call);
+      mNotificationManager.cancel(NOTIFICATION_TAG, NOTIFICATION_ID);
     }
     mCurrentNotification = NOTIFICATION_NONE;
   }
@@ -324,11 +320,19 @@ public class StatusBarNotifier
     if (callState == DialerCall.State.INCOMING
         || callState == DialerCall.State.CALL_WAITING
         || isVideoUpgradeRequest) {
-      boolean alreadyActive =
-          callList.getActiveOrBackgroundCall() != null
-              && InCallPresenter.getInstance().isShowingInCallUi();
-      notificationType =
-          alreadyActive ? NOTIFICATION_INCOMING_CALL_QUIET : NOTIFICATION_INCOMING_CALL;
+      if (ConfigProviderBindings.get(mContext)
+          .getBoolean("quiet_incoming_call_if_ui_showing", true)) {
+        notificationType =
+            InCallPresenter.getInstance().isShowingInCallUi()
+                ? NOTIFICATION_INCOMING_CALL_QUIET
+                : NOTIFICATION_INCOMING_CALL;
+      } else {
+        boolean alreadyActive =
+            callList.getActiveOrBackgroundCall() != null
+                && InCallPresenter.getInstance().isShowingInCallUi();
+        notificationType =
+            alreadyActive ? NOTIFICATION_INCOMING_CALL_QUIET : NOTIFICATION_INCOMING_CALL;
+      }
     } else {
       notificationType = NOTIFICATION_IN_CALL;
     }
@@ -390,13 +394,13 @@ public class StatusBarNotifier
     LogUtil.i("StatusBarNotifier.buildAndSendNotification", "notificationType=" + notificationType);
     switch (notificationType) {
       case NOTIFICATION_INCOMING_CALL:
-        NotificationChannelManager.applyChannel(
-            builder, mContext, Channel.INCOMING_CALL, accountHandle);
+        if (BuildCompat.isAtLeastO()) {
+          builder.setChannelId(NotificationChannelId.INCOMING_CALL);
+        }
         configureFullScreenIntent(builder, createLaunchPendingIntent(true /* isFullScreen */));
         // Set the notification category and bump the priority for incoming calls
         builder.setCategory(Notification.CATEGORY_CALL);
         // This will be ignored on O+ and handled by the channel
-        //noinspection deprecation
         builder.setPriority(Notification.PRIORITY_MAX);
         if (mCurrentNotification != NOTIFICATION_INCOMING_CALL) {
           LogUtil.i(
@@ -404,18 +408,20 @@ public class StatusBarNotifier
               "Canceling old notification so this one can be noisy");
           // Moving from a non-interuptive notification (or none) to a noisy one. Cancel the old
           // notification (if there is one) so the fullScreenIntent or HUN will show
-          mNotificationManager.cancel(R.id.notification_ongoing_call);
+          mNotificationManager.cancel(NOTIFICATION_TAG, NOTIFICATION_ID);
         }
         break;
       case NOTIFICATION_INCOMING_CALL_QUIET:
-        NotificationChannelManager.applyChannel(
-            builder, mContext, Channel.ONGOING_CALL, accountHandle);
+        if (BuildCompat.isAtLeastO()) {
+          builder.setChannelId(NotificationChannelId.ONGOING_CALL);
+        }
         break;
       case NOTIFICATION_IN_CALL:
-        setColorized(publicBuilder);
-        setColorized(builder);
-        NotificationChannelManager.applyChannel(
-            builder, mContext, Channel.ONGOING_CALL, accountHandle);
+        if (BuildCompat.isAtLeastO()) {
+          publicBuilder.setColorized(true);
+          builder.setColorized(true);
+          builder.setChannelId(NotificationChannelId.ONGOING_CALL);
+        }
         break;
     }
 
@@ -461,7 +467,7 @@ public class StatusBarNotifier
         "displaying notification for " + notificationType);
 
     try {
-      mNotificationManager.notify(R.id.notification_ongoing_call, notification);
+      mNotificationManager.notify(NOTIFICATION_TAG, NOTIFICATION_ID, notification);
     } catch (RuntimeException e) {
       // TODO(b/34744003): Move the memory stats into silent feedback PSD.
       ActivityManager activityManager = mContext.getSystemService(ActivityManager.class);
@@ -593,8 +599,14 @@ public class StatusBarNotifier
   @VisibleForTesting
   @Nullable
   String getContentTitle(ContactCacheEntry contactInfo, DialerCall call) {
+<<<<<<< HEAD
     if (call.isConferenceCall() || call.hasProperty(Details.PROPERTY_GENERIC_CONFERENCE)) {
       return mContext.getResources().getString(R.string.conference_call_name);
+=======
+    if (call.isConferenceCall()) {
+      return CallerInfoUtils.getConferenceString(
+          mContext, call.hasProperty(Details.PROPERTY_GENERIC_CONFERENCE));
+>>>>>>> 442c9b88edcdf780933c4c1f274021a3b48d2a4a
     }
 
     if (TextUtils.isEmpty(contactInfo.namePrimary)) {
@@ -636,20 +648,16 @@ public class StatusBarNotifier
     if (contactInfo.photo == null) {
       int width = (int) resources.getDimension(android.R.dimen.notification_large_icon_width);
       int height = (int) resources.getDimension(android.R.dimen.notification_large_icon_height);
-      int contactType = LetterTileDrawable.TYPE_DEFAULT;
+      @ContactType
+      int contactType =
+          LetterTileDrawable.getContactTypeFromPrimitives(
+              CallerInfoUtils.isVoiceMailNumber(context, call),
+              call.isSpam(),
+              contactInfo.isBusiness,
+              call.getNumberPresentation(),
+              call.isConferenceCall() && !call.hasProperty(Details.PROPERTY_GENERIC_CONFERENCE));
       LetterTileDrawable lettertile = new LetterTileDrawable(resources);
 
-      // TODO: Deduplicate across Dialer. b/36195917
-      if (CallerInfoUtils.isVoiceMailNumber(context, call)) {
-        contactType = LetterTileDrawable.TYPE_VOICEMAIL;
-      } else if (contactInfo.isBusiness) {
-        contactType = LetterTileDrawable.TYPE_BUSINESS;
-      } else if (call.getNumberPresentation() == TelecomManager.PRESENTATION_RESTRICTED) {
-        contactType = LetterTileDrawable.TYPE_GENERIC_AVATAR;
-      } else if (call.isConferenceCall()
-          && !call.hasProperty(Details.PROPERTY_GENERIC_CONFERENCE)) {
-        contactType = LetterTileDrawable.TYPE_CONFERENCE;
-      }
       lettertile.setCanonicalDialerLetterTileDetails(
           contactInfo.namePrimary == null ? contactInfo.number : contactInfo.namePrimary,
           contactInfo.lookupKey,
@@ -702,6 +710,7 @@ public class StatusBarNotifier
         resId = R.drawable.quantum_ic_videocam_white_24;
     } else if (call.hasProperty(PROPERTY_HIGH_DEF_AUDIO)
         && MotorolaUtils.shouldShowHdIconInNotification(mContext)) {
+<<<<<<< HEAD
         // Normally when a call is ongoing the status bar displays an icon of a phone with animated
         // lines. This is a helpful hint for users so they know how to get back to the call.
         // For Sprint HD calls, we replace this icon with an icon of a phone with a HD badge.
@@ -715,6 +724,19 @@ public class StatusBarNotifier
         }
     }
     return resId;
+=======
+      // Normally when a call is ongoing the status bar displays an icon of a phone. This is a
+      // helpful hint for users so they know how to get back to the call. For Sprint HD calls, we
+      // replace this icon with an icon of a phone with a HD badge. This is a carrier requirement.
+      return R.drawable.ic_hd_call;
+    }
+    // If ReturnToCall is enabled, use the static icon. The animated one will show in the bubble.
+    if (ReturnToCallController.isEnabled(mContext)) {
+      return R.drawable.quantum_ic_call_white_24;
+    } else {
+      return R.drawable.on_going_call;
+    }
+>>>>>>> 442c9b88edcdf780933c4c1f274021a3b48d2a4a
   }
 
   /** Returns the message to use with the notification. */
@@ -739,22 +761,17 @@ public class StatusBarNotifier
     }
 
     if (isIncomingOrWaiting) {
-      EnrichedCallManager manager = EnrichedCallComponent.get(mContext).getEnrichedCallManager();
-      Session session = null;
-      if (call.getNumber() != null) {
-        session =
-            manager.getSession(
-                call.getUniqueCallId(),
-                call.getNumber(),
-                manager.createIncomingCallComposerFilter());
-      }
-
       if (call.isSpam()) {
         resId = R.string.notification_incoming_spam_call;
+<<<<<<< HEAD
       } else if (session != null) {
         resId = getECIncomingCallText(session);
       } else if (call.isIncomingConfCall()) {
         resId = R.string.notification_incoming_conf_call;
+=======
+      } else if (shouldShowEnrichedCallNotification(call.getEnrichedCallSession())) {
+        resId = getECIncomingCallText(call.getEnrichedCallSession());
+>>>>>>> 442c9b88edcdf780933c4c1f274021a3b48d2a4a
       } else if (call.hasProperty(Details.PROPERTY_WIFI)) {
         resId = R.string.notification_incoming_call_wifi;
       } else {
@@ -786,6 +803,13 @@ public class StatusBarNotifier
     return mContext.getString(resId);
   }
 
+  private boolean shouldShowEnrichedCallNotification(Session session) {
+    if (session == null) {
+      return false;
+    }
+    return session.getMultimediaData().hasData() || session.getMultimediaData().isImportant();
+  }
+
   private int getECIncomingCallText(Session session) {
     int resId;
     MultimediaData data = session.getMultimediaData();
@@ -811,8 +835,10 @@ public class StatusBarNotifier
         } else {
           resId = R.string.important_notification_incoming_call_with_photo;
         }
-      } else {
+      } else if (hasSubject) {
         resId = R.string.important_notification_incoming_call_with_message;
+      } else {
+        resId = R.string.important_notification_incoming_call;
       }
       if (mContext.getString(resId).length() > 50) {
         resId = R.string.important_notification_incoming_call_attachments;
@@ -882,13 +908,9 @@ public class StatusBarNotifier
         "will show \"answer\" action in the incoming call Notification");
     PendingIntent answerVoicePendingIntent =
         createNotificationPendingIntent(mContext, ACTION_ANSWER_VOICE_INCOMING_CALL);
-    // We put animation resources in "anim" folder instead of "drawable", which causes Android
-    // Studio to complain.
-    // TODO: Move "anim" resources to "drawable" as recommended in AnimationDrawable doc?
-    //noinspection ResourceType
     builder.addAction(
         new Notification.Action.Builder(
-                Icon.createWithResource(mContext, R.anim.on_going_call),
+                Icon.createWithResource(mContext, R.drawable.quantum_ic_call_white_24),
                 getActionText(
                     R.string.notification_action_answer, R.color.notification_action_accept),
                 answerVoicePendingIntent)
@@ -986,7 +1008,7 @@ public class StatusBarNotifier
     builder.setOngoing(true);
     builder.setOnlyAlertOnce(true);
     // This will be ignored on O+ and handled by the channel
-    //noinspection deprecation
+    // noinspection deprecation
     builder.setPriority(Notification.PRIORITY_HIGH);
 
     return builder;
@@ -1059,6 +1081,9 @@ public class StatusBarNotifier
 
     @Override
     public void onInternationalCallOnWifi() {}
+
+    @Override
+    public void onEnrichedCallSessionUpdate() {}
 
     /**
      * Responds to changes in the session modification state for the call by dismissing the status

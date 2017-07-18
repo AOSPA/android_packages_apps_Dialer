@@ -48,10 +48,14 @@ import com.android.dialer.callintent.CallInitiationType;
 import com.android.dialer.callintent.CallIntentParser;
 import com.android.dialer.callintent.CallSpecificAppData;
 import com.android.dialer.common.Assert;
-import com.android.dialer.common.ConfigProviderBindings;
 import com.android.dialer.common.LogUtil;
+import com.android.dialer.configprovider.ConfigProviderBindings;
 import com.android.dialer.enrichedcall.EnrichedCallCapabilities;
 import com.android.dialer.enrichedcall.EnrichedCallComponent;
+import com.android.dialer.enrichedcall.EnrichedCallManager;
+import com.android.dialer.enrichedcall.EnrichedCallManager.CapabilitiesListener;
+import com.android.dialer.enrichedcall.EnrichedCallManager.Filter;
+import com.android.dialer.enrichedcall.EnrichedCallManager.StateChangedListener;
 import com.android.dialer.enrichedcall.Session;
 import com.android.dialer.lightbringer.LightbringerComponent;
 import com.android.dialer.logging.ContactLookupResult;
@@ -80,7 +84,7 @@ import java.util.concurrent.TimeUnit;
 import org.codeaurora.ims.utils.QtiImsExtUtils;
 
 /** Describes a single call and its state. */
-public class DialerCall implements VideoTechListener {
+public class DialerCall implements VideoTechListener, StateChangedListener, CapabilitiesListener {
 
   public static final int CALL_HISTORY_STATUS_UNKNOWN = 0;
   public static final int CALL_HISTORY_STATUS_PRESENT = 1;
@@ -153,6 +157,12 @@ public class DialerCall implements VideoTechListener {
   private EnrichedCallCapabilities mEnrichedCallCapabilities;
   private Session mEnrichedCallSession;
 
+  private int answerAndReleaseButtonDisplayedTimes = 0;
+  private boolean releasedByAnsweringSecondCall = false;
+  // Times when a second call is received but AnswerAndRelease button is not shown
+  // since it's not supported.
+  private int secondCallWithoutAnswerAndReleasedButtonTimes = 0;
+
   public static String getNumberFromHandle(Uri handle) {
     return handle == null ? "" : handle.getSchemeSpecificPart();
   }
@@ -162,6 +172,9 @@ public class DialerCall implements VideoTechListener {
    * State#ONHOLD} state which indicates that the call is being held locally on the device.
    */
   private boolean isRemotelyHeld;
+
+  /** Indicates whether this call is currently in the process of being merged into a conference. */
+  private boolean isMergeInProcess;
 
   /**
    * Indicates whether the phone account associated with this call supports specifying a call
@@ -268,6 +281,14 @@ public class DialerCall implements VideoTechListener {
             case TelephonyManagerCompat.EVENT_NOTIFY_INTERNATIONAL_CALL_ON_WFC:
               notifyInternationalCallOnWifi();
               break;
+            case TelephonyManagerCompat.EVENT_MERGE_START:
+              LogUtil.i("DialerCall.onConnectionEvent", "merge start");
+              isMergeInProcess = true;
+              break;
+            case TelephonyManagerCompat.EVENT_MERGE_COMPLETE:
+              LogUtil.i("DialerCall.onConnectionEvent", "merge complete");
+              isMergeInProcess = false;
+              break;
             default:
               break;
           }
@@ -305,6 +326,8 @@ public class DialerCall implements VideoTechListener {
 
     mTimeAddedMs = System.currentTimeMillis();
     parseCallSpecificAppData();
+
+    updateEnrichedCallSession();
   }
 
   private static int translateState(int state) {
@@ -426,6 +449,12 @@ public class DialerCall implements VideoTechListener {
       for (DialerCallListener listener : mListeners) {
         listener.onDialerCallDisconnect();
       }
+      EnrichedCallComponent.get(mContext)
+          .getEnrichedCallManager()
+          .unregisterCapabilitiesListener(this);
+      EnrichedCallComponent.get(mContext)
+          .getEnrichedCallManager()
+          .unregisterCapabilitiesListener(this);
     } else {
       for (DialerCallListener listener : mListeners) {
         listener.onDialerCallUpdate();
@@ -987,12 +1016,40 @@ public class DialerCall implements VideoTechListener {
     return isRemotelyHeld;
   }
 
+  public boolean isMergeInProcess() {
+    return isMergeInProcess;
+  }
+
   public boolean isIncoming() {
     return mLogState.isIncoming;
   }
 
   public LatencyReport getLatencyReport() {
     return mLatencyReport;
+  }
+
+  public int getAnswerAndReleaseButtonDisplayedTimes() {
+    return answerAndReleaseButtonDisplayedTimes;
+  }
+
+  public void increaseAnswerAndReleaseButtonDisplayedTimes() {
+    answerAndReleaseButtonDisplayedTimes++;
+  }
+
+  public boolean getReleasedByAnsweringSecondCall() {
+    return releasedByAnsweringSecondCall;
+  }
+
+  public void setReleasedByAnsweringSecondCall(boolean releasedByAnsweringSecondCall) {
+    this.releasedByAnsweringSecondCall = releasedByAnsweringSecondCall;
+  }
+
+  public int getSecondCallWithoutAnswerAndReleasedButtonTimes() {
+    return secondCallWithoutAnswerAndReleasedButtonTimes;
+  }
+
+  public void increaseSecondCallWithoutAnswerAndReleasedButtonTimes() {
+    secondCallWithoutAnswerAndReleasedButtonTimes++;
   }
 
   @Nullable
@@ -1223,6 +1280,71 @@ public class DialerCall implements VideoTechListener {
     TelecomAdapter.getInstance().setAudioRoute(CallAudioState.ROUTE_SPEAKER);
   }
 
+  @Override
+  public void onCapabilitiesUpdated() {
+    if (getNumber() == null) {
+      return;
+    }
+    EnrichedCallCapabilities capabilities =
+        EnrichedCallComponent.get(mContext).getEnrichedCallManager().getCapabilities(getNumber());
+    if (capabilities != null) {
+      setEnrichedCallCapabilities(capabilities);
+      update();
+    }
+  }
+
+  @Override
+  public void onEnrichedCallStateChanged() {
+    updateEnrichedCallSession();
+  }
+
+  private void updateEnrichedCallSession() {
+    if (getNumber() == null) {
+      return;
+    }
+    if (getEnrichedCallSession() != null) {
+      // State changes to existing sessions are currently handled by the UI components (which have
+      // their own listeners). Someday instead we could remove those and just call update() here and
+      // have the usual onDialerCallUpdate update the UI.
+      dispatchOnEnrichedCallSessionUpdate();
+      return;
+    }
+
+    EnrichedCallManager manager = EnrichedCallComponent.get(mContext).getEnrichedCallManager();
+
+    Filter filter =
+        isIncoming()
+            ? manager.createIncomingCallComposerFilter()
+            : manager.createOutgoingCallComposerFilter();
+
+    Session session = manager.getSession(getUniqueCallId(), getNumber(), filter);
+    if (session == null) {
+      return;
+    }
+
+    session.setUniqueDialerCallId(getUniqueCallId());
+    setEnrichedCallSession(session);
+
+    LogUtil.i(
+        "DialerCall.updateEnrichedCallSession",
+        "setting session %d's dialer id to %s",
+        session.getSessionId(),
+        getUniqueCallId());
+
+    dispatchOnEnrichedCallSessionUpdate();
+  }
+
+  private void dispatchOnEnrichedCallSessionUpdate() {
+    for (DialerCallListener listener : mListeners) {
+      listener.onEnrichedCallSessionUpdate();
+    }
+  }
+
+  void onRemovedFromCallList() {
+    // Ensure we clean up when this call is removed.
+    mVideoTechManager.dispatchRemovedFromCallList();
+  }
+
   /**
    * Specifies whether a number is in the call history or not. {@link #CALL_HISTORY_STATUS_UNKNOWN}
    * means there is no result.
@@ -1423,6 +1545,7 @@ public class DialerCall implements VideoTechListener {
 
       String phoneNumber = call.getNumber();
       phoneNumber = phoneNumber != null ? phoneNumber : "";
+      phoneNumber = phoneNumber.replaceAll("[^+0-9]", "");
 
       // Insert order here determines the priority of that video tech option
       videoTechs = new ArrayList<>();
@@ -1441,7 +1564,10 @@ public class DialerCall implements VideoTechListener {
 
       videoTechs.add(
           new LightbringerTech(
-              LightbringerComponent.get(call.mContext).getLightbringer(), call, phoneNumber));
+              LightbringerComponent.get(call.mContext).getLightbringer(),
+              call,
+              call.mTelecomCall,
+              phoneNumber));
     }
 
     VideoTech getVideoTech() {
@@ -1463,6 +1589,12 @@ public class DialerCall implements VideoTechListener {
     void dispatchCallStateChanged(int newState) {
       for (VideoTech videoTech : videoTechs) {
         videoTech.onCallStateChanged(context, newState);
+      }
+    }
+
+    void dispatchRemovedFromCallList() {
+      for (VideoTech videoTech : videoTechs) {
+        videoTech.onRemovedFromCallList();
       }
     }
   }

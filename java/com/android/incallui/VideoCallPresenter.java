@@ -31,9 +31,9 @@ import android.telecom.VideoProfile.CameraCapabilities;
 import android.view.Surface;
 import android.view.SurfaceView;
 import com.android.dialer.common.Assert;
-import com.android.dialer.common.ConfigProviderBindings;
 import com.android.dialer.common.LogUtil;
 import com.android.dialer.compat.CompatUtils;
+import com.android.dialer.configprovider.ConfigProviderBindings;
 import com.android.incallui.InCallPresenter.InCallDetailsListener;
 import com.android.incallui.InCallPresenter.InCallOrientationListener;
 import com.android.incallui.InCallPresenter.InCallStateListener;
@@ -983,7 +983,7 @@ public class VideoCallPresenter
   /**
    * Adjusts the current video mode by setting up the preview and display surfaces as necessary.
    * Expected to be called whenever the video state associated with a call changes (e.g. a user
-   * turns their camera on or off) to ensure the correct surfaces are shown/hidden. TODO: Need
+   * turns their camera on or off) to ensure the correct surfaces are shown/hidden. TODO(vt): Need
    * to adjust size and orientation of preview surface here.
    */
   private void adjustVideoMode(DialerCall call) {
@@ -1071,7 +1071,7 @@ public class VideoCallPresenter
     if (!hasCameraPermission) {
       videoCall.setCamera(null);
       mPreviewSurfaceState = PreviewSurfaceState.NONE;
-      // TODO: Inform remote party that the video is off. This is similar to b/30256571.
+      // TODO(wangqi): Inform remote party that the video is off. This is similar to b/30256571.
     } else if (isCameraRequired) {
       InCallCameraManager cameraManager = InCallPresenter.getInstance().getInCallCameraManager();
       videoCall.setCamera(cameraManager.getActiveCameraId());
