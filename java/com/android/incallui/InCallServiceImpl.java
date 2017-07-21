@@ -27,6 +27,7 @@ import com.android.incallui.audiomode.AudioModeProvider;
 import com.android.incallui.call.CallList;
 import com.android.incallui.call.ExternalCallList;
 import com.android.incallui.call.TelecomAdapter;
+import org.codeaurora.ims.utils.QtiCarrierConfigHelper;
 
 /**
  * Used to receive updates about calls from the Telecom component. This service is bound to Telecom
@@ -64,6 +65,7 @@ public class InCallServiceImpl extends InCallService {
   @Override
   public IBinder onBind(Intent intent) {
     final Context context = getApplicationContext();
+    QtiCarrierConfigHelper.getInstance().setup(context);
     final ContactInfoCache contactInfoCache = ContactInfoCache.getInstance(context);
     InCallPresenter.getInstance()
         .setUp(
@@ -98,5 +100,6 @@ public class InCallServiceImpl extends InCallService {
     // Tear down the InCall system
     TelecomAdapter.getInstance().clearInCallService();
     InCallPresenter.getInstance().tearDown();
+    QtiCarrierConfigHelper.getInstance().teardown();
   }
 }
