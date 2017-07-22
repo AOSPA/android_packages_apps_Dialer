@@ -34,6 +34,7 @@ import com.android.contacts.common.compat.TelephonyManagerCompat;
 import com.android.contacts.common.list.ViewPagerTabs;
 import com.android.dialer.app.DialtactsActivity;
 import com.android.dialer.app.R;
+import com.android.dialer.compat.AppCompatConstants;
 import com.android.dialer.database.CallLogQueryHandler;
 import com.android.dialer.logging.Logger;
 import com.android.dialer.logging.ScreenEvent;
@@ -82,7 +83,8 @@ public class CallLogActivity extends TransactionSafeActivity
     final Intent intent = getIntent();
     if (intent != null) {
       final int callType = intent.getIntExtra(CallLog.Calls.EXTRA_CALL_TYPE_FILTER, -1);
-      if (callType == CallLog.Calls.MISSED_TYPE) {
+      if (callType == CallLog.Calls.MISSED_TYPE ||
+          callType == AppCompatConstants.MISSED_IMS_TYPE) {
         startingTab = TAB_INDEX_MISSED;
       }
     }
@@ -196,7 +198,8 @@ public class CallLogActivity extends TransactionSafeActivity
     mTabTitles = new String[TAB_INDEX_COUNT_MSIM];
     if (intent != null) {
       final int callType = intent.getIntExtra(CallLog.Calls.EXTRA_CALL_TYPE_FILTER, -1);
-      if (callType == CallLog.Calls.MISSED_TYPE) {
+      if (callType == CallLog.Calls.MISSED_TYPE ||
+          callType == AppCompatConstants.MISSED_IMS_TYPE) {
         mMSimCallsFragment.setFilterType(Calls.MISSED_TYPE);
         mTabTitles[0] = getString(R.string.call_log_missed_title);
       }

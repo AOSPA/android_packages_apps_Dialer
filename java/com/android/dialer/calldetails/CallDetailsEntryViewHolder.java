@@ -88,9 +88,7 @@ public class CallDetailsEntryViewHolder extends ViewHolder {
       CallTypeHelper callTypeHelper,
       boolean showMultimediaDivider) {
     int callType = entry.getCallType();
-    boolean isVideoCall =
-        (entry.getFeatures() & Calls.FEATURES_VIDEO) == Calls.FEATURES_VIDEO
-            && CallUtil.isVideoEnabled(context);
+    boolean isVideoCall = (entry.getFeatures() & Calls.FEATURES_VIDEO) == Calls.FEATURES_VIDEO;
     boolean isPulledCall =
         (entry.getFeatures() & Calls.FEATURES_PULLED_EXTERNALLY)
             == Calls.FEATURES_PULLED_EXTERNALLY;
@@ -98,7 +96,7 @@ public class CallDetailsEntryViewHolder extends ViewHolder {
     callTime.setTextColor(getColorForCallType(context, callType));
     callTypeIcon.clear();
     callTypeIcon.add(callType);
-    callTypeIcon.setShowVideo((entry.getFeatures() & Calls.FEATURES_VIDEO) == Calls.FEATURES_VIDEO);
+    callTypeIcon.setShowVideo(isVideoCall);
     callTypeIcon.setShowHd(MotorolaUtils.shouldShowHdIconInCallLog(context, entry.getFeatures()));
     callTypeIcon.setShowWifi(
         MotorolaUtils.shouldShowWifiIconInCallLog(context, entry.getFeatures()));
@@ -175,13 +173,16 @@ public class CallDetailsEntryViewHolder extends ViewHolder {
   private static @ColorInt int getColorForCallType(Context context, int callType) {
     switch (callType) {
       case AppCompatConstants.CALLS_OUTGOING_TYPE:
+      case AppCompatConstants.OUTGOING_IMS_TYPE:
       case AppCompatConstants.CALLS_VOICEMAIL_TYPE:
       case AppCompatConstants.CALLS_BLOCKED_TYPE:
       case AppCompatConstants.CALLS_INCOMING_TYPE:
+      case AppCompatConstants.INCOMING_IMS_TYPE:
       case AppCompatConstants.CALLS_ANSWERED_EXTERNALLY_TYPE:
       case AppCompatConstants.CALLS_REJECTED_TYPE:
         return ContextCompat.getColor(context, R.color.dialer_secondary_text_color);
       case AppCompatConstants.CALLS_MISSED_TYPE:
+      case AppCompatConstants.MISSED_IMS_TYPE:
       default:
         // It is possible for users to end up with calls with unknown call types in their
         // call history, possibly due to 3rd party call log implementations (e.g. to
