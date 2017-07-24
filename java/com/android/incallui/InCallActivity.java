@@ -180,6 +180,7 @@ public class InCallActivity extends TransactionSafeFragmentActivity
     LogUtil.i("InCallActivity.onStop", "");
     super.onStop();
     common.onStop();
+    BottomSheetHelper.getInstance().dismissBottomSheet();
     isVisible = false;
   }
 

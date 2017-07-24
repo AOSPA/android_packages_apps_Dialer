@@ -220,6 +220,12 @@ public class BottomSheetHelper implements InCallPresenter.InCallEventListener,
    }
 
    public void dismissBottomSheet() {
+     final InCallActivity inCallActivity = InCallPresenter.getInstance().getActivity();
+     if (inCallActivity == null || !inCallActivity.isVisible()) {
+       LogUtil.w("BottomSheetHelper.dismissBottomSheet",
+               "In call activity is either null or not visible");
+       return;
+     }
      if (moreOptionsSheet != null && moreOptionsSheet.isVisible()) {
        moreOptionsSheet.dismiss();
        moreOptionsSheet = null;
