@@ -308,8 +308,16 @@ public class InCallActivity extends TransactionSafeFragmentActivity
       // repositions itself.
       inCallScreen.onInCallScreenDialpadVisibilityChange(show);
     }
-    inCallScreen.onInCallShowDialpad(show);
+    notifyDialpadVisibilityState(show);
     return didChange;
+  }
+
+  public void notifyDialpadVisibilityState(boolean isShowing) {
+    if (getActiveInCallScreen() != null) {
+      getActiveInCallScreen().onInCallShowDialpad(isShowing);
+    } else {
+      LogUtil.w("InCallActvity.showDialpadFragment","in call screen is null");
+    }
   }
 
   public boolean isDialpadVisible() {
@@ -569,6 +577,7 @@ public class InCallActivity extends TransactionSafeFragmentActivity
       transaction.commitNow();
       Logger.get(this).logScreenView(ScreenEvent.Type.INCALL, this);
     }
+    notifyDialpadVisibilityState(common.didShowDialpadFragment());
     isInShowMainInCallFragment = false;
   }
 
