@@ -54,6 +54,7 @@ import com.android.incallui.answerproximitysensor.PseudoScreenState;
 import com.android.incallui.call.CallList;
 import com.android.incallui.call.DialerCall;
 import com.android.incallui.call.ExternalCallList;
+import com.android.incallui.call.InCallVideoCallCallbackNotifier;
 import com.android.incallui.call.TelecomAdapter;
 import com.android.incallui.latencyreport.LatencyReport;
 import com.android.incallui.legacyblocking.BlockedNumberContentObserver;
@@ -361,6 +362,7 @@ public class InCallPresenter implements CallList.Listener {
     mSpamCallListListener = new SpamCallListListener(context);
     mCallList.addListener(mSpamCallListListener);
 
+    InCallVideoCallCallbackNotifier.getInstance().setUp();
     InCallCsRedialHandler.getInstance().setUp(mContext);
     InCallUiStateNotifier.getInstance().setUp(context);
     VideoPauseController.getInstance().setUp(this);
@@ -396,6 +398,7 @@ public class InCallPresenter implements CallList.Listener {
         .listen(mPhoneStateListener, PhoneStateListener.LISTEN_NONE);
 
     attemptCleanup();
+    InCallVideoCallCallbackNotifier.getInstance().tearDown();
     VideoPauseController.getInstance().tearDown();
     InCallUiStateNotifier.getInstance().tearDown();
 

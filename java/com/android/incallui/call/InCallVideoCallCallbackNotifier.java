@@ -54,6 +54,15 @@ public class InCallVideoCallCallbackNotifier {
     return sInstance;
   }
 
+  public void setUp() {
+  }
+
+  public void tearDown() {
+    mCallSessionEvent = CALL_SESSION_INVALID_EVENT;
+    mVideoEventListeners.clear();
+    mSurfaceChangeListeners.clear();
+  }
+
   /**
    * Adds a new {@link SurfaceChangeListener}.
    *
