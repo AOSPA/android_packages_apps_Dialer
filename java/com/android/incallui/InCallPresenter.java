@@ -378,17 +378,13 @@ public class InCallPresenter implements CallList.Listener {
         .getSystemService(TelephonyManager.class)
         .listen(mPhoneStateListener, PhoneStateListener.LISTEN_CALL_STATE);
 
-<<<<<<< HEAD
     addDetailsListener(CallSubstateNotifier.getInstance());
     CallList.getInstance().addListener(CallSubstateNotifier.getInstance());
     InCallZoomController.getInstance().setUp(mContext);
     OrientationModeHandler.getInstance().setUp();
     addDetailsListener(SessionModificationCauseNotifier.getInstance());
 
-    Log.d(this, "Finished InCallPresenter.setUp");
-=======
     LogUtil.d("InCallPresenter.setUp", "Finished InCallPresenter.setUp");
->>>>>>> 442c9b88edcdf780933c4c1f274021a3b48d2a4a
   }
 
   /**
@@ -1086,13 +1082,8 @@ public class InCallPresenter implements CallList.Listener {
 
   /*package*/
   void onActivityStarted() {
-<<<<<<< HEAD
-    LogUtil.i("InCallPresenter.onActivityStarted", "");
-    notifyInCallUiStateNotifier(true);
-=======
     LogUtil.d("InCallPresenter.onActivityStarted", "onActivityStarted");
-    notifyVideoPauseController(true);
->>>>>>> 442c9b88edcdf780933c4c1f274021a3b48d2a4a
+    notifyInCallUiStateNotifier(true);
     if (mStatusBarNotifier != null) {
       // TODO(maxwelb) - b/36649622: Investigate this redundant call
       mStatusBarNotifier.updateNotification(mCallList);
@@ -1101,24 +1092,13 @@ public class InCallPresenter implements CallList.Listener {
 
   /*package*/
   void onActivityStopped() {
-<<<<<<< HEAD
-    LogUtil.i("InCallPresenter.onActivityStopped", "");
+    LogUtil.d("InCallPresenter.onActivityStopped", "onActivityStopped");
     notifyInCallUiStateNotifier(false);
   }
 
   private void notifyInCallUiStateNotifier(boolean showing) {
-    LogUtil.i("InCallPresenter.notifyInCallUiStateNotifier", " mIsChangingConfigurations= " +
+    LogUtil.d("InCallPresenter.notifyInCallUiStateNotifier", " mIsChangingConfigurations= " +
         mIsChangingConfigurations);
-=======
-    LogUtil.d("InCallPresenter.onActivityStopped", "onActivityStopped");
-    notifyVideoPauseController(false);
-  }
-
-  private void notifyVideoPauseController(boolean showing) {
-    LogUtil.d(
-        "InCallPresenter.notifyVideoPauseController",
-        "mIsChangingConfigurations=" + mIsChangingConfigurations);
->>>>>>> 442c9b88edcdf780933c4c1f274021a3b48d2a4a
     if (!mIsChangingConfigurations) {
       InCallUiStateNotifier.getInstance().onUiShowing(showing);
     }
@@ -1424,13 +1404,8 @@ public class InCallPresenter implements CallList.Listener {
       mInCallActivity.dismissPendingDialogs();
     }
 
-<<<<<<< HEAD
     if (showCallUi || showAccountPicker || isAutoAnswer) {
-      Log.i(this, "Start in call UI");
-=======
-    if (showCallUi || showAccountPicker) {
       LogUtil.i("InCallPresenter.startOrFinishUi", "Start in call UI");
->>>>>>> 442c9b88edcdf780933c4c1f274021a3b48d2a4a
       showInCall(false /* showDialpad */, !showAccountPicker /* newOutgoingCall */);
     } else if (startIncomingCallSequence) {
       LogUtil.i("InCallPresenter.startOrFinishUi", "Start Full Screen in call UI");
@@ -1652,7 +1627,6 @@ public class InCallPresenter implements CallList.Listener {
         orientation == InCallOrientationEventListener.ACTIVITY_PREFERENCE_ALLOW_ROTATION);
   }
 
-<<<<<<< HEAD
   /* returns TRUE if screen is turned ON else false */
   private boolean isScreenInteractive() {
     return mPowerManager.isInteractive();
@@ -1670,13 +1644,6 @@ public class InCallPresenter implements CallList.Listener {
 
     if (mWakeLock != null) {
       mWakeLock.acquire();
-=======
-  public void enableScreenTimeout(boolean enable) {
-    LogUtil.v("InCallPresenter.enableScreenTimeout", "enableScreenTimeout: value=" + enable);
-    if (mInCallActivity == null) {
-      LogUtil.e("InCallPresenter.enableScreenTimeout", "InCallActivity is null.");
-      return;
->>>>>>> 442c9b88edcdf780933c4c1f274021a3b48d2a4a
     }
   }
 

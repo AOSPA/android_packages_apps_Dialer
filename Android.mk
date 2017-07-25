@@ -302,12 +302,9 @@ LOCAL_STATIC_ANDROID_LIBRARIES := \
 
 LOCAL_JAVA_LIBRARIES := \
 	dialer-auto-value \
-<<<<<<< HEAD
         telephony-ext \
         ims-common \
-=======
 	org.apache.http.legacy \
->>>>>>> 442c9b88edcdf780933c4c1f274021a3b48d2a4a
 
 # Libraries needed by the compiler (JACK) to generate code.
 PROCESSOR_LIBRARIES_TARGET := \

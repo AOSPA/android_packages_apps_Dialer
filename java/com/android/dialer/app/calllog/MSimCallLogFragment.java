@@ -45,7 +45,10 @@ import android.telephony.SubscriptionInfo;
 import android.telephony.SubscriptionManager;
 import android.view.LayoutInflater;
 import android.view.View;
+import android.view.View.OnClickListener;
 import android.view.ViewGroup;
+import android.widget.ImageView;
+import android.widget.TextView;
 import android.widget.AdapterView;
 import android.widget.AdapterView.OnItemSelectedListener;
 import android.widget.ArrayAdapter;
@@ -58,13 +61,15 @@ import com.android.dialer.app.contactinfo.ContactInfoCache.OnContactInfoChangedL
 import com.android.dialer.app.contactinfo.ExpirableCacheHeadlessFragment;
 import com.android.dialer.app.list.ListsFragment;
 import com.android.dialer.app.voicemail.VoicemailPlaybackPresenter;
-import com.android.dialer.app.widget.EmptyContentView;
-import com.android.dialer.app.widget.EmptyContentView.OnEmptyViewActionButtonClickedListener;
+import com.android.dialer.widget.EmptyContentView;
+import com.android.dialer.widget.EmptyContentView.OnEmptyViewActionButtonClickedListener;
 import com.android.dialer.blocking.FilteredNumberAsyncQueryHandler;
 import com.android.dialer.common.Assert;
 import com.android.dialer.common.LogUtil;
 import com.android.dialer.database.CallLogQueryHandler;
 import com.android.dialer.location.GeoUtil;
+import com.android.dialer.logging.DialerImpression;
+import com.android.dialer.logging.Logger;
 import com.android.dialer.phonenumbercache.ContactInfoHelper;
 import com.android.dialer.util.PermissionsUtil;
 
@@ -75,15 +80,18 @@ import com.android.dialer.util.PermissionsUtil;
 public class MSimCallLogFragment extends Fragment
     implements CallLogQueryHandler.Listener,
         CallLogAdapter.CallFetcher,
+        CallLogAdapter.MultiSelectRemoveView,
         OnEmptyViewActionButtonClickedListener,
         FragmentCompat.OnRequestPermissionsResultCallback,
-        CallLogModalAlertManager.Listener {
+        CallLogModalAlertManager.Listener,
+        OnClickListener {
   private static final String KEY_FILTER_TYPE = "filter_type";
   private static final String KEY_LOG_LIMIT = "log_limit";
   private static final String KEY_DATE_LIMIT = "date_limit";
   private static final String KEY_IS_CALL_LOG_ACTIVITY = "is_call_log_activity";
   private static final String KEY_HAS_READ_CALL_LOG_PERMISSION = "has_read_call_log_permission";
   private static final String KEY_REFRESH_DATA_REQUIRED = "refresh_data_required";
+  private static final String KEY_SELECT_ALL_MODE = "select_all_mode_checked";
 
   // No limit specified for the number of logs to show; use the CallLogQueryHandler's default.
   private static final int NO_LOG_LIMIT = -1;
@@ -103,6 +111,9 @@ public class MSimCallLogFragment extends Fragment
   // See issue 6363009
   private final ContentObserver mCallLogObserver = new CustomContentObserver();
   private final ContentObserver mContactsObserver = new CustomContentObserver();
+  private View mMultiSelectUnSelectAllViewContent;
+  private TextView mSelectUnselectAllViewText;
+  private ImageView mSelectUnselectAllIcon;
   private RecyclerView mRecyclerView;
   private LinearLayoutManager mLayoutManager;
   private CallLogAdapter mAdapter;
@@ -136,6 +147,7 @@ public class MSimCallLogFragment extends Fragment
    * True if this instance of the MSimCallLogFragment shown in the CallLogActivity.
    */
   private boolean mIsCallLogActivity = false;
+  private boolean selectAllMode;
   private final Handler mDisplayUpdateHandler =
       new Handler() {
         @Override
@@ -316,6 +328,13 @@ public class MSimCallLogFragment extends Fragment
     mModalAlertView = (ViewGroup) view.findViewById(R.id.modal_message_container);
     mModalAlertManager =
         new CallLogModalAlertManager(LayoutInflater.from(getContext()), mModalAlertView, this);
+    mMultiSelectUnSelectAllViewContent =
+        view.findViewById(R.id.multi_select_select_all_view_content);
+    mSelectUnselectAllViewText = (TextView) view.findViewById(R.id.select_all_view_text);
+    mSelectUnselectAllIcon = (ImageView) view.findViewById(R.id.select_all_view_icon);
+    mMultiSelectUnSelectAllViewContent.setOnClickListener(null);
+    mSelectUnselectAllIcon.setOnClickListener(this);
+    mSelectUnselectAllViewText.setOnClickListener(this);
     mFilterSlotSpinnerView = (Spinner) view.findViewById(R.id.filter_sub_spinner);
     mFilterStatusSpinnerView = (Spinner) view.findViewById(R.id.filter_status_spinner);
   }
@@ -340,7 +359,11 @@ public class MSimCallLogFragment extends Fragment
                 getActivity(),
                 mRecyclerView,
                 this,
-                CallLogCache.getCallLogCache(getActivity()),
+                this,
+                activityType == CallLogAdapter.ACTIVITY_TYPE_DIALTACTS
+                    ? (CallLogAdapter.OnActionModeStateChangedListener) getActivity()
+                    : null,
+                new CallLogCache(getActivity()),
                 mContactInfoCache,
                 getVoicemailPlaybackPresenter(),
                 new FilteredNumberAsyncQueryHandler(getActivity()),
@@ -358,7 +381,16 @@ public class MSimCallLogFragment extends Fragment
   public void onActivityCreated(Bundle savedInstanceState) {
     super.onActivityCreated(savedInstanceState);
     setupData();
+    updateSelectAllState(savedInstanceState);
     mAdapter.onRestoreInstanceState(savedInstanceState);
+  }
+
+  private void updateSelectAllState(Bundle savedInstanceState) {
+    if (savedInstanceState != null) {
+      if (savedInstanceState.getBoolean(KEY_SELECT_ALL_MODE, false)) {
+        updateSelectAllIcon();
+      }
+    }
   }
 
   @Override
@@ -404,8 +436,6 @@ public class MSimCallLogFragment extends Fragment
 
   @Override
   public void onStop() {
-    updateOnTransition();
-
     super.onStop();
     mAdapter.onStop();
     mContactInfoCache.stop();
@@ -430,7 +460,7 @@ public class MSimCallLogFragment extends Fragment
     outState.putBoolean(KEY_IS_CALL_LOG_ACTIVITY, mIsCallLogActivity);
     outState.putBoolean(KEY_HAS_READ_CALL_LOG_PERMISSION, mHasReadCallLogPermission);
     outState.putBoolean(KEY_REFRESH_DATA_REQUIRED, mRefreshDataRequired);
-
+    outState.putBoolean(KEY_SELECT_ALL_MODE, selectAllMode);
     mAdapter.onSaveInstanceState(outState);
   }
 
@@ -506,9 +536,7 @@ public class MSimCallLogFragment extends Fragment
     super.setMenuVisibility(menuVisible);
     if (mMenuVisible != menuVisible) {
       mMenuVisible = menuVisible;
-      if (!menuVisible) {
-        updateOnTransition();
-      } else if (isResumed()) {
+      if (menuVisible && isResumed()) {
         refreshData();
       }
     }
@@ -526,27 +554,10 @@ public class MSimCallLogFragment extends Fragment
       fetchCalls();
       mCallLogQueryHandler.fetchVoicemailStatus();
       mCallLogQueryHandler.fetchMissedCallsUnreadCount();
-      updateOnTransition();
       mRefreshDataRequired = false;
     } else {
       // Refresh the display of the existing data to update the timestamp text descriptions.
       mAdapter.notifyDataSetChanged();
-    }
-  }
-
-  /**
-   * Updates the voicemail notification state.
-   *
-   * <p>TODO: Move to CallLogActivity
-   */
-  private void updateOnTransition() {
-    // We don't want to update any call data when keyguard is on because the user has likely not
-    // seen the new calls yet.
-    // This might be called before onCreate() and thus we need to check null explicitly.
-    if (mKeyguardManager != null
-        && !mKeyguardManager.inKeyguardRestrictedInputMode()
-        && mCallTypeFilter == Calls.VOICEMAIL_TYPE) {
-      CallLogNotificationsService.markNewVoicemailsAsOld(getActivity(), null);
     }
   }
 
@@ -629,6 +640,51 @@ public class MSimCallLogFragment extends Fragment
       if (hostInterface != null && getUserVisibleHint()) {
         hostInterface.enableFloatingButton(true);
       }
+    }
+  }
+
+  @Override
+  public void showMultiSelectRemoveView(boolean show) {
+    mMultiSelectUnSelectAllViewContent.setVisibility(show ? View.VISIBLE : View.GONE);
+    mMultiSelectUnSelectAllViewContent.setAlpha(show ? 0 : 1);
+    mMultiSelectUnSelectAllViewContent.animate().alpha(show ? 1 : 0).start();
+    ((ListsFragment) getParentFragment()).showMultiSelectRemoveView(show);
+  }
+
+  @Override
+  public void setSelectAllModeToFalse() {
+    selectAllMode = false;
+    mSelectUnselectAllIcon.setImageDrawable(
+        getContext().getDrawable(R.drawable.ic_empty_check_mark_white_24dp));
+  }
+
+  @Override
+  public void tapSelectAll() {
+    LogUtil.i("CallLogFragment.tapSelectAll", "imitating select all");
+    selectAllMode = true;
+    updateSelectAllIcon();
+  }
+
+  @Override
+  public void onClick(View v) {
+    selectAllMode = !selectAllMode;
+    if (selectAllMode) {
+      Logger.get(v.getContext()).logImpression(DialerImpression.Type.MULTISELECT_SELECT_ALL);
+    } else {
+      Logger.get(v.getContext()).logImpression(DialerImpression.Type.MULTISELECT_UNSELECT_ALL);
+    }
+    updateSelectAllIcon();
+  }
+
+  private void updateSelectAllIcon() {
+    if (selectAllMode) {
+      mSelectUnselectAllIcon.setImageDrawable(
+          getContext().getDrawable(R.drawable.ic_check_mark_blue_24dp));
+      getAdapter().onAllSelected();
+    } else {
+      mSelectUnselectAllIcon.setImageDrawable(
+          getContext().getDrawable(R.drawable.ic_empty_check_mark_white_24dp));
+      getAdapter().onAllDeselected();
     }
   }
 

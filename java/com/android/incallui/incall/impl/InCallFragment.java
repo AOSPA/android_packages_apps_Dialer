@@ -50,13 +50,10 @@ import com.android.dialer.common.LogUtil;
 import com.android.dialer.logging.DialerImpression;
 import com.android.dialer.logging.Logger;
 import com.android.dialer.multimedia.MultimediaData;
-<<<<<<< HEAD
 import com.android.incallui.BottomSheetHelper;
 import com.android.incallui.ExtBottomSheetFragment.ExtBottomSheetActionCallback;
 import com.android.incallui.audiomode.AudioModeProvider;
-=======
 import com.android.dialer.widget.LockableViewPager;
->>>>>>> 442c9b88edcdf780933c4c1f274021a3b48d2a4a
 import com.android.incallui.audioroute.AudioRouteSelectorDialogFragment;
 import com.android.incallui.audioroute.AudioRouteSelectorDialogFragment.AudioRouteSelectorPresenter;
 import com.android.incallui.contactgrid.ContactGridManager;

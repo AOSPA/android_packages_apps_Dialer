@@ -26,11 +26,8 @@ import android.text.TextUtils;
 import com.android.dialer.common.Assert;
 import com.android.incallui.call.DialerCall.State;
 import com.android.incallui.incall.protocol.PrimaryCallState;
-<<<<<<< HEAD
-import com.android.incallui.QtiCallUtils;
-=======
 import com.android.incallui.incall.protocol.PrimaryInfo;
->>>>>>> 442c9b88edcdf780933c4c1f274021a3b48d2a4a
+import com.android.incallui.QtiCallUtils;
 import com.android.incallui.videotech.utils.SessionModificationState;
 import com.android.incallui.videotech.utils.VideoUtils;
 
@@ -128,7 +125,6 @@ public class TopRow {
   }
 
   private static CharSequence getLabelForIncoming(Context context, PrimaryCallState state) {
-<<<<<<< HEAD
     if (state.isConference) {
       if (isAccount(state)) {
         return context.getString(R.string.incoming_conf_via_template, state.connectionLabel);
@@ -138,11 +134,7 @@ public class TopRow {
         return context.getString(R.string.card_title_incoming_conf_call);
       }
     } else if (state.isVideoCall) {
-      return getLabelForIncomingVideo(context, state.isWifi);
-=======
-    if (state.isVideoCall) {
       return getLabelForIncomingVideo(context, state.sessionModificationState, state.isWifi);
->>>>>>> 442c9b88edcdf780933c4c1f274021a3b48d2a4a
     } else if (state.isWifi && !TextUtils.isEmpty(state.connectionLabel)) {
       return state.connectionLabel;
     } else if (isAccount(state)) {
@@ -154,27 +146,10 @@ public class TopRow {
     }
   }
 
-<<<<<<< HEAD
-  private static CharSequence getLabelForIncomingVideo(Context context, boolean isWifi) {
-      return isWifi ? QtiCallUtils.getLabelForIncomingWifiVideoCall(context) :
-          QtiCallUtils.getLabelForIncomingVideoCall(context);
-=======
   private static CharSequence getLabelForIncomingVideo(
       Context context, @SessionModificationState int sessionModificationState, boolean isWifi) {
-    if (sessionModificationState == SessionModificationState.RECEIVED_UPGRADE_TO_VIDEO_REQUEST) {
-      if (isWifi) {
-        return context.getString(R.string.contact_grid_incoming_wifi_video_request);
-      } else {
-        return context.getString(R.string.contact_grid_incoming_video_request);
-      }
-    } else {
-      if (isWifi) {
-        return context.getString(R.string.contact_grid_incoming_wifi_video_call);
-      } else {
-        return context.getString(R.string.contact_grid_incoming_video_call);
-      }
-    }
->>>>>>> 442c9b88edcdf780933c4c1f274021a3b48d2a4a
+      return isWifi ? QtiCallUtils.getLabelForIncomingWifiVideoCall(context) :
+          QtiCallUtils.getLabelForIncomingVideoCall(context);
   }
 
   private static CharSequence getLabelForDialing(Context context, PrimaryCallState state) {

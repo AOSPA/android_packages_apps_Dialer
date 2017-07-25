@@ -53,12 +53,8 @@ import android.view.View.OnSystemUiVisibilityChangeListener;
 import android.view.ViewGroup;
 import android.view.ViewGroup.MarginLayoutParams;
 import android.view.ViewOutlineProvider;
-<<<<<<< HEAD
-import android.view.ViewTreeObserver;
 import android.view.Window;
 import android.view.WindowManager;
-=======
->>>>>>> 442c9b88edcdf780933c4c1f274021a3b48d2a4a
 import android.view.accessibility.AccessibilityEvent;
 import android.view.animation.AccelerateDecelerateInterpolator;
 import android.view.animation.Interpolator;
@@ -120,13 +116,8 @@ public class VideoCallFragment extends Fragment
   @VisibleForTesting(otherwise = VisibleForTesting.PRIVATE)
   static final String ARG_CALL_ID = "call_id";
 
-<<<<<<< HEAD
-  public static final float BLUR_PREVIEW_RADIUS = 16.0f;
-  public static final float BLUR_PREVIEW_SCALE_FACTOR = 1.0f;
-=======
-  @VisibleForTesting static final float BLUR_PREVIEW_RADIUS = 16.0f;
-  @VisibleForTesting static final float BLUR_PREVIEW_SCALE_FACTOR = 1.0f;
->>>>>>> 442c9b88edcdf780933c4c1f274021a3b48d2a4a
+  @VisibleForTesting public static final float BLUR_PREVIEW_RADIUS = 16.0f;
+  @VisibleForTesting public static final float BLUR_PREVIEW_SCALE_FACTOR = 1.0f;
   private static final float BLUR_REMOTE_RADIUS = 25.0f;
   private static final float BLUR_REMOTE_SCALE_FACTOR = 0.25f;
   private static final float ASPECT_RATIO_MATCH_THRESHOLD = 0.2f;
@@ -773,10 +764,18 @@ public class VideoCallFragment extends Fragment
 
     videoCallScreenDelegate.getLocalVideoSurfaceTexture().attachToTextureView(previewTextureView);
     videoCallScreenDelegate.getRemoteVideoSurfaceTexture().attachToTextureView(remoteTextureView);
-<<<<<<< HEAD
     enableScreenTimeout(!(shouldShowPreview || shouldShowRemote));
-    updateVideoOffViews();
-    updateRemoteVideoScaling();
+
+    this.isRemotelyHeld = isRemotelyHeld;
+    if (this.shouldShowRemote != shouldShowRemote) {
+      this.shouldShowRemote = shouldShowRemote;
+      updateRemoteOffView();
+    }
+    if (this.shouldShowPreview != shouldShowPreview) {
+      this.shouldShowPreview = shouldShowPreview;
+      updatePreviewOffView();
+    }
+
     maybeLoadPreConfiguredImageAsync();
   }
 
@@ -850,18 +849,6 @@ public class VideoCallFragment extends Fragment
 
   private Drawable getDefaultImage() {
     return getResources().getDrawable(R.drawable.img_no_image_automirrored);
-=======
-
-    this.isRemotelyHeld = isRemotelyHeld;
-    if (this.shouldShowRemote != shouldShowRemote) {
-      this.shouldShowRemote = shouldShowRemote;
-      updateRemoteOffView();
-    }
-    if (this.shouldShowPreview != shouldShowPreview) {
-      this.shouldShowPreview = shouldShowPreview;
-      updatePreviewOffView();
-    }
->>>>>>> 442c9b88edcdf780933c4c1f274021a3b48d2a4a
   }
 
   @Override
@@ -1312,7 +1299,6 @@ public class VideoCallFragment extends Fragment
     // Always hide the preview off and remote off views in green screen mode.
     boolean previewEnabled = isInGreenScreenMode || shouldShowPreview;
     previewOffOverlay.setVisibility(previewEnabled ? View.GONE : View.VISIBLE);
-<<<<<<< HEAD
     if (shouldShowPreview && !videoCallScreenDelegate.shallTransmitStaticImage()) {
       // Blur only if preview is shown when not transmitting static image
       updateBlurredImageView(
@@ -1322,15 +1308,7 @@ public class VideoCallFragment extends Fragment
           BLUR_PREVIEW_RADIUS,
           BLUR_PREVIEW_SCALE_FACTOR);
     }
-=======
-    updateBlurredImageView(
-        previewTextureView,
-        previewOffBlurredImageView,
-        shouldShowPreview,
-        BLUR_PREVIEW_RADIUS,
-        BLUR_PREVIEW_SCALE_FACTOR);
   }
->>>>>>> 442c9b88edcdf780933c4c1f274021a3b48d2a4a
 
   private void updateRemoteOffView() {
     LogUtil.enterBlock("VideoCallFragment.updateRemoteOffView");
@@ -1368,50 +1346,14 @@ public class VideoCallFragment extends Fragment
         BLUR_REMOTE_SCALE_FACTOR);
   }
 
-<<<<<<< HEAD
-  public static void updateBlurredImageView(
-=======
   @VisibleForTesting
-  void updateBlurredImageView(
->>>>>>> 442c9b88edcdf780933c4c1f274021a3b48d2a4a
+  public void updateBlurredImageView(
       TextureView textureView,
       ImageView blurredImageView,
       boolean isVideoEnabled,
       float blurRadius,
       float scaleFactor) {
-<<<<<<< HEAD
-    boolean didBlur = false;
-    long startTimeMillis = SystemClock.elapsedRealtime();
-    if (!isVideoEnabled) {
-      int width = Math.round(textureView.getWidth() * scaleFactor);
-      int height = Math.round(textureView.getHeight() * scaleFactor);
-      // This call takes less than 10 milliseconds.
-      Bitmap bitmap = textureView.getBitmap(width, height);
-      if (bitmap != null) {
-        // TODO: When the view is first displayed after a rotation the bitmap is empty
-        // and thus this blur has no effect.
-        // This call can take 100 milliseconds.
-        final InCallActivity inCallActivity = InCallPresenter.getInstance().getActivity();
-        if (inCallActivity == null) {
-            return;
-        }
-        blur(inCallActivity, bitmap, blurRadius);
-
-        // TODO: Figure out why only have to apply the transform in landscape mode
-        if (width > height) {
-          bitmap =
-              Bitmap.createBitmap(
-                  bitmap,
-                  0,
-                  0,
-                  bitmap.getWidth(),
-                  bitmap.getHeight(),
-                  textureView.getTransform(null),
-                  true);
-        }
-=======
     Context context = getContext();
->>>>>>> 442c9b88edcdf780933c4c1f274021a3b48d2a4a
 
     if (isVideoEnabled || context == null) {
       blurredImageView.setImageBitmap(null);
@@ -1437,7 +1379,11 @@ public class VideoCallFragment extends Fragment
     // TODO(mdooley): When the view is first displayed after a rotation the bitmap is empty
     // and thus this blur has no effect.
     // This call can take 100 milliseconds.
-    blur(getContext(), bitmap, blurRadius);
+    final InCallActivity inCallActivity = InCallPresenter.getInstance().getActivity();
+    if (inCallActivity == null) {
+      return;
+    }
+    blur(inCallActivity, bitmap, blurRadius);
 
     // TODO(mdooley): Figure out why only have to apply the transform in landscape mode
     if (width > height) {

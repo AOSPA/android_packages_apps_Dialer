@@ -38,6 +38,11 @@ import android.content.DialogInterface.OnDismissListener;
 import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.graphics.Point;
+import android.os.SystemClock;
+import android.renderscript.Allocation;
+import android.renderscript.Element;
+import android.renderscript.RenderScript;
+import android.renderscript.ScriptIntrinsicBlur;
 import android.provider.Settings;
 import android.view.Surface;
 import android.view.TextureView;
@@ -425,7 +430,7 @@ public class PictureModeHelper implements InCallDetailsListener,
                                 incallActivity, primaryCall.getVideoState(),
                                 primaryCall.getVideoTech().getSessionModificationState());
                         }
-                        VideoCallFragment.updateBlurredImageView(
+                        updateBlurredImageView(
                             mPreviewTextureView, mPreviewOffBlurredImageView,
                             showOutgoing,
                             VideoCallFragment.BLUR_PREVIEW_RADIUS,
@@ -545,4 +550,71 @@ public class PictureModeHelper implements InCallDetailsListener,
     @Override
     public void onSessionModificationStateChange(DialerCall call) {}
 
+    public void updateBlurredImageView(
+        TextureView textureView,
+        ImageView blurredImageView,
+        boolean isVideoEnabled,
+        float blurRadius,
+        float scaleFactor) {
+      boolean didBlur = false;
+      long startTimeMillis = SystemClock.elapsedRealtime();
+      if (!isVideoEnabled) {
+        int width = Math.round(textureView.getWidth() * scaleFactor);
+        int height = Math.round(textureView.getHeight() * scaleFactor);
+        // This call takes less than 10 milliseconds.
+        Bitmap bitmap = textureView.getBitmap(width, height);
+        if (bitmap != null) {
+          // TODO: When the view is first displayed after a rotation the bitmap is empty
+          // and thus this blur has no effect.
+          // This call can take 100 milliseconds.
+          final InCallActivity inCallActivity = InCallPresenter.getInstance().getActivity();
+          if (inCallActivity == null) {
+              return;
+          }
+          blur(inCallActivity, bitmap, blurRadius);
+
+          // TODO: Figure out why only have to apply the transform in landscape mode
+          if (width > height) {
+            bitmap =
+                Bitmap.createBitmap(
+                    bitmap,
+                    0,
+                    0,
+                    bitmap.getWidth(),
+                    bitmap.getHeight(),
+                    textureView.getTransform(null),
+                    true);
+          }
+
+          blurredImageView.setImageBitmap(bitmap);
+          blurredImageView.setVisibility(View.VISIBLE);
+          didBlur = true;
+        }
+      }
+      if (!didBlur) {
+        blurredImageView.setImageBitmap(null);
+        blurredImageView.setVisibility(View.GONE);
+      }
+
+      LogUtil.i(
+          "PictureModeHelper.updateBlurredImageView",
+          "didBlur: %b, took %d millis",
+          didBlur,
+          (SystemClock.elapsedRealtime() - startTimeMillis));
+    }
+
+    private void blur(Context context, Bitmap image, float blurRadius) {
+      RenderScript renderScript = RenderScript.create(context);
+      ScriptIntrinsicBlur blurScript =
+          ScriptIntrinsicBlur.create(renderScript, Element.U8_4(renderScript));
+      Allocation allocationIn = Allocation.createFromBitmap(renderScript, image);
+      Allocation allocationOut = Allocation.createFromBitmap(renderScript, image);
+      blurScript.setRadius(blurRadius);
+      blurScript.setInput(allocationIn);
+      blurScript.forEach(allocationOut);
+      allocationOut.copyTo(image);
+      blurScript.destroy();
+      allocationIn.destroy();
+      allocationOut.destroy();
+  }
 }

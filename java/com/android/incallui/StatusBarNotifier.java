@@ -62,7 +62,7 @@ import android.text.style.ForegroundColorSpan;
 import com.android.contacts.common.compat.telecom.TelecomManagerCompat;
 import com.android.contacts.common.ContactsUtils;
 import com.android.contacts.common.ContactsUtils.UserType;
-import com.android.contacts.common.GeoUtil;
+import com.android.dialer.location.GeoUtil;
 import com.android.contacts.common.lettertiles.LetterTileDrawable;
 import com.android.contacts.common.lettertiles.LetterTileDrawable.ContactType;
 import com.android.contacts.common.preference.ContactsPreferences;
@@ -70,11 +70,13 @@ import com.android.contacts.common.util.BitmapUtil;
 import com.android.contacts.common.util.ContactDisplayUtils;
 import com.android.dialer.common.LogUtil;
 import com.android.dialer.configprovider.ConfigProviderBindings;
+import com.android.dialer.enrichedcall.EnrichedCallComponent;
 import com.android.dialer.enrichedcall.EnrichedCallManager;
 import com.android.dialer.enrichedcall.Session;
 import com.android.dialer.multimedia.MultimediaData;
 import com.android.dialer.notification.NotificationChannelId;
 import com.android.dialer.oem.MotorolaUtils;
+import com.android.dialer.telecom.TelecomUtil;
 import com.android.dialer.util.DrawableConverter;
 import com.android.incallui.ContactInfoCache.ContactCacheEntry;
 import com.android.incallui.ContactInfoCache.ContactInfoCacheCallback;
@@ -340,8 +342,7 @@ public class StatusBarNotifier
     PhoneAccountHandle ph = call.getAccountHandle();
     String accountLabel = null;
     if (ph != null) {
-      PhoneAccount account = TelecomManagerCompat.getPhoneAccount(
-          mContext.getSystemService(TelecomManager.class), ph);
+      PhoneAccount account = TelecomUtil.getPhoneAccount(mContext, ph);
       if (account != null && !TextUtils.isEmpty(account.getLabel())) {
         accountLabel = account.getLabel().toString();
       }
@@ -599,14 +600,9 @@ public class StatusBarNotifier
   @VisibleForTesting
   @Nullable
   String getContentTitle(ContactCacheEntry contactInfo, DialerCall call) {
-<<<<<<< HEAD
-    if (call.isConferenceCall() || call.hasProperty(Details.PROPERTY_GENERIC_CONFERENCE)) {
-      return mContext.getResources().getString(R.string.conference_call_name);
-=======
     if (call.isConferenceCall()) {
       return CallerInfoUtils.getConferenceString(
           mContext, call.hasProperty(Details.PROPERTY_GENERIC_CONFERENCE));
->>>>>>> 442c9b88edcdf780933c4c1f274021a3b48d2a4a
     }
 
     if (TextUtils.isEmpty(contactInfo.namePrimary)) {
@@ -701,42 +697,29 @@ public class StatusBarNotifier
     android.util.Log.i("TAG","Dialer ==== > supportsVoicePrivacy : "+supportsVoicePrivacy);
     if (call.getState() == DialerCall.State.ONHOLD) {
         if (supportsVoicePrivacy) {
-            resId = R.drawable.stat_sys_vp_phone_call_on_hold;
+            return R.drawable.stat_sys_vp_phone_call_on_hold;
         } else {
-            resId = R.drawable.ic_phone_paused_white_24dp;
+            return R.drawable.ic_phone_paused_white_24dp;
         }
     } else if (call.getVideoTech().getSessionModificationState()
         == SessionModificationState.RECEIVED_UPGRADE_TO_VIDEO_REQUEST) {
-        resId = R.drawable.quantum_ic_videocam_white_24;
+        return R.drawable.quantum_ic_videocam_white_24;
     } else if (call.hasProperty(PROPERTY_HIGH_DEF_AUDIO)
         && MotorolaUtils.shouldShowHdIconInNotification(mContext)) {
-<<<<<<< HEAD
-        // Normally when a call is ongoing the status bar displays an icon of a phone with animated
-        // lines. This is a helpful hint for users so they know how to get back to the call.
-        // For Sprint HD calls, we replace this icon with an icon of a phone with a HD badge.
-        // This is a carrier requirement.
-        resId = R.drawable.ic_hd_call;
-    } else {
-        if (supportsVoicePrivacy) {
-            resId = R.drawable.stat_sys_vp_phone_call;
-        } else {
-            resId = R.anim.on_going_call;
-        }
-    }
-    return resId;
-=======
       // Normally when a call is ongoing the status bar displays an icon of a phone. This is a
       // helpful hint for users so they know how to get back to the call. For Sprint HD calls, we
       // replace this icon with an icon of a phone with a HD badge. This is a carrier requirement.
       return R.drawable.ic_hd_call;
+    } else if (supportsVoicePrivacy) {
+      return R.drawable.stat_sys_vp_phone_call;
     }
+
     // If ReturnToCall is enabled, use the static icon. The animated one will show in the bubble.
     if (ReturnToCallController.isEnabled(mContext)) {
       return R.drawable.quantum_ic_call_white_24;
     } else {
       return R.drawable.on_going_call;
     }
->>>>>>> 442c9b88edcdf780933c4c1f274021a3b48d2a4a
   }
 
   /** Returns the message to use with the notification. */
@@ -761,17 +744,24 @@ public class StatusBarNotifier
     }
 
     if (isIncomingOrWaiting) {
+      EnrichedCallManager manager = EnrichedCallComponent.get(mContext).getEnrichedCallManager();
+      Session session = null;
+      if (call.getNumber() != null) {
+        session =
+            manager.getSession(
+                call.getUniqueCallId(),
+                call.getNumber(),
+                manager.createIncomingCallComposerFilter());
+      }
+
       if (call.isSpam()) {
         resId = R.string.notification_incoming_spam_call;
-<<<<<<< HEAD
       } else if (session != null) {
         resId = getECIncomingCallText(session);
       } else if (call.isIncomingConfCall()) {
         resId = R.string.notification_incoming_conf_call;
-=======
       } else if (shouldShowEnrichedCallNotification(call.getEnrichedCallSession())) {
         resId = getECIncomingCallText(call.getEnrichedCallSession());
->>>>>>> 442c9b88edcdf780933c4c1f274021a3b48d2a4a
       } else if (call.hasProperty(Details.PROPERTY_WIFI)) {
         resId = R.string.notification_incoming_call_wifi;
       } else {

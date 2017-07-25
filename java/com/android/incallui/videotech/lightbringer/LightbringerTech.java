@@ -21,11 +21,8 @@ import android.os.Build;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.telecom.Call;
-<<<<<<< HEAD
 import android.telecom.InCallService.VideoCall;
-=======
 import com.android.contacts.common.compat.telecom.TelecomManagerCompat;
->>>>>>> 442c9b88edcdf780933c4c1f274021a3b48d2a4a
 import com.android.dialer.common.Assert;
 import com.android.dialer.configprovider.ConfigProviderBindings;
 import com.android.dialer.lightbringer.Lightbringer;

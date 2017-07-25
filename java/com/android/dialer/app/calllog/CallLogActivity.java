@@ -61,11 +61,7 @@ public class CallLogActivity extends TransactionSafeActivity
   private ViewPagerTabs mViewPagerTabs;
   private FragmentPagerAdapter mViewPagerAdapter;
   private CallLogFragment mAllCallsFragment;
-<<<<<<< HEAD
-  private CallLogFragment mMissedCallsFragment;
   private MSimCallLogFragment mMSimCallsFragment;
-=======
->>>>>>> 442c9b88edcdf780933c4c1f274021a3b48d2a4a
   private String[] mTabTitles;
   private boolean mIsResumed;
 
@@ -205,7 +201,6 @@ public class CallLogActivity extends TransactionSafeActivity
     return position;
   }
 
-<<<<<<< HEAD
   private void initMSimCallLog() {
     setContentView(R.layout.call_log_activity);
     getWindow().setBackgroundDrawable(null);
@@ -232,7 +227,8 @@ public class CallLogActivity extends TransactionSafeActivity
 
     mViewPagerTabs.setViewPager(mViewPager);
     mViewPager.setCurrentItem(startingTab);
-=======
+  }
+
   @Override
   public void callHistoryDeleted() {
     if (EnrichedCallComponent.get(this).getEnrichedCallManager().hasStoredData()) {
@@ -246,7 +242,6 @@ public class CallLogActivity extends TransactionSafeActivity
   public void onBackPressed() {
     PerformanceReport.recordClick(UiAction.Type.PRESS_ANDROID_BACK_BUTTON);
     super.onBackPressed();
->>>>>>> 442c9b88edcdf780933c4c1f274021a3b48d2a4a
   }
 
   /** Adapter for the view pager. */
@@ -294,7 +289,6 @@ public class CallLogActivity extends TransactionSafeActivity
     }
   }
 
-<<<<<<< HEAD
   public class MSimViewPagerAdapter extends FragmentPagerAdapter {
     public MSimViewPagerAdapter(FragmentManager fm) {
       super(fm);
@@ -332,7 +326,8 @@ public class CallLogActivity extends TransactionSafeActivity
     public int getCount() {
       return TAB_INDEX_COUNT_MSIM;
     }
-=======
+  }
+
   @Override
   protected void onActivityResult(int requestCode, int resultCode, Intent data) {
     if (requestCode == DialtactsActivity.ACTIVITY_REQUEST_CODE_CALL_DETAILS) {
@@ -349,6 +344,5 @@ public class CallLogActivity extends TransactionSafeActivity
       }
     }
     super.onActivityResult(requestCode, resultCode, data);
->>>>>>> 442c9b88edcdf780933c4c1f274021a3b48d2a4a
   }
 }

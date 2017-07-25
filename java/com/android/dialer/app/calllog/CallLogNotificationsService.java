@@ -173,14 +173,6 @@ public class CallLogNotificationsService extends IntentService {
         String phoneNumber = intent.getStringExtra(EXTRA_POST_CALL_NUMBER);
         MissedCallNotifier.getIstance(this).insertPostCallNotification(phoneNumber, note);
         break;
-<<<<<<< HEAD
-      case ACTION_MARK_NEW_MISSED_CALLS_AS_OLD:
-        if (PermissionsUtil.hasCallLogWritePermissions(this)) {
-          CallLogNotificationsQueryHelper.removeMissedCallNotifications(this, intent.getData());
-        } else {
-          LogUtil.d("CallLogNotificationsService.onHandleIntent", "no call log write permissions.");
-        }
-=======
       case ACTION_CANCEL_ALL_MISSED_CALLS:
         CallLogNotificationsQueryHelper.markAllMissedCallsInCallLogAsRead(this);
         MissedCallNotifier.cancelAllMissedCallNotifications(this);
@@ -190,7 +182,6 @@ public class CallLogNotificationsService extends IntentService {
         Uri callUri = intent.getData();
         CallLogNotificationsQueryHelper.markSingleMissedCallInCallLogAsRead(this, callUri);
         MissedCallNotifier.cancelSingleMissedCallNotification(this, callUri);
->>>>>>> 442c9b88edcdf780933c4c1f274021a3b48d2a4a
         TelecomUtil.cancelMissedCallsNotification(this);
         break;
       case ACTION_CALL_BACK_FROM_MISSED_CALL_NOTIFICATION:

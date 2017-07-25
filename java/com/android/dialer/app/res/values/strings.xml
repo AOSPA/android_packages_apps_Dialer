@@ -938,12 +938,10 @@
   <!-- Label for setting that shows more information about the Phone app [CHAR LIMIT=30] -->
   <string name="about_phone_label">About</string>
 
-<<<<<<< HEAD
   <string name="call_log_show_all_slots">All SIMs</string>
 
   <string name="call_log_all_calls_header">All calls</string>
 
-=======
   <!-- Button text to prompt a user to open an sms conversation [CHAR LIMIT=NONE] -->
   <string name="view_conversation">View</string>
 
@@ -954,5 +952,4 @@
   <!-- If a user deletes a call that has attachments (photo, message, ect) bundled with it, they need
         to be told that they need to go to the SMS app to delete the attachments. [CHAR LIMIT=NONE] -->
   <string name="multiple_ec_data_deleted">Calls deleted. View and delete attachments shared during calls in Messages.</string>
->>>>>>> 442c9b88edcdf780933c4c1f274021a3b48d2a4a
 </resources>

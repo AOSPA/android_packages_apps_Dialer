@@ -755,7 +755,6 @@ public class DialtactsActivity extends TransactionSafeActivity
       handleMenuSettings();
       Logger.get(this).logScreenView(ScreenEvent.Type.SETTINGS, this);
       return true;
-<<<<<<< HEAD
     } else if (resId == R.id.menu_4g_conference_call) {
       try {
         if (QtiCallUtils.isConferenceDialerEnabled(getApplicationContext())) {
@@ -768,11 +767,9 @@ public class DialtactsActivity extends TransactionSafeActivity
       } finally {
         return true;
       }
-=======
     } else if (resId == R.id.menu_new_ui_launcher_shortcut) {
       MainComponent.get(this).getMain().createNewUiLauncherShortcut(this);
       return true;
->>>>>>> 442c9b88edcdf780933c4c1f274021a3b48d2a4a
     }
     return false;
   }
@@ -1617,16 +1614,14 @@ public class DialtactsActivity extends TransactionSafeActivity
         simulatorMenuItem.setVisible(false);
       }
 
-<<<<<<< HEAD
       final MenuItem conferDialerOption = menu.findItem(R.id.menu_4g_conference_call);
       conferDialerOption.setVisible(
           QtiCallUtils.isConferenceUriDialerEnabled(getApplicationContext()));
-=======
+
       Main dialtacts = MainComponent.get(context).getMain();
       menu.findItem(R.id.menu_new_ui_launcher_shortcut)
           .setVisible(dialtacts.isNewUiEnabled(context));
 
->>>>>>> 442c9b88edcdf780933c4c1f274021a3b48d2a4a
       super.show();
     }
   }

@@ -333,27 +333,7 @@ public class CallButtonPresenter
    */
   @Override
   public void switchCameraClicked(boolean useFrontFacingCamera) {
-<<<<<<< HEAD
-    if (mCall == null) {
-      return;
-    }
-
-    InCallCameraManager cameraManager = InCallPresenter.getInstance().getInCallCameraManager();
-    cameraManager.setUseFrontFacingCamera(useFrontFacingCamera);
-
-    String cameraId = cameraManager.getActiveCameraId();
-    if (cameraId != null) {
-      final int cameraDir =
-          cameraManager.isUsingFrontFacingCamera()
-              ? CameraDirection.CAMERA_DIRECTION_FRONT_FACING
-              : CameraDirection.CAMERA_DIRECTION_BACK_FACING;
-      mCall.setCameraDir(cameraDir);
-      mCall.getVideoTech().setCamera(cameraId);
-      InCallZoomController.getInstance().onCameraEnabled(cameraId);
-    }
-=======
     updateCamera(useFrontFacingCamera);
->>>>>>> 442c9b88edcdf780933c4c1f274021a3b48d2a4a
   }
 
   @Override
