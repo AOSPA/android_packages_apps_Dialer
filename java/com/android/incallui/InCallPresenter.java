@@ -183,6 +183,7 @@ public class InCallPresenter implements CallList.Listener {
   private boolean mBoundAndWaitingForOutgoingCall;
   /** Determines if the InCall UI is in fullscreen mode or not. */
   private boolean mIsFullScreen = false;
+  private boolean mIsShowErrorDialogOnActivityStart = true;
   private PowerManager mPowerManager;
   private PowerManager.WakeLock mWakeLock = null;
 
@@ -439,6 +440,8 @@ public class InCallPresenter implements CallList.Listener {
       return;
     }
     updateActivity(null);
+    // Reset this flag to true for next InCallActivity launch
+    mIsShowErrorDialogOnActivityStart = true;
   }
 
   /**
@@ -464,7 +467,8 @@ public class InCallPresenter implements CallList.Listener {
 
       // By the time the UI finally comes up, the call may already be disconnected.
       // If that's the case, we may need to show an error dialog.
-      if (mCallList != null && mCallList.getDisconnectedCall() != null) {
+      if (mCallList != null && mCallList.getDisconnectedCall() != null
+          && mIsShowErrorDialogOnActivityStart) {
         maybeShowErrorDialogOnDisconnect(mCallList.getDisconnectedCall());
       }
 
@@ -803,7 +807,18 @@ public class InCallPresenter implements CallList.Listener {
    */
   @Override
   public void onDisconnect(DialerCall call) {
-    maybeShowErrorDialogOnDisconnect(call);
+    if (mCallList.getActiveOrBackgroundCall() == null) {
+      if (isActivityStarted()) {
+        // If InCallActivity already started then straight away show call disconnect error dialog
+        maybeShowErrorDialogOnDisconnect(call);
+      } else {
+        // Show call disconnect error dialog when activity starts
+        mIsShowErrorDialogOnActivityStart = true;
+      }
+    } else {
+      // Show call disconnect error dialog when background call InCallActivity onStart
+      mIsShowErrorDialogOnActivityStart = false;
+    }
 
     // We need to do the run the same code as onCallListChange.
     onCallListChange(mCallList);
