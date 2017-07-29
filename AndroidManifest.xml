@@ -73,6 +73,7 @@
         android:name="DialerApplication"
         android:label="@string/applicationLabel"
         android:icon="@mipmap/ic_launcher_phone"
+        android:roundIcon="@mipmap/ic_launcher_phone_round"
         android:hardwareAccelerated="true"
         android:supportsRtl="true"
         android:backupAgent='com.android.dialer.DialerBackupAgent'
