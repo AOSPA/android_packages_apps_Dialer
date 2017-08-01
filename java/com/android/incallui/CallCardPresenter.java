@@ -1076,6 +1076,11 @@ public class CallCardPresenter
     return mPrimary != null && mPrimary.getState() == DialerCall.State.ACTIVE;
   }
 
+  @Override
+  public void onSessionModificationStateChange(DialerCall call) {
+   //No-op
+  }
+
   private String getConferenceString(DialerCall call) {
     boolean isGenericConference = call.hasProperty(Details.PROPERTY_GENERIC_CONFERENCE);
     LogUtil.v("CallCardPresenter.getConferenceString", "" + isGenericConference);

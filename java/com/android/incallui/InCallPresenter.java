@@ -54,6 +54,7 @@ import com.android.incallui.answerproximitysensor.PseudoScreenState;
 import com.android.incallui.call.CallList;
 import com.android.incallui.call.DialerCall;
 import com.android.incallui.call.ExternalCallList;
+import com.android.incallui.call.InCallVideoCallCallbackNotifier;
 import com.android.incallui.call.TelecomAdapter;
 import com.android.incallui.latencyreport.LatencyReport;
 import com.android.incallui.legacyblocking.BlockedNumberContentObserver;
@@ -361,6 +362,7 @@ public class InCallPresenter implements CallList.Listener {
     mSpamCallListListener = new SpamCallListListener(context);
     mCallList.addListener(mSpamCallListListener);
 
+    InCallVideoCallCallbackNotifier.getInstance().setUp();
     InCallCsRedialHandler.getInstance().setUp(mContext);
     InCallUiStateNotifier.getInstance().setUp(context);
     VideoPauseController.getInstance().setUp(this);
@@ -396,6 +398,7 @@ public class InCallPresenter implements CallList.Listener {
         .listen(mPhoneStateListener, PhoneStateListener.LISTEN_NONE);
 
     attemptCleanup();
+    InCallVideoCallCallbackNotifier.getInstance().tearDown();
     VideoPauseController.getInstance().tearDown();
     InCallUiStateNotifier.getInstance().tearDown();
 
@@ -791,6 +794,7 @@ public class InCallPresenter implements CallList.Listener {
       // Re-evaluate which fragment is being shown.
       mInCallActivity.onPrimaryCallStateChanged();
     }
+    notifySessionModificationStateChange(call);
   }
 
   /**
@@ -1210,6 +1214,12 @@ public class InCallPresenter implements CallList.Listener {
    */
   public boolean isFullscreen() {
     return mIsFullScreen;
+  }
+
+  public void notifySessionModificationStateChange(DialerCall call) {
+   for (InCallEventListener listener : mInCallEventListeners) {
+     listener.onSessionModificationStateChange(call);
+   }
   }
 
   /**
@@ -1752,7 +1762,7 @@ public class InCallPresenter implements CallList.Listener {
    * UI. Used as a means of communicating between fragments that make up the UI.
    */
   public interface InCallEventListener {
-
+    void onSessionModificationStateChange(DialerCall call);
     void onFullscreenModeChanged(boolean isFullscreenMode);
     void onSendStaticImageStateChanged(boolean isEnabled);
   }

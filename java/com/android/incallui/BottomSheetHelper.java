@@ -674,6 +674,11 @@ public class BottomSheetHelper implements InCallPresenter.InCallEventListener,
       //No-op
     }
 
+    @Override
+    public void onSessionModificationStateChange(DialerCall call) {
+      //No-op
+    }
+
     /**
      * Handles a change to the fullscreen mode of the app.
      *

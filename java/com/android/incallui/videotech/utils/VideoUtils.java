@@ -33,12 +33,6 @@ public class VideoUtils {
         || state == SessionModificationState.UPGRADE_TO_VIDEO_REQUEST_TIMED_OUT;
   }
 
-  public static boolean hasVideoUpgradeRequestFailed(@SessionModificationState int state) {
-    return state == SessionModificationState.UPGRADE_TO_VIDEO_REQUEST_FAILED
-        || state == SessionModificationState.REQUEST_REJECTED
-        || state == SessionModificationState.UPGRADE_TO_VIDEO_REQUEST_TIMED_OUT;
-  }
-
   public static boolean hasReceivedVideoUpgradeRequest(@SessionModificationState int state) {
     return state == SessionModificationState.RECEIVED_UPGRADE_TO_VIDEO_REQUEST;
   }

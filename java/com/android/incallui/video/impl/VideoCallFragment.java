@@ -403,8 +403,8 @@ public class VideoCallFragment extends Fragment
   @Override
   public void onVideoScreenStop() {
     getView().removeCallbacks(cameraPermissionDialogRunnable);
-    videoCallScreenDelegate.onVideoCallScreenUiUnready();
     videoCallScreenDelegate.onUiShowing(false);
+    videoCallScreenDelegate.onVideoCallScreenUiUnready();
   }
 
   private void exitFullscreenMode() {
@@ -1306,7 +1306,13 @@ public class VideoCallFragment extends Fragment
           new Runnable() {
             @Override
             public void run() {
-              remoteVideoOff.setVisibility(View.GONE);
+              boolean remoteEnabled = isInGreenScreenMode || shouldShowRemote;
+              boolean isResumed = remoteEnabled && !isRemotelyHeld;
+              if (isResumed) {
+                remoteVideoOff.setVisibility(View.GONE);
+              } else {
+                LogUtil.v("VideoCallFragment.updateVideoOffViews", "Not resumed.Ignore");
+              }
             }
           },
           VIDEO_OFF_VIEW_FADE_OUT_DELAY_IN_MILLIS);
