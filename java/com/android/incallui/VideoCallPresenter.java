@@ -190,7 +190,7 @@ public class VideoCallPresenter
         !isModifyToVideoRxType(mPrimaryCall) &&
         (VideoProfile.isBidirectional(videoState)
         || VideoProfile.isTransmissionEnabled(videoState)
-        || isVideoUpgrade(sessionModificationState));
+        || (VideoProfile.isAudioOnly(videoState) && isVideoUpgrade(sessionModificationState)));
   }
 
   /**
@@ -340,6 +340,24 @@ public class VideoCallPresenter
 
     return VideoProfile.isTransmissionEnabled(videoState)
         || isVideoUpgrade(sessionModificationState);
+  }
+
+  public static boolean showOutgoingVideo(
+      Context context, int videoState, int sessionModificationState,
+      boolean isModifyToVideoRxType) {
+    if (!VideoUtils.hasCameraPermissionAndAllowedByUser(context)) {
+      LogUtil.i("VideoCallPresenter.showOutgoingVideo", "Camera permission is disabled by user.");
+      return false;
+    }
+
+    if (!CompatUtils.isVideoCompatible()) {
+      return false;
+    }
+
+    return VideoProfile.isTransmissionEnabled(videoState)
+        || (!isModifyToVideoRxType &&
+        VideoProfile.isAudioOnly(videoState) &&
+        isVideoUpgrade(sessionModificationState));
   }
 
   private static void updateCameraSelection(DialerCall call) {
@@ -1170,8 +1188,10 @@ public class VideoCallPresenter
       LogUtil.e("VideoCallPresenter.showVideoUi", "videoCallScreen is null returning");
       return;
     }
+    boolean isModifyToVideoRxType = isModifyToVideoRxType(mPrimaryCall);
     boolean showIncomingVideo = showIncomingVideo(videoState, callState);
-    boolean showOutgoingVideo = showOutgoingVideo(mContext, videoState, sessionModificationState);
+    boolean showOutgoingVideo = showOutgoingVideo(mContext, videoState, sessionModificationState,
+        isModifyToVideoRxType);
     LogUtil.i(
         "VideoCallPresenter.showVideoUi",
         "showIncoming: %b, showOutgoing: %b, isRemotelyHeld: %b shallTransmitStaticImage: %b" +
@@ -1180,11 +1200,10 @@ public class VideoCallPresenter
         showOutgoingVideo,
         isRemotelyHeld,
         shallTransmitStaticImage(),
-        isModifyToVideoRxType(mPrimaryCall));
+        isModifyToVideoRxType);
     updateRemoteVideoSurfaceDimensions();
     mVideoCallScreen.showVideoViews(showOutgoingVideo && !shallTransmitStaticImage() &&
-        !isModifyToVideoRxType(mPrimaryCall) && !QtiCallUtils.hasVideoCrbtVoLteCall(),
-        showIncomingVideo, isRemotelyHeld);
+        !QtiCallUtils.hasVideoCrbtVoLteCall(), showIncomingVideo, isRemotelyHeld);
     if (BottomSheetHelper.getInstance().canDisablePipMode() && mPictureModeHelper != null) {
       mPictureModeHelper.setPreviewVideoLayoutParams();
     }
