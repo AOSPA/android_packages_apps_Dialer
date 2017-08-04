@@ -375,7 +375,7 @@ public class VideoCallFragment extends Fragment
   @Override
   public void onVideoScreenStart() {
     inCallButtonUiDelegate.refreshMuteState();
-    videoCallScreenDelegate.onVideoCallScreenUiReady();
+    videoCallScreenDelegate.onVideoCallScreenUiReady(this);
     getView().postDelayed(cameraPermissionDialogRunnable, CAMERA_PERMISSION_DIALOG_DELAY_IN_MILLIS);
   }
 
