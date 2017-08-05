@@ -118,13 +118,21 @@ public class ImsVideoTech implements VideoTech {
       setSessionModificationState(SessionModificationState.NO_REQUEST);
     }
 
-    // Determines if a received upgrade to video request should be cancelled. This can happen if
-    // another InCall UI responds to the upgrade to video request.
     int newVideoState = call.getDetails().getVideoState();
-    if (newVideoState != previousVideoState
-        && sessionModificationState == SessionModificationState.RECEIVED_UPGRADE_TO_VIDEO_REQUEST) {
-      LogUtil.i("ImsVideoTech.onCallStateChanged", "cancelling upgrade notification");
-      setSessionModificationState(SessionModificationState.NO_REQUEST);
+    LogUtil.v("ImsVideoTech.onCallStateChanged","previousVideoState = " +
+        previousVideoState + " newVideoState = " + newVideoState);
+    if (newVideoState != previousVideoState) {
+      if (paused && VideoProfile.isPaused(previousVideoState)
+          && !VideoProfile.isPaused(newVideoState)) {
+        paused = false;
+      }
+
+      // Determines if a received upgrade to video request should be cancelled. This can happen if
+      // another InCall UI responds to the upgrade to video request.
+      if (sessionModificationState == SessionModificationState.RECEIVED_UPGRADE_TO_VIDEO_REQUEST) {
+        LogUtil.i("ImsVideoTech.onCallStateChanged", "cancelling upgrade notification");
+        setSessionModificationState(SessionModificationState.NO_REQUEST);
+      }
     }
     previousVideoState = newVideoState;
   }
