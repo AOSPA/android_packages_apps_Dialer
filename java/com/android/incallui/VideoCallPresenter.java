@@ -1170,7 +1170,8 @@ public class VideoCallPresenter
         isModifyToVideoRxType(mPrimaryCall));
     updateRemoteVideoSurfaceDimensions();
     mVideoCallScreen.showVideoViews(showOutgoingVideo && !shallTransmitStaticImage() &&
-        !isModifyToVideoRxType(mPrimaryCall), showIncomingVideo, isRemotelyHeld);
+        !isModifyToVideoRxType(mPrimaryCall) && !QtiCallUtils.hasVideoCrbtVoLteCall(),
+        showIncomingVideo, isRemotelyHeld);
     if (BottomSheetHelper.getInstance().canDisablePipMode() && mPictureModeHelper != null) {
       mPictureModeHelper.setPreviewVideoLayoutParams();
     }

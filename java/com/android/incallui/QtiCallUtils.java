@@ -362,4 +362,28 @@ public class QtiCallUtils {
            return callList.getIncomingOrActive();
         }
     }
+
+    //Checks if DialerCall has video CRBT - an outgoing receive-only video call
+    public static boolean hasVideoCrbtVoLteCall(DialerCall call) {
+        return (call != null && call.getState() == DialerCall.State.DIALING
+           && isVideoRxOnly(call));
+    }
+
+    //Checks if CallList has CRBT VoLTE call - an outgoing receive-only video call
+    public static boolean hasVideoCrbtVoLteCall() {
+        DialerCall call = CallList.getInstance().getFirstCall();
+        return (call != null && call.getState() == DialerCall.State.DIALING
+           && isVideoRxOnly(call));
+    }
+
+    //Checks if CallList has CRBT Video Call. An outgoing bidirectional video call
+    //is treated as CRBT video call if CRBT feature is enabled
+    public static boolean hasVideoCrbtVtCall(Context context) {
+        DialerCall call = CallList.getInstance().getFirstCall();
+        boolean videoCrbtConfig = QtiImsExtUtils.isCarrierConfigEnabled(
+                BottomSheetHelper.getInstance().getPhoneId(),
+                context, "config_enable_video_crbt");
+        return (call != null && call.getState() == DialerCall.State.DIALING
+                && isVideoBidirectional(call) && videoCrbtConfig);
+    }
 }
