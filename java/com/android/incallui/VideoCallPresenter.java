@@ -214,6 +214,7 @@ public class VideoCallPresenter
         mPrimaryCall + " mPreviewSurfaceState = " + mPreviewSurfaceState);
 
     mIsInBackground = !showing;
+    boolean wasTransmitStaticImage = sShallTransmitStaticImage;
 
     int phoneId = BottomSheetHelper.getInstance().getPhoneId();
     if (!QtiImsExtUtils.shallShowStaticImageUi(phoneId, mContext) &&
@@ -233,6 +234,13 @@ public class VideoCallPresenter
       // Set pause image only for ACTIVE calls going to background.
       // While coming to foreground, unset pause image for all calls.
       setPauseImage();
+      if(wasTransmitStaticImage != sShallTransmitStaticImage && mPrimaryCall != null) {
+        showVideoUi(
+            mPrimaryCall.getVideoState(),
+            mPrimaryCall.getState(),
+            mPrimaryCall.getVideoTech().getSessionModificationState(),
+            mPrimaryCall.isRemotelyHeld());
+      }
     }
 
     if (showing) {
