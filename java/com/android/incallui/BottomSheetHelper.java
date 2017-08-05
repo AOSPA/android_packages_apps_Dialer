@@ -132,14 +132,20 @@ public class BottomSheetHelper implements InCallPresenter.InCallEventListener,
      InCallPresenter.getInstance().removeIncomingCallListener(mPrimaryCallTracker);
      InCallPresenter.getInstance().removeInCallEventListener(this);
      mIsHideMe = false;
-     mPrimaryCallTracker.removeListener(this);
-     mPrimaryCallTracker = null;
+     if (mPrimaryCallTracker != null) {
+       mPrimaryCallTracker.removeListener(this);
+       mPrimaryCallTracker = null;
+     }
      mContext = null;
      mResources = null;
      moreOptionsMap = null;
    }
 
    public void updateMap() {
+     if (mPrimaryCallTracker == null) {
+       LogUtil.w("BottomSheetHelper.updateMap : ", "PrimaryCallTracker is null");
+       return;
+     }
      mCall = mPrimaryCallTracker.getPrimaryCall();
      LogUtil.i("BottomSheetHelper.updateMap","mCall = " + mCall);
 

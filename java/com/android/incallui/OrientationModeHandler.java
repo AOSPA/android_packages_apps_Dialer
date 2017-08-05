@@ -91,9 +91,11 @@ public class OrientationModeHandler implements InCallDetailsListener, InCallUiLi
         InCallPresenter.getInstance().removeListener(mPrimaryCallTracker);
         InCallPresenter.getInstance().removeDetailsListener(this);
         InCallPresenter.getInstance().removeInCallUiListener(this);
-        mPrimaryCallTracker.removeListener(this);
+        if (mPrimaryCallTracker != null) {
+            mPrimaryCallTracker.removeListener(this);
+            mPrimaryCallTracker = null;
+        }
         mOrientationMode = QtiCallConstants.ORIENTATION_MODE_UNSPECIFIED;
-        mPrimaryCallTracker = null;
     }
 
     /**
@@ -108,7 +110,7 @@ public class OrientationModeHandler implements InCallDetailsListener, InCallUiLi
           Log.e(this, "onDetailsChanged: details is null");
           return;
         }
-        if (!mPrimaryCallTracker.isPrimaryCall(call)) {
+        if (mPrimaryCallTracker != null && !mPrimaryCallTracker.isPrimaryCall(call)) {
           Log.e(this, "onDetailsChanged: call is non-primary call");
           return;
         }
@@ -122,6 +124,10 @@ public class OrientationModeHandler implements InCallDetailsListener, InCallUiLi
      */
     @Override
     public void onUiShowing(boolean showing) {
+       if (mPrimaryCallTracker == null) {
+           Log.e(this, "onUiShowing showing: " + showing + " PrimaryCallTracker is null");
+           return;
+       }
         DialerCall call = mPrimaryCallTracker.getPrimaryCall();
         Log.d(this, "onUiShowing showing: " + showing + " call = " + call);
 
@@ -166,7 +172,7 @@ public class OrientationModeHandler implements InCallDetailsListener, InCallUiLi
     private void onScreenOrientationChanged(DialerCall call, int orientation) {
         Log.d(this, "onScreenOrientationChanged: Call : " + call + " screen orientation = " +
                 orientation);
-        if (!mPrimaryCallTracker.isPrimaryCall(call)) {
+        if (mPrimaryCallTracker != null && !mPrimaryCallTracker.isPrimaryCall(call)) {
             Log.e(this, "Can't set requested orientation on a non-primary call");
             return;
         }
