@@ -224,6 +224,9 @@ public class VideoCallPresenter
 
     if (!isVideoCall(mPrimaryCall) && !isVideoUpgrade(mPrimaryCall)) {
       LogUtil.w("VideoCallPresenter.onUiShowing", " received for voice call");
+      if (mPreviewSurfaceState != PreviewSurfaceState.NONE) {
+         enableCamera(mVideoCall, false);
+      }
       return;
     }
 
@@ -487,7 +490,7 @@ public class VideoCallPresenter
     if (!CompatUtils.isVideoCompatible()) {
       return;
     }
-
+    onUiShowing(false);
     cancelAutoFullScreen();
 
     InCallPresenter.getInstance().removeListener(this);
@@ -865,6 +868,16 @@ public class VideoCallPresenter
 
       checkForOrientationAllowedChange(newPrimaryCall);
       updateCameraSelection(newPrimaryCall);
+
+      // Existing call is put on hold and new call is in incoming state does mean that
+      // user is trying to answer the call
+      if (isIncomingVideoCall(newPrimaryCall) &&
+          isTransmissionEnabled(mPrimaryCall) &&
+          mPrimaryCall.getState() == DialerCall.State.ONHOLD) {
+        // Close camera on mPrimaryCall
+        LogUtil.v("VideoCallPresenter.onPrimaryCallChanged", "closing camera");
+        enableCamera(mPrimaryCall.getVideoCall(), false);
+      }
       adjustVideoMode(newPrimaryCall);
     }
   }

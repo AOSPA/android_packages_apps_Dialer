@@ -59,5 +59,4 @@ public interface VideoCallScreenDelegate {
 
   int getDeviceOrientation();
 
-  void onUiShowing(boolean showing);
 }
