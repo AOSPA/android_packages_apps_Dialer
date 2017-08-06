@@ -662,11 +662,9 @@ public class InCallFragment extends Fragment
 
     if (DialerCall.State.ACTIVE == state) {
       mVbButton.setVisibility(View.VISIBLE);
-    } else if (DialerCall.State.DISCONNECTED == state) {
-      if (DialerCall.State.ACTIVE != state
-          && isVolumeBoostOn()) {
-        mVbButton.setVisibility(View.GONE);
-
+    } else {
+      mVbButton.setVisibility(View.GONE);
+      if (isVolumeBoostOn()) {
         setVolumeBoost(false);
       }
     }
