@@ -446,9 +446,10 @@ public class InCallFragment extends Fragment
   @Override
   public void onInCallShowDialpad(boolean isShown) {
     LogUtil.i("InCallFragment.onInCallShowDialpad","isShown: "+isShown);
-    boolean shouldShowMoreButton = !isShown
-      && BottomSheetHelper.getInstance().shallShowMoreButton(getActivity());
-    moreOptionsMenuButton.setVisibility(shouldShowMoreButton ? View.VISIBLE : View.GONE);
+    BottomSheetHelper bottomSheetHelper = BottomSheetHelper.getInstance();
+    bottomSheetHelper.updateMoreButtonVisibility(
+        isShown ? false : bottomSheetHelper.shallShowMoreButton(getActivity()),
+        moreOptionsMenuButton);
   }
 
   @Override
@@ -539,9 +540,9 @@ public class InCallFragment extends Fragment
         pager.setCurrentItem(adapter.getButtonGridPosition());
       }
     }
-    moreOptionsMenuButton.setVisibility(
-       BottomSheetHelper.getInstance().shallShowMoreButton(
-          getActivity()) ? View.VISIBLE : View.GONE);
+    BottomSheetHelper bottomSheetHelper = BottomSheetHelper.getInstance();
+    bottomSheetHelper.updateMoreButtonVisibility(
+        bottomSheetHelper.shallShowMoreButton(getActivity()), moreOptionsMenuButton);
   }
 
   @Override
