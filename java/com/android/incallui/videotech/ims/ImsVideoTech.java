@@ -188,7 +188,6 @@ public class ImsVideoTech implements VideoTech {
     Assert.checkArgument(requestedVideoState != VideoProfile.STATE_AUDIO_ONLY);
     LogUtil.i("ImsVideoTech.acceptUpgradeRequest", "videoState: " + requestedVideoState);
     call.getVideoCall().sendSessionModifyResponse(new VideoProfile(requestedVideoState));
-    setSessionModificationState(SessionModificationState.NO_REQUEST);
     // Telecom manages audio route for us
     listener.onUpgradedToVideo(false /* switchToSpeaker */);
     logger.logImpression(DialerImpression.Type.IMS_VIDEO_REQUEST_ACCEPTED);
@@ -198,7 +197,6 @@ public class ImsVideoTech implements VideoTech {
   public void acceptVideoRequestAsAudio() {
     LogUtil.enterBlock("ImsVideoTech.acceptVideoRequestAsAudio");
     call.getVideoCall().sendSessionModifyResponse(new VideoProfile(VideoProfile.STATE_AUDIO_ONLY));
-    setSessionModificationState(SessionModificationState.NO_REQUEST);
     logger.logImpression(DialerImpression.Type.IMS_VIDEO_REQUEST_ACCEPTED_AS_AUDIO);
   }
 
@@ -206,7 +204,6 @@ public class ImsVideoTech implements VideoTech {
   public void acceptVideoRequest(int requestedVideoState) {
     LogUtil.i("ImsVideoTech.acceptVideoRequest", "videoState: " + requestedVideoState);
     call.getVideoCall().sendSessionModifyResponse(new VideoProfile(requestedVideoState));
-    setSessionModificationState(SessionModificationState.NO_REQUEST);
     // Telecom manages audio route for us
     if (VideoProfile.isVideo(requestedVideoState)) {
       listener.onUpgradedToVideo(false /* switchToSpeaker */);
@@ -218,7 +215,6 @@ public class ImsVideoTech implements VideoTech {
     LogUtil.enterBlock("ImsVideoTech.declineUpgradeRequest");
     call.getVideoCall()
         .sendSessionModifyResponse(new VideoProfile(call.getDetails().getVideoState()));
-    setSessionModificationState(SessionModificationState.NO_REQUEST);
     logger.logImpression(DialerImpression.Type.IMS_VIDEO_REQUEST_DECLINED);
   }
 
