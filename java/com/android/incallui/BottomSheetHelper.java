@@ -46,6 +46,7 @@ import android.os.Bundle;
 import android.provider.Settings;
 import android.telecom.Call.Details;
 import android.telecom.VideoProfile;
+import android.view.View;
 
 import com.android.dialer.compat.ActivityCompat;
 import com.android.incallui.call.CallList;
@@ -315,6 +316,19 @@ public class BottomSheetHelper implements InCallPresenter.InCallEventListener,
      }
      LogUtil.w("BottomSheetHelper shallShowMoreButton","returns false");
      return false;
+   }
+
+   public void updateMoreButtonVisibility(boolean isVisible, View moreOptionsMenuButton) {
+     if (moreOptionsMenuButton == null) {
+       return;
+     }
+
+     if (isVisible) {
+       moreOptionsMenuButton.setVisibility(View.VISIBLE);
+     } else {
+       dismissBottomSheet();
+       moreOptionsMenuButton.setVisibility(View.GONE);
+     }
    }
 
    private int getPhoneIdExtra(DialerCall call) {
