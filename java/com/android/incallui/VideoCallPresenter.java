@@ -447,7 +447,7 @@ public class VideoCallPresenter
 
   /** Called when the user interface is ready to be used. */
   @Override
-  public void onVideoCallScreenUiReady() {
+  public void onVideoCallScreenUiReady(VideoCallScreen videoCallScreen) {
     LogUtil.v("VideoCallPresenter.onVideoCallScreenUiReady", "");
     Assert.checkState(!isVideoCallScreenUiReady);
 
@@ -457,6 +457,7 @@ public class VideoCallPresenter
       return;
     }
 
+    mVideoCallScreen = videoCallScreen;
     mDeviceOrientation = InCallOrientationEventListener.getCurrentOrientation();
 
     // Register for call state changes last
@@ -513,6 +514,7 @@ public class VideoCallPresenter
       updateCameraSelection(mPrimaryCall);
     }
 
+    mVideoCallScreen = null;
     isVideoCallScreenUiReady = false;
   }
 
@@ -1415,6 +1417,11 @@ public class VideoCallPresenter
   }
 
   private void updateRemoteVideoSurfaceDimensions() {
+    if (mVideoCallScreen == null) {
+      LogUtil.i("VideoCallPresenter.updateRemoteVideoSurfaceDimensions",
+          "mVideoCallScreen is null");
+      return;
+    }
     Activity activity = mVideoCallScreen.getVideoCallScreenFragment().getActivity();
     if (activity != null) {
       Point screenSize = new Point();
