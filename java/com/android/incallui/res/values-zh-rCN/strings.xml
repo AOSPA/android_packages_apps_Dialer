@@ -162,4 +162,8 @@
     <string name="modify_call_option_vt_tx">视频发送</string>
     <string name="modify_call_option_vt_rx">视频接收</string>
     <string name="modify_call_option_voice">仅语音</string>
+    <string name="cancel_modify_call_label">取消更改通话类型</string>
+    <string name="cancel_modify_call_title">取消更改通话类型?</string>
+    <string name="cancel_upgrade">取消视频请求</string>
+    <string name="not_cancel">不取消</string>
 </resources>

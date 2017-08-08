@@ -61,6 +61,7 @@
     <string name="modify_call_label">Modify Call</string>
     <string name="notification_requesting_video_tx_call">"Incoming video tx request"</string>
     <string name="notification_requesting_video_rx_call">"Incoming video rx request"</string>
+    <string name="cancel_modify_call_label">Cancel Modify Call</string>
 
     <!-- Text for the PIP mode button -->
     <string name="pipModeLabel">PIP Mode</string>
@@ -120,6 +121,11 @@
        <item>false</item>
     </string-array>
 
+    <string-array name="cancel_modify_call">
+       <item>@string/cancel_modify_call_label</item>
+       <item>false</item>
+    </string-array>
+
     <!-- array of all the options to ensure mapping-->
     <array name="bottom_sheet_more_options">
        <item>@array/show_dialpad</item>
@@ -132,6 +138,7 @@
        <item>@array/video_tx</item>
        <item>@array/modify_call</item>
        <item>@array/pipMode</item>
+       <item>@array/cancel_modify_call</item>
     </array>
 
     <!-- In-call screen: Modify Call Options for IMS call -->
@@ -140,6 +147,9 @@
     <string name="modify_call_option_vt_tx" translatable="false">Video Transmit</string>
     <string name="modify_call_option_vt_rx" translatable="false">Video Receive</string>
     <string name="modify_call_option_voice" translatable="false">Voice Only</string>
+    <string name="cancel_modify_call_title">Cancel modify call?</string>
+    <string name="cancel_upgrade">Cancel Upgrade</string>
+    <string name="not_cancel">Not Cancel</string>
 
     <string name="call_state_dialing">Dialing</string>
     <string name="call_state_holding">Holding</string>
