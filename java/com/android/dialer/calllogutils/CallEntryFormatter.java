@@ -81,23 +81,18 @@ public class CallEntryFormatter {
   }
 
   private static CharSequence formatDuration(Context context, long elapsedSeconds) {
-    Resources res = context.getResources();
-    String formatPattern;
+    long minutes = 0;
+    long seconds = 0;
+
     if (elapsedSeconds >= 60) {
-      String minutesString = res.getString(R.string.call_details_minutes_abbreviation);
-      String secondsString = res.getString(R.string.call_details_seconds_abbreviation);
-      // example output: "1m 1s"
-      formatPattern =
-          context.getString(
-              R.string.call_duration_format_pattern, "m", minutesString, "s", secondsString);
+      minutes = elapsedSeconds / 60;
+      elapsedSeconds -= minutes * 60;
+      seconds = elapsedSeconds;
+      return context.getString(R.string.callDetailsDurationFormat, minutes, seconds);
     } else {
-      String secondsString = res.getString(R.string.call_details_seconds_abbreviation);
-      // example output: "1s"
-      formatPattern =
-          context.getString(R.string.call_duration_short_format_pattern, "s", secondsString);
+      seconds = elapsedSeconds;
+      return context.getString(R.string.callDetailsShortDurationFormat, seconds);
     }
-    SimpleDateFormat format = new SimpleDateFormat(formatPattern);
-    return format.format(new Date(TimeUnit.SECONDS.toMillis(elapsedSeconds)));
   }
 
   private static CharSequence formatDurationA11y(Context context, long elapsedSeconds) {

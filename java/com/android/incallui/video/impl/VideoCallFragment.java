@@ -375,7 +375,7 @@ public class VideoCallFragment extends Fragment
   @Override
   public void onVideoScreenStart() {
     inCallButtonUiDelegate.refreshMuteState();
-    videoCallScreenDelegate.onVideoCallScreenUiReady();
+    videoCallScreenDelegate.onVideoCallScreenUiReady(this);
     getView().postDelayed(cameraPermissionDialogRunnable, CAMERA_PERMISSION_DIALOG_DELAY_IN_MILLIS);
   }
 
@@ -403,7 +403,6 @@ public class VideoCallFragment extends Fragment
   @Override
   public void onVideoScreenStop() {
     getView().removeCallbacks(cameraPermissionDialogRunnable);
-    videoCallScreenDelegate.onUiShowing(false);
     videoCallScreenDelegate.onVideoCallScreenUiUnready();
   }
 
@@ -751,6 +750,9 @@ public class VideoCallFragment extends Fragment
     updateVideoOffViews();
     updateRemoteVideoScaling();
     maybeLoadPreConfiguredImageAsync();
+    if (QtiCallUtils.hasVideoCrbtVoLteCall() && !shouldShowPreview) {
+      previewTextureView.setVisibility(View.GONE);
+    }
   }
 
   private void maybeLoadPreConfiguredImageAsync() {
@@ -940,9 +942,9 @@ public class VideoCallFragment extends Fragment
         "buttonId: %s, show: %b",
         InCallButtonIdsExtension.toString(buttonId),
         show);
-    moreOptionsMenuButton.setVisibility(
-      BottomSheetHelper.getInstance().shallShowMoreButton(
-      getActivity()) ? View.VISIBLE : View.GONE);
+    BottomSheetHelper bottomSheetHelper = BottomSheetHelper.getInstance();
+    bottomSheetHelper.updateMoreButtonVisibility(
+        bottomSheetHelper.shallShowMoreButton(getActivity()), moreOptionsMenuButton);
     if (buttonId == InCallButtonIds.BUTTON_AUDIO) {
       speakerButtonController.setEnabled(show);
     } else if (buttonId == InCallButtonIds.BUTTON_MUTE) {
@@ -973,9 +975,9 @@ public class VideoCallFragment extends Fragment
         "buttonId: %s, enable: %b",
         InCallButtonIdsExtension.toString(buttonId),
         enable);
-    moreOptionsMenuButton.setVisibility(
-      BottomSheetHelper.getInstance().shallShowMoreButton(
-      getActivity()) ? View.VISIBLE : View.GONE);
+    BottomSheetHelper bottomSheetHelper = BottomSheetHelper.getInstance();
+    bottomSheetHelper.updateMoreButtonVisibility(
+        bottomSheetHelper.shallShowMoreButton(getActivity()), moreOptionsMenuButton);
     if (buttonId == InCallButtonIds.BUTTON_AUDIO) {
       speakerButtonController.setEnabled(enable);
     } else if (buttonId == InCallButtonIds.BUTTON_MUTE) {
@@ -990,9 +992,9 @@ public class VideoCallFragment extends Fragment
   @Override
   public void setEnabled(boolean enabled) {
     LogUtil.v("VideoCallFragment.setEnabled", "enabled: " + enabled);
-    moreOptionsMenuButton.setVisibility(
-      BottomSheetHelper.getInstance().shallShowMoreButton(
-      getActivity()) ? View.VISIBLE : View.GONE);
+    BottomSheetHelper bottomSheetHelper = BottomSheetHelper.getInstance();
+    bottomSheetHelper.updateMoreButtonVisibility(
+        bottomSheetHelper.shallShowMoreButton(getActivity()), moreOptionsMenuButton);
     speakerButtonController.setEnabled(enabled);
     muteButton.setEnabled(enabled);
     cameraOffButton.setEnabled(enabled);
@@ -1134,20 +1136,25 @@ public class VideoCallFragment extends Fragment
 
   @Override
   public void onInCallScreenDialpadVisibilityChange(boolean isShowing) {
-    LogUtil.i("VideoCallFragment.onInCallScreenDialpadVisibilityChange", null);
+    LogUtil.i("VideoCallFragment.onInCallScreenDialpadVisibilityChange", "isShowing = "
+        + isShowing);
+    if (!isShowing) {
+      videoCallScreenDelegate.resetAutoFullscreenTimer();
+    }
   }
 
   @Override
   public void onInCallShowDialpad(boolean isShown) {
     LogUtil.i("VideoCallFragment.onInCallShowDialpad","isShown: "+isShown);
-    boolean shouldShowMoreButton = !isShown
-      && BottomSheetHelper.getInstance().shallShowMoreButton(getActivity());
-    moreOptionsMenuButton.setVisibility(shouldShowMoreButton ? View.VISIBLE : View.GONE);
+    BottomSheetHelper bottomSheetHelper = BottomSheetHelper.getInstance();
+    bottomSheetHelper.updateMoreButtonVisibility(
+        isShown ? false : bottomSheetHelper.shallShowMoreButton(getActivity()),
+        moreOptionsMenuButton);
   }
 
   @Override
   public int getAnswerAndDialpadContainerResourceId() {
-    return 0;
+    return R.id.videocall_dialpad_container;
   }
 
   @Override

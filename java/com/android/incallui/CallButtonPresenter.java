@@ -457,7 +457,6 @@ public class CallButtonPresenter
         isVideo
             && call.getState() != DialerCall.State.DIALING
             && call.getState() != DialerCall.State.CONNECTING;
-
     mInCallButtonUi.showButton(InCallButtonIds.BUTTON_AUDIO, true);
     mInCallButtonUi.showButton(InCallButtonIds.BUTTON_SWAP, showSwap);
     mInCallButtonUi.showButton(InCallButtonIds.BUTTON_HOLD, showHold);
@@ -468,8 +467,9 @@ public class CallButtonPresenter
     mInCallButtonUi.showButton(InCallButtonIds.BUTTON_UPGRADE_TO_VIDEO, showUpgradeToVideo);
     mInCallButtonUi.showButton(InCallButtonIds.BUTTON_DOWNGRADE_TO_AUDIO, showDowngradeToAudio);
     mInCallButtonUi.showButton(
-        InCallButtonIds.BUTTON_SWITCH_CAMERA, VideoCallPresenter.isTransmissionEnabled(call) &&
-        hasCameraPermission && !BottomSheetHelper.getInstance().isHideMeSelected());
+      InCallButtonIds.BUTTON_SWITCH_CAMERA, VideoCallPresenter.isTransmissionEnabled(call)
+      && hasCameraPermission && !BottomSheetHelper.getInstance().isHideMeSelected()
+      && !QtiCallUtils.hasVideoCrbtVoLteCall(call));
     mInCallButtonUi.showButton(InCallButtonIds.BUTTON_PAUSE_VIDEO, showPauseVideo);
     if (isVideo) {
       mInCallButtonUi.setVideoPaused(!call.getVideoTech().isTransmitting() || !hasCameraPermission);

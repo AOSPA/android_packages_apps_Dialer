@@ -309,14 +309,6 @@ public class StatusBarNotifier
       return;
     }
 
-    final boolean ignoreIncoming = callList.getActiveOrBackgroundCall() == null
-        && InCallPresenter.getInstance().isShowingInCallUi();
-    // In-call UI is not closed with pending dialog, so the notification can be ignored.
-    if (ignoreIncoming) {
-      LogUtil.i("StatusBarNotifier.buildAndSendNotification", "Ignore this notification");
-      return;
-    }
-
     final int callState = call.getState();
 
     // Check if data has changed; if nothing is different, don't issue another notification.
@@ -333,8 +325,7 @@ public class StatusBarNotifier
         || callState == DialerCall.State.CALL_WAITING
         || isVideoUpgradeRequest) {
       boolean alreadyActive =
-          callList.getActiveOrBackgroundCall() != null
-              && InCallPresenter.getInstance().isShowingInCallUi();
+          InCallPresenter.getInstance().isShowingInCallUi();
       notificationType =
           alreadyActive ? NOTIFICATION_INCOMING_CALL_QUIET : NOTIFICATION_INCOMING_CALL;
     } else {

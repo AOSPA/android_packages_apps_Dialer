@@ -521,6 +521,11 @@ public class AnswerFragment extends Fragment
     return this;
   }
 
+  @Override
+  public void updateAnswerScreenUi() {
+    updateUI();
+  }
+
   private AnswerMethod getAnswerMethod() {
     return ((AnswerMethod)
         getChildFragmentManager().findFragmentById(R.id.answer_method_container));
@@ -853,12 +858,12 @@ public class AnswerFragment extends Fragment
       contactGridManager.setCallState(primaryCallState);
     }
     restoreBackgroundMaskColor();
-    if (BottomSheetHelper.getInstance().shallShowMoreButton(getActivity())) {
-      BottomSheetHelper.getInstance().updateMap();
-      moreOptionsMenuButton.setVisibility(View.VISIBLE);
-    } else {
-      moreOptionsMenuButton.setVisibility(View.GONE);
+    BottomSheetHelper bottomSheetHelper = BottomSheetHelper.getInstance();
+    boolean isVisible = bottomSheetHelper.shallShowMoreButton(getActivity());
+    if (isVisible) {
+      bottomSheetHelper.updateMap();
     }
+    bottomSheetHelper.updateMoreButtonVisibility(isVisible, moreOptionsMenuButton);
   }
 
   @Override
