@@ -34,8 +34,8 @@ public class EnableWifiCallingPrompt {
   // reason if it wants us to prompt the user to enable Wi-Fi calling. In Android-O we might
   // consider using a more explicit way to signal this.
   private static final String REASON_WIFI_ON_BUT_WFC_OFF = "REASON_WIFI_ON_BUT_WFC_OFF";
-  private static final String ACTION_WIFI_CALLING_SETTINGS =
-      "android.settings.WIFI_CALLING_SETTINGS";
+  private static final String ACTION_SHOW_CALL_SETTINGS =
+      "android.telecom.action.SHOW_CALL_SETTINGS";
   private static final String ANDROID_SETTINGS_PACKAGE = "com.android.settings";
 
   public static boolean shouldShowPrompt(@NonNull DisconnectCause cause) {
@@ -75,7 +75,7 @@ public class EnableWifiCallingPrompt {
   private static void openWifiCallingSettings(@NonNull Context context) {
     LogUtil.i("EnableWifiCallingPrompt.openWifiCallingSettings", "opening settings");
     context.startActivity(
-        new Intent(ACTION_WIFI_CALLING_SETTINGS).setPackage(ANDROID_SETTINGS_PACKAGE));
+        new Intent(ACTION_SHOW_CALL_SETTINGS).setPackage(ANDROID_SETTINGS_PACKAGE));
   }
 
   private EnableWifiCallingPrompt() {}

@@ -129,13 +129,16 @@ public class QtiCallUtils {
             return false;
         }
         boolean isEnhanced4gLteModeSettingEnabled = false;
+        boolean isVolteEnabledByPlatform = false;
         TelephonyManager telephonyManager =
                 (TelephonyManager) context.getSystemService(Context.TELEPHONY_SERVICE);
         for (int i = 0; i < telephonyManager.getPhoneCount(); i++) {
-            isEnhanced4gLteModeSettingEnabled |= ImsManager.getInstance(context, i)
-                    .isEnhanced4gLteModeSettingEnabledByUserForSlot();
+            ImsManager imsMgr = ImsManager.getInstance(context, i);
+            isEnhanced4gLteModeSettingEnabled |=
+                    imsMgr.isEnhanced4gLteModeSettingEnabledByUserForSlot();
+            isVolteEnabledByPlatform |= imsMgr.isVolteEnabledByPlatformForSlot();
         }
-        return isEnhanced4gLteModeSettingEnabled && ImsManager.isVolteEnabledByPlatform(context);
+        return isEnhanced4gLteModeSettingEnabled && isVolteEnabledByPlatform;
     }
 
     /**
@@ -146,16 +149,19 @@ public class QtiCallUtils {
             return false;
         }
         boolean isEnhanced4gLteModeSettingEnabled = false;
+        boolean isVolteEnabledByPlatform = false;
         TelephonyManager telephonyManager =
                 (TelephonyManager) context.getSystemService(Context.TELEPHONY_SERVICE);
         for (int i = 0; i < telephonyManager.getPhoneCount(); i++) {
             if (QtiImsExtUtils.isCarrierConfigEnabled(i, context,
                     "config_enable_conference_dialer")) {
-                isEnhanced4gLteModeSettingEnabled |= ImsManager.getInstance(context, i)
-                        .isEnhanced4gLteModeSettingEnabledByUserForSlot();
+                ImsManager imsMgr = ImsManager.getInstance(context, i);
+                isEnhanced4gLteModeSettingEnabled |=
+                        imsMgr.isEnhanced4gLteModeSettingEnabledByUserForSlot();
+                isVolteEnabledByPlatform |= imsMgr.isVolteEnabledByPlatformForSlot();
             }
         }
-        return isEnhanced4gLteModeSettingEnabled && ImsManager.isVolteEnabledByPlatform(context);
+        return isEnhanced4gLteModeSettingEnabled && isVolteEnabledByPlatform;
     }
 
     /**
