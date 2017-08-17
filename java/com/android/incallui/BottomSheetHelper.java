@@ -466,7 +466,7 @@ public class BottomSheetHelper implements InCallPresenter.InCallEventListener,
 
    private void maybeUpdateHideMeInMap() {
      if (!QtiImsExtUtils.shallShowStaticImageUi(getPhoneId(), mContext) ||
-         !VideoUtils.hasCameraPermissionAndAllowedByUser(mContext)) {
+         !VideoUtils.hasCameraPermissionAndShownPrivacyToast(mContext)) {
        return;
      }
 

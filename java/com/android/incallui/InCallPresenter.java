@@ -192,6 +192,8 @@ public class InCallPresenter implements CallList.Listener {
   private PowerManager mPowerManager;
   private PowerManager.WakeLock mWakeLock = null;
 
+  private boolean mScreenTimeoutEnabled = true;
+
   private PhoneStateListener mPhoneStateListener =
       new PhoneStateListener() {
         @Override
@@ -416,6 +418,7 @@ public class InCallPresenter implements CallList.Listener {
   }
 
   private void attemptFinishActivity() {
+    mScreenTimeoutEnabled = true;
     final boolean doFinish = (mInCallActivity != null && isActivityStarted());
     LogUtil.i("InCallPresenter.attemptFinishActivity", "Hide in call UI: " + doFinish);
     if (doFinish) {
@@ -876,7 +879,7 @@ public class InCallPresenter implements CallList.Listener {
 
     if (newState == InCallState.NO_CALLS) {
       if (mBoundAndWaitingForOutgoingCall) {
-        return InCallState.PENDING_OUTGOING;
+        return InCallState.OUTGOING;
       }
     }
 
@@ -894,7 +897,7 @@ public class InCallPresenter implements CallList.Listener {
     mBoundAndWaitingForOutgoingCall = isBound;
     mThemeColorManager.setPendingPhoneAccountHandle(handle);
     if (isBound && mInCallState == InCallState.NO_CALLS) {
-      mInCallState = InCallState.PENDING_OUTGOING;
+      mInCallState = InCallState.OUTGOING;
     }
   }
 
@@ -1085,9 +1088,10 @@ public class InCallPresenter implements CallList.Listener {
     LogUtil.d("InCallPresenter.onActivityStarted", "onActivityStarted");
     notifyInCallUiStateNotifier(true);
     if (mStatusBarNotifier != null) {
-      // TODO(maxwelb) - b/36649622: Investigate this redundant call
+      // TODO - b/36649622: Investigate this redundant call
       mStatusBarNotifier.updateNotification(mCallList);
     }
+    applyScreenTimeout();
   }
 
   /*package*/
@@ -1636,6 +1640,27 @@ public class InCallPresenter implements CallList.Listener {
     if (!isScreenInteractive()) {
       acquireWakeLock();
       releaseWakeLock();
+    }
+  }
+
+  //TODO need to revoist the logic to keep screen ON while in Video call
+  public void enableScreenTimeout(boolean enable) {
+    LogUtil.v("InCallPresenter.enableScreenTimeout", "enableScreenTimeout: value=" + enable);
+    mScreenTimeoutEnabled = enable;
+    applyScreenTimeout();
+  }
+
+  private void applyScreenTimeout() {
+    if (mInCallActivity == null) {
+      LogUtil.e("InCallPresenter.applyScreenTimeout", "InCallActivity is null.");
+      return;
+    }
+
+    final Window window = mInCallActivity.getWindow();
+    if (mScreenTimeoutEnabled) {
+      window.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+    } else {
+      window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
     }
   }
 

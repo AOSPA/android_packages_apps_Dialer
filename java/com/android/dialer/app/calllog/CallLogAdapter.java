@@ -369,19 +369,29 @@ public class CallLogAdapter extends GroupingListAdapter
             }
             expandViewHolderActions(viewHolder);
 
-            if (viewHolder.videoCallButtonView != null
-                && viewHolder.videoCallButtonView.getVisibility() == View.VISIBLE
-                && LightbringerComponent.get(mActivity).getLightbringer().getPackageName() != null
-                && LightbringerComponent.get(mActivity)
-                    .getLightbringer()
-                    .getPackageName()
-                    .equals(
-                        ((IntentProvider) viewHolder.videoCallButtonView.getTag())
-                            .getIntent(mActivity)
-                            .getPackage())) {
+            if (isLightbringerCallButtonVisible(viewHolder.videoCallButtonView)) {
               CallIntentBuilder.increaseLightbringerCallButtonAppearInExpandedCallLogItemCount();
             }
           }
+        }
+
+        private boolean isLightbringerCallButtonVisible(View videoCallButtonView) {
+          if (videoCallButtonView == null) {
+            return false;
+          }
+          if (videoCallButtonView.getVisibility() != View.VISIBLE) {
+            return false;
+          }
+          IntentProvider intentProvider = (IntentProvider) videoCallButtonView.getTag();
+          if (intentProvider == null) {
+            return false;
+          }
+          String packageName =
+              LightbringerComponent.get(mActivity).getLightbringer().getPackageName();
+          if (packageName == null) {
+            return false;
+          }
+          return packageName.equals(intentProvider.getIntent(mActivity).getPackage());
         }
       };
 
@@ -445,7 +455,7 @@ public class CallLogAdapter extends GroupingListAdapter
    * Holds a list of URIs that are pending deletion or undo. If the activity ends before the undo
    * timeout, all of the pending URIs will be deleted.
    *
-   * <p>TODO(twyen): move this and OnVoicemailDeletedListener to somewhere like {@link
+   * <p>TODO: move this and OnVoicemailDeletedListener to somewhere like {@link
    * VisualVoicemailCallLogFragment}. The CallLogAdapter does not need to know about what to do with
    * hidden item or what to hide.
    */
@@ -968,7 +978,7 @@ public class CallLogAdapter extends GroupingListAdapter
   }
 
   @MainThread
-  private CallDetailsEntries createCallDetailsEntries(Cursor cursor, int count) {
+  private static CallDetailsEntries createCallDetailsEntries(Cursor cursor, int count) {
     Assert.isMainThread();
     int position = cursor.getPosition();
     CallDetailsEntries.Builder entries = CallDetailsEntries.newBuilder();
@@ -981,16 +991,6 @@ public class CallLogAdapter extends GroupingListAdapter
               .setDate(cursor.getLong(CallLogQuery.DATE))
               .setDuration(cursor.getLong(CallLogQuery.DURATION))
               .setFeatures(cursor.getInt(CallLogQuery.FEATURES));
-
-      String phoneAccountComponentName = cursor.getString(CallLogQuery.ACCOUNT_COMPONENT_NAME);
-      if (getLightbringer().getPhoneAccountComponentName() != null
-          && getLightbringer()
-              .getPhoneAccountComponentName()
-              .flattenToString()
-              .equals(phoneAccountComponentName)) {
-        entry.setIsLightbringerCall(true);
-      }
-
       entries.addEntries(entry.build());
       cursor.moveToNext();
     }
