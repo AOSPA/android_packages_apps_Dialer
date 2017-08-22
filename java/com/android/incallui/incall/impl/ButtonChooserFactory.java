@@ -85,11 +85,11 @@ class ButtonChooserFactory {
     mapping.put(
         InCallButtonIds.BUTTON_SWITCH_TO_SECONDARY, MappingInfo.builder(4).setSlotOrder(0).build());
     mapping.put(
-        InCallButtonIds.BUTTON_MANAGE_VOICE_CONFERENCE,
-        MappingInfo.builder(4).setSlotOrder(5).build());
-    mapping.put(
         InCallButtonIds.BUTTON_UPGRADE_TO_VIDEO, MappingInfo.builder(4).setSlotOrder(10).build());
-    mapping.put(InCallButtonIds.BUTTON_HOLD, MappingInfo.builder(5).setSlotOrder(0).build());
+    mapping.put(
+        InCallButtonIds.BUTTON_MANAGE_VOICE_CONFERENCE,
+        MappingInfo.builder(5).setSlotOrder(0).build());
+    mapping.put(InCallButtonIds.BUTTON_HOLD, MappingInfo.builder(5).setSlotOrder(5).build());
 
     return new ButtonChooser(new MappedButtonConfig(mapping));
   }
