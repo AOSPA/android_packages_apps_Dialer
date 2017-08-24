@@ -22,7 +22,6 @@ import android.content.Context;
 import android.content.pm.PackageManager;
 import android.content.res.Resources;
 import android.graphics.Bitmap;
-import android.graphics.Matrix;
 import android.graphics.Outline;
 import android.graphics.Point;
 import android.graphics.drawable.Drawable;
@@ -327,7 +326,7 @@ public class VideoCallFragment extends Fragment
               int oldRight,
               int oldBottom) {
             LogUtil.i("VideoCallFragment.onLayoutChange", "previewTextureView layout changed");
-            fixPreviewRotation();
+            updatePreviewVideoScaling();
             updatePreviewOffView();
           }
         });
@@ -851,11 +850,13 @@ public class VideoCallFragment extends Fragment
   @Override
   public void onLocalVideoDimensionsChanged() {
     LogUtil.i("VideoCallFragment.onLocalVideoDimensionsChanged", null);
+    updatePreviewVideoScaling();
   }
 
   @Override
   public void onLocalVideoOrientationChanged() {
     LogUtil.i("VideoCallFragment.onLocalVideoOrientationChanged", null);
+    updatePreviewVideoScaling();
   }
 
   /** Called when the remote video's dimensions change. */
@@ -1183,15 +1184,31 @@ public class VideoCallFragment extends Fragment
     // Do nothing
   }
 
-  private void fixPreviewRotation() {
-    int rotationDegrees = getRotationDegrees();
-    if (rotationDegrees == 90 || rotationDegrees == 270) {
-      int viewWidth = previewTextureView.getWidth();
-      int viewHeight = previewTextureView.getHeight();
-      Matrix transform = new Matrix();
-      // Multiplying by -1 prevents the image from being upside down in landscape mode.
-      transform.postRotate(rotationDegrees * -1.0f, viewWidth / 2.0f, viewHeight / 2.0f);
-      previewTextureView.setTransform(transform);
+  private void updatePreviewVideoScaling() {
+    if (previewTextureView.getWidth() == 0 || previewTextureView.getHeight() == 0) {
+      LogUtil.i("VideoCallFragment.updatePreviewVideoScaling", "view layout hasn't finished yet");
+      return;
+    }
+    VideoSurfaceTexture localVideoSurfaceTexture =
+        videoCallScreenDelegate.getLocalVideoSurfaceTexture();
+    Point cameraDimensions = localVideoSurfaceTexture.getSurfaceDimensions();
+    if (cameraDimensions == null) {
+      LogUtil.i(
+          "VideoCallFragment.updatePreviewVideoScaling", "camera dimensions haven't been set");
+      return;
+    }
+    if (isLandscape()) {
+      VideoSurfaceBindings.scaleVideoAndFillView(
+          previewTextureView,
+          cameraDimensions.x,
+          cameraDimensions.y,
+          videoCallScreenDelegate.getDeviceOrientation());
+    } else {
+      VideoSurfaceBindings.scaleVideoAndFillView(
+          previewTextureView,
+          cameraDimensions.y,
+          cameraDimensions.x,
+          videoCallScreenDelegate.getDeviceOrientation());
     }
   }
 
@@ -1226,22 +1243,6 @@ public class VideoCallFragment extends Fragment
     // Choose orientation based on display orientation, not window orientation
     int rotation = getActivity().getWindowManager().getDefaultDisplay().getRotation();
     return rotation == Surface.ROTATION_90 || rotation == Surface.ROTATION_270;
-  }
-
-  private int getRotationDegrees() {
-    int rotation = getActivity().getWindowManager().getDefaultDisplay().getRotation();
-    switch (rotation) {
-      case Surface.ROTATION_0:
-        return 0;
-      case Surface.ROTATION_90:
-        return 90;
-      case Surface.ROTATION_180:
-        return 180;
-      case Surface.ROTATION_270:
-        return 270;
-      default:
-        throw Assert.createAssertionFailException("unsupported rotation: " + rotation);
-    }
   }
 
   private void enterGreenScreenMode() {
