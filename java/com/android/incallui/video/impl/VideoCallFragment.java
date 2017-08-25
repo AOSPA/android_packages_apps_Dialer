@@ -172,6 +172,7 @@ public class VideoCallFragment extends Fragment
   private boolean isRemotelyHeld;
   private ContactGridManager contactGridManager;
   private SecondaryInfo savedSecondaryInfo;
+  private PauseImageTask mPauseImageTask;
   private final Runnable cameraPermissionDialogRunnable =
       new Runnable() {
         @Override
@@ -778,8 +779,26 @@ public class VideoCallFragment extends Fragment
   }
 
   private void maybeLoadPreConfiguredImageAsync() {
+    Context context = getContext();
+    if (context == null) {
+      LogUtil.w("VideoCallFragment.maybeLoadPreConfiguredImageAsync", "context is null");
+      return;
+    }
+
+    if (!QtiImsExtUtils.shallShowStaticImageUi(BottomSheetHelper.getInstance().getPhoneId(),
+        context)) {
+      return;
+    }
+
     LogUtil.v("VideoCallFragment.maybeLoadPreConfiguredImageAsync", " shallTransmitStaticImage = "
         + videoCallScreenDelegate.shallTransmitStaticImage());
+
+    if (mPauseImageTask != null &&
+        mPauseImageTask.getStatus() != AsyncTask.Status.FINISHED) {
+      boolean isCancelled = mPauseImageTask.cancel(true);
+      LogUtil.w("VideoCallFragment.maybeLoadPreConfiguredImageAsync",
+          "isCancelled = " + isCancelled);
+    }
 
     /**
      * Do not load static image if:
@@ -800,35 +819,42 @@ public class VideoCallFragment extends Fragment
       return;
     }
 
-    final AsyncTask<Void, Void, Bitmap> task = new AsyncTask<Void, Void, Bitmap>() {
-      // Decode image in background.
-      @Override
-      protected Bitmap doInBackground(Void... params) {
-        try {
-          return loadImage();
-        } catch (QtiImsException ex) {
-          LogUtil.e("VideoCallFragment.loadImage", " ex = " + ex);
-        }
-        return null;
-      }
+    mPauseImageTask = new PauseImageTask();
+    mPauseImageTask.execute();
+  }
 
-      // Once complete, set bitmap/pause image.
-      @Override
-      protected void onPostExecute(Bitmap bitmap) {
-        boolean useDefaultImage = bitmap == null;
-        LogUtil.d("VideoCallFragment.onPostExecute", "bitmap = " + bitmap);
-        videoCallScreenDelegate.setUseDefaultImage(useDefaultImage);
-
-        if (useDefaultImage) {
-          QtiCallUtils.displayToast(getContext(), R.string.qti_ims_defaultImage_fallback);
-          setPreviewImage(getDefaultImage());
-        } else {
-          setPreviewImage(bitmap);
+  private class PauseImageTask extends AsyncTask<Void, Void, Bitmap> {
+    // Decode image in background.
+    @Override
+    protected Bitmap doInBackground(Void... params) {
+      try {
+        if (isCancelled()) {
+          LogUtil.w("VideoCallFragment.doInBackground", "PauseImageTask is cancelled");
+          return null;
         }
-        videoCallScreenDelegate.setPauseImage();
+
+        return loadImage();
+      } catch (QtiImsException ex) {
+        LogUtil.e("VideoCallFragment.doInBackground", " ex = " + ex);
       }
-    };
-    task.execute();
+      return null;
+    }
+
+    // Once complete, set bitmap/pause image.
+    @Override
+    protected void onPostExecute(Bitmap bitmap) {
+      boolean useDefaultImage = bitmap == null;
+      LogUtil.d("VideoCallFragment.onPostExecute", "bitmap = " + bitmap);
+      videoCallScreenDelegate.setUseDefaultImage(useDefaultImage);
+
+      if (useDefaultImage) {
+        QtiCallUtils.displayToast(getContext(), R.string.qti_ims_defaultImage_fallback);
+        setPreviewImage(getDefaultImage());
+      } else {
+        setPreviewImage(bitmap);
+      }
+      videoCallScreenDelegate.setPauseImage();
+    }
   }
 
   private Bitmap loadImage() throws QtiImsException {

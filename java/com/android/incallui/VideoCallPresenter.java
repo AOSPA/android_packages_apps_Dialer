@@ -1087,7 +1087,8 @@ public class VideoCallPresenter
           videoCall,
           isCameraRequired(newVideoState, call.getVideoTech().getSessionModificationState()));
 
-      if (shallTransmitStaticImage()) {
+      if (QtiImsExtUtils.shallShowStaticImageUi(BottomSheetHelper.getInstance().getPhoneId(),
+          mContext) && shallTransmitStaticImage()) {
         /* when call downgrades and later upgrades, mVideoCall can be null that prevents setting
            pause image to lower layers so invoke setPauseImage with videocall obj as parameter */
         setPauseImage(videoCall);
