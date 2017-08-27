@@ -172,6 +172,7 @@ public class InCallActivity extends TransactionSafeFragmentActivity
     LogUtil.i("InCallActivity.onPause", "");
     super.onPause();
     common.onPause();
+    BottomSheetHelper.getInstance().dismissBottomSheet();
     InCallPresenter.getInstance().getPseudoScreenState().removeListener(this);
   }
 
@@ -180,7 +181,6 @@ public class InCallActivity extends TransactionSafeFragmentActivity
     LogUtil.i("InCallActivity.onStop", "");
     super.onStop();
     common.onStop();
-    BottomSheetHelper.getInstance().dismissBottomSheet();
     isVisible = false;
   }
 

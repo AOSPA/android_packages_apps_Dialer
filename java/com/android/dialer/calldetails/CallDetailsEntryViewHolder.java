@@ -39,6 +39,7 @@ import com.android.dialer.oem.MotorolaUtils;
 import com.android.dialer.util.CallUtil;
 import com.android.dialer.util.DialerUtils;
 import com.android.dialer.util.IntentUtil;
+import com.android.incallui.QtiCallUtils;
 
 /** ViewHolder for call entries in {@link CallDetailsActivity}. */
 public class CallDetailsEntryViewHolder extends ViewHolder {
@@ -92,6 +93,7 @@ public class CallDetailsEntryViewHolder extends ViewHolder {
     boolean isPulledCall =
         (entry.getFeatures() & Calls.FEATURES_PULLED_EXTERNALLY)
             == Calls.FEATURES_PULLED_EXTERNALLY;
+    boolean callDurationEnabled = QtiCallUtils.isConferenceDialerEnabled(context);
 
     callTime.setTextColor(getColorForCallType(context, callType));
     callTypeIcon.clear();
@@ -103,7 +105,7 @@ public class CallDetailsEntryViewHolder extends ViewHolder {
 
     callTypeText.setText(callTypeHelper.getCallTypeText(callType, isVideoCall, isPulledCall));
     callTime.setText(CallEntryFormatter.formatDate(context, entry.getDate()));
-    if (CallTypeHelper.isMissedCallType(callType)) {
+    if (CallTypeHelper.isMissedCallType(callType) || callDurationEnabled) {
       callDuration.setVisibility(View.GONE);
     } else {
       callDuration.setVisibility(View.VISIBLE);
