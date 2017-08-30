@@ -157,6 +157,9 @@ public class DialerCall implements VideoTechListener, StateChangedListener, Capa
   private int mCameraDirection = CameraDirection.CAMERA_DIRECTION_UNKNOWN;
   private EnrichedCallCapabilities mEnrichedCallCapabilities;
   private Session mEnrichedCallSession;
+  private final TelecomManager mTelecomManager;
+  private PhoneAccount mPhoneAccount;
+  private Details mDetails;
 
   private int answerAndReleaseButtonDisplayedTimes = 0;
   private boolean releasedByAnsweringSecondCall = false;
@@ -313,6 +316,7 @@ public class DialerCall implements VideoTechListener, StateChangedListener, Capa
 
     // Must be after assigning mTelecomCall
     mVideoTechManager = new VideoTechManager(this);
+    mTelecomManager = mContext.getSystemService(TelecomManager.class);
 
     updateFromTelecomCall();
     if (isHiddenNumber() && TextUtils.isEmpty(getNumber())) {
@@ -446,7 +450,16 @@ public class DialerCall implements VideoTechListener, StateChangedListener, Capa
     int oldState = getState();
     // We want to potentially register a video call callback here.
     updateFromTelecomCall();
-    if (oldState != getState() && getState() == DialerCall.State.DISCONNECTED) {
+    // if no details updated, ignore the duplicated state for connecting and dialing
+    final int newState = getState();
+    boolean ignore = mDetails != null && mDetails.equals(mTelecomCall.getDetails());
+    if (oldState == newState && (newState == DialerCall.State.CONNECTING ||
+        newState == DialerCall.State.DIALING) && ignore) {
+      LogUtil.v("DialerCall.update", "ignore unneccessnary connecting or dialing state");
+      return;
+    }
+    mDetails = mTelecomCall.getDetails();
+    if (oldState != newState && newState == DialerCall.State.DISCONNECTED) {
       for (DialerCallListener listener : mListeners) {
         listener.onDialerCallDisconnect();
       }
@@ -505,11 +518,15 @@ public class DialerCall implements VideoTechListener, StateChangedListener, Capa
       mPhoneAccountHandle = newPhoneAccountHandle;
 
       if (mPhoneAccountHandle != null) {
-        PhoneAccount phoneAccount =
-            mContext.getSystemService(TelecomManager.class).getPhoneAccount(mPhoneAccountHandle);
-        if (phoneAccount != null) {
+        mPhoneAccount = mTelecomManager.getPhoneAccount(mPhoneAccountHandle);
+        if (mPhoneAccount != null) {
           mIsCallSubjectSupported =
-              phoneAccount.hasCapabilities(PhoneAccount.CAPABILITY_CALL_SUBJECT);
+              mPhoneAccount.hasCapabilities(PhoneAccount.CAPABILITY_CALL_SUBJECT);
+          callProviderIcon = mPhoneAccount.getIcon().loadDrawable(mContext);
+          callProviderLabel = mPhoneAccount.getLabel().toString();
+          if (callProviderLabel == null) {
+            callProviderLabel = "";
+          }
         }
       }
     }
@@ -1121,10 +1138,13 @@ public class DialerCall implements VideoTechListener, StateChangedListener, Capa
 
   /** Return the string label to represent the call provider */
   public String getCallProviderLabel() {
+    if (callProviderLabel != null) {
+      return callProviderLabel;
+    }
     PhoneAccount account = getPhoneAccount();
     if (account != null && !TextUtils.isEmpty(account.getLabel())) {
       List<PhoneAccountHandle> accounts =
-          mContext.getSystemService(TelecomManager.class).getCallCapablePhoneAccounts();
+          mTelecomManager.getCallCapablePhoneAccounts();
       if (accounts != null && accounts.size() > 1 &&
           SubscriptionManager.from(mContext).getActiveSubscriptionInfoCount() > 1) {
         callProviderLabel = account.getLabel().toString();
@@ -1138,10 +1158,13 @@ public class DialerCall implements VideoTechListener, StateChangedListener, Capa
 
   /** Return the Drawable Icon to represent the call provider */
   public Drawable getCallProviderIcon() {
+    if (callProviderIcon != null) {
+      return callProviderIcon;
+    }
     PhoneAccount account = getPhoneAccount();
     if (account != null && account.getIcon() != null) {
       List<PhoneAccountHandle> accounts =
-          mContext.getSystemService(TelecomManager.class).getCallCapablePhoneAccounts();
+          mTelecomManager.getCallCapablePhoneAccounts();
       if (accounts != null && accounts.size() > 1 &&
           SubscriptionManager.from(mContext).getActiveSubscriptionInfoCount() > 1) {
         callProviderIcon = account.getIcon().loadDrawable(mContext);
@@ -1150,12 +1173,17 @@ public class DialerCall implements VideoTechListener, StateChangedListener, Capa
     return callProviderIcon;
   }
 
-  private PhoneAccount getPhoneAccount() {
+  public PhoneAccount getPhoneAccount() {
+    if (mPhoneAccount != null) {
+      return mPhoneAccount;
+    }
+
     PhoneAccountHandle accountHandle = getAccountHandle();
     if (accountHandle == null) {
       return null;
     }
-    return mContext.getSystemService(TelecomManager.class).getPhoneAccount(accountHandle);
+    mPhoneAccount = mTelecomManager.getPhoneAccount(accountHandle);
+    return mPhoneAccount;
   }
 
   public VideoTech getVideoTech() {
@@ -1181,8 +1209,7 @@ public class DialerCall implements VideoTechListener, StateChangedListener, Capa
         }
       }
 
-      String simNumber =
-          mContext.getSystemService(TelecomManager.class).getLine1Number(getAccountHandle());
+      String simNumber = mTelecomManager.getLine1Number(getAccountHandle());
       if (!showCallbackNumber && PhoneNumberUtils.compare(callbackNumber, simNumber)) {
         LogUtil.v(
             "DialerCall.getCallbackNumber",
@@ -1203,13 +1230,9 @@ public class DialerCall implements VideoTechListener, StateChangedListener, Capa
     // If it's an emergency call, and they're not populating the callback number,
     // then try to fall back to the phone sub info (to hopefully get the SIM's
     // number directly from the telephony layer).
-    PhoneAccountHandle accountHandle = getAccountHandle();
-    if (accountHandle != null) {
-      PhoneAccount account =
-          mContext.getSystemService(TelecomManager.class).getPhoneAccount(accountHandle);
-      if (account != null) {
-        return getNumberFromHandle(account.getSubscriptionAddress());
-      }
+    PhoneAccount account = getPhoneAccount();
+    if (account != null) {
+      return getNumberFromHandle(account.getSubscriptionAddress());
     }
     return null;
   }
