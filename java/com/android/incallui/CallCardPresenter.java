@@ -123,6 +123,7 @@ public class CallCardPresenter
   private InCallScreen mInCallScreen;
   private boolean isInCallScreenReady;
   private boolean shouldSendAccessibilityEvent;
+  private final AccessibilityManager accessibilityManager;
 
   @NonNull private final CallLocation callLocation;
   private final Runnable sendAccessibilityEventRunnable =
@@ -144,6 +145,8 @@ public class CallCardPresenter
     LogUtil.i("CallCardController.constructor", null);
     mContext = Assert.isNotNull(context).getApplicationContext();
     callLocation = CallLocationComponent.get(mContext).getCallLocation();
+    accessibilityManager = (AccessibilityManager) mContext
+        .getSystemService(Context.ACCESSIBILITY_SERVICE);
   }
 
   private static boolean hasCallSubject(DialerCall call) {
@@ -1163,9 +1166,7 @@ public class CallCardPresenter
     if (mContext == null) {
       return;
     }
-    final AccessibilityManager am =
-        (AccessibilityManager) mContext.getSystemService(Context.ACCESSIBILITY_SERVICE);
-    if (!am.isEnabled()) {
+    if (!accessibilityManager.isEnabled()) {
       return;
     }
     // Announce the current call if it's new incoming/outgoing call or primary call is changed
