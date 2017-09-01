@@ -1445,6 +1445,7 @@ public class InCallPresenter implements CallList.Listener {
       Log.i(this, "Cleaning up");
 
       cleanupSurfaces();
+      VideoCallPresenter.cleanUp();
 
       mIsActivityPreviouslyStarted = false;
       mIsChangingConfigurations = false;
