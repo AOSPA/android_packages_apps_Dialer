@@ -866,7 +866,8 @@ public class DialpadFragment extends Fragment
 
             final MenuItem conferDialerOption
                     = menu.findItem(R.id.menu_add_to_4g_conference_call);
-            conferDialerOption.setVisible(QtiCallUtils.isConferenceDialerEnabled(getActivity()));
+            conferDialerOption.setVisible(
+                    QtiCallUtils.showAddTo4gConferenceCallOption(getActivity()));
 
             boolean enable = !isDigitsEmpty();
             for (int i = 0; i < menu.size(); i++) {

@@ -537,6 +537,14 @@ public class VideoCallPresenter
     isVideoCallScreenUiReady = false;
   }
 
+  public static void cleanUp() {
+    LogUtil.v("VideoCallPresenter.cleanUp", "");
+   sShallTransmitStaticImage = false;
+   sUseDefaultImage = false;
+   mIsIncomingVideoAvailable = false;
+   mIsVideoMode = false;
+  }
+
   /**
    * Handles clicks on the video surfaces. If not currently in fullscreen mode, will set fullscreen.
    */

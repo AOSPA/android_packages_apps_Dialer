@@ -713,11 +713,7 @@ public class DialtactsActivity extends TransactionSafeActivity
       return true;
     } else if (resId == R.id.menu_4g_conference_call) {
       try {
-        if (QtiCallUtils.isConferenceDialerEnabled(getApplicationContext())) {
-          startActivity(QtiCallUtils.getConferenceDialerIntent(null));
-        } else {
-          startActivity(QtiCallUtils.getConferenceDialerIntent());
-        }
+       QtiCallUtils.openConferenceUriDialerOr4gConferenceDialer(this);
       } catch (ActivityNotFoundException e) {
         LogUtil.e("DialtactsActivity.onMenuItemClick", "Activity not found. " + e);
       } finally {
@@ -1520,7 +1516,7 @@ public class DialtactsActivity extends TransactionSafeActivity
 
       final MenuItem conferDialerOption = menu.findItem(R.id.menu_4g_conference_call);
       conferDialerOption.setVisible(
-          QtiCallUtils.isConferenceUriDialerEnabled(getApplicationContext()));
+          QtiCallUtils.show4gConferenceDialerMenuOption(getApplicationContext()));
       super.show();
     }
   }
