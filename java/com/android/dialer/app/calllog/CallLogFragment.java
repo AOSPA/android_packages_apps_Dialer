@@ -16,7 +16,13 @@
 
 package com.android.dialer.app.calllog;
 
+import static android.Manifest.permission.ADD_VOICEMAIL;
+import static android.Manifest.permission.CALL_PHONE;
+import static android.Manifest.permission.USE_SIP;
+import static android.Manifest.permission.READ_PHONE_STATE;
 import static android.Manifest.permission.READ_CALL_LOG;
+import static android.Manifest.permission.PROCESS_OUTGOING_CALLS;
+import static android.Manifest.permission.WRITE_CALL_LOG;
 
 import android.app.Activity;
 import android.app.Fragment;
@@ -73,7 +79,7 @@ public class CallLogFragment extends Fragment
   private static final String KEY_LOG_LIMIT = "log_limit";
   private static final String KEY_DATE_LIMIT = "date_limit";
   private static final String KEY_IS_CALL_LOG_ACTIVITY = "is_call_log_activity";
-  private static final String KEY_HAS_READ_CALL_LOG_PERMISSION = "has_read_call_log_permission";
+  private static final String KEY_HAS_PHONE_PERMISSION = "has_phone_permission";
   private static final String KEY_REFRESH_DATA_REQUIRED = "refresh_data_required";
 
   // No limit specified for the number of logs to show; use the CallLogQueryHandler's default.
@@ -81,7 +87,7 @@ public class CallLogFragment extends Fragment
   // No date-based filtering.
   private static final int NO_DATE_LIMIT = 0;
 
-  private static final int READ_CALL_LOG_PERMISSION_REQUEST_CODE = 1;
+  private static final int PHONE_PERMISSION_REQUEST_CODE = 1;
 
   private static final int EVENT_UPDATE_DISPLAY = 1;
 
@@ -108,7 +114,7 @@ public class CallLogFragment extends Fragment
         }
       };
   private boolean mRefreshDataRequired;
-  private boolean mHasReadCallLogPermission;
+  private boolean mHasPhonePermission;
   // Exactly same variable is in Fragment as a package private.
   private boolean mMenuVisible = true;
   // Default to all calls.
@@ -192,7 +198,7 @@ public class CallLogFragment extends Fragment
       mLogLimit = state.getInt(KEY_LOG_LIMIT, mLogLimit);
       mDateLimit = state.getLong(KEY_DATE_LIMIT, mDateLimit);
       mIsCallLogActivity = state.getBoolean(KEY_IS_CALL_LOG_ACTIVITY, mIsCallLogActivity);
-      mHasReadCallLogPermission = state.getBoolean(KEY_HAS_READ_CALL_LOG_PERMISSION, false);
+      mHasPhonePermission = state.getBoolean(KEY_HAS_PHONE_PERMISSION, false);
       mRefreshDataRequired = state.getBoolean(KEY_REFRESH_DATA_REQUIRED, mRefreshDataRequired);
     }
 
@@ -326,6 +332,17 @@ public class CallLogFragment extends Fragment
     fetchCalls();
   }
 
+  /**check if the Dialer app has all the specified permissions. */
+  private boolean hasPhonePermission() {
+    return PermissionsUtil.hasPermission(getActivity(), READ_CALL_LOG) &&
+        PermissionsUtil.hasPermission(getActivity(), WRITE_CALL_LOG) &&
+        PermissionsUtil.hasPermission(getActivity(), READ_PHONE_STATE) &&
+        PermissionsUtil.hasPermission(getActivity(), CALL_PHONE) &&
+        PermissionsUtil.hasPermission(getActivity(), ADD_VOICEMAIL) &&
+        PermissionsUtil.hasPermission(getActivity(), USE_SIP) &&
+        PermissionsUtil.hasPermission(getActivity(), PROCESS_OUTGOING_CALLS);
+  }
+
   @Nullable
   protected VoicemailPlaybackPresenter getVoicemailPlaybackPresenter() {
     return null;
@@ -348,17 +365,15 @@ public class CallLogFragment extends Fragment
   public void onResume() {
     LogUtil.d("CallLogFragment.onResume", toString());
     super.onResume();
-    final boolean hasReadCallLogPermission =
-        PermissionsUtil.hasPermission(getActivity(), READ_CALL_LOG);
-    if (!mHasReadCallLogPermission && hasReadCallLogPermission) {
+    if (!mHasPhonePermission && hasPhonePermission()) {
       // We didn't have the permission before, and now we do. Force a refresh of the call log.
       // Note that this code path always happens on a fresh start, but mRefreshDataRequired
       // is already true in that case anyway.
       mRefreshDataRequired = true;
-      updateEmptyMessage(mCallTypeFilter);
     }
 
-    mHasReadCallLogPermission = hasReadCallLogPermission;
+    updateEmptyMessage(mCallTypeFilter);
+    mHasPhonePermission = hasPhonePermission();
 
     /*
      * Always clear the filtered numbers cache since users could have blocked/unblocked numbers
@@ -405,7 +420,7 @@ public class CallLogFragment extends Fragment
     outState.putInt(KEY_LOG_LIMIT, mLogLimit);
     outState.putLong(KEY_DATE_LIMIT, mDateLimit);
     outState.putBoolean(KEY_IS_CALL_LOG_ACTIVITY, mIsCallLogActivity);
-    outState.putBoolean(KEY_HAS_READ_CALL_LOG_PERMISSION, mHasReadCallLogPermission);
+    outState.putBoolean(KEY_HAS_PHONE_PERMISSION, mHasPhonePermission);
     outState.putBoolean(KEY_REFRESH_DATA_REQUIRED, mRefreshDataRequired);
 
     mAdapter.onSaveInstanceState(outState);
@@ -458,6 +473,20 @@ public class CallLogFragment extends Fragment
     return mAdapter;
   }
 
+  /**
+   * if the user disable the permission setting, and then click TURN ON to enbables the permission
+   * from Dialer, it only request CALL_PHONE permission that are missing other specified
+   * permissions so that it will result in many permission issues.Check if the Dialer app has all
+   * the specified permissions.if any permission is not granted, it will request all the specified
+   * permissions.
+   */
+  private void requestPhonePermission() {
+    FragmentCompat.requestPermissions(
+        this, new String[] {READ_PHONE_STATE, READ_CALL_LOG,
+        WRITE_CALL_LOG, CALL_PHONE, ADD_VOICEMAIL, USE_SIP,
+        PROCESS_OUTGOING_CALLS}, PHONE_PERMISSION_REQUEST_CODE);
+  }
+
   @Override
   public void setMenuVisibility(boolean menuVisible) {
     super.setMenuVisibility(menuVisible);
@@ -466,7 +495,13 @@ public class CallLogFragment extends Fragment
       if (!menuVisible) {
         updateOnTransition();
       } else if (isResumed()) {
-        refreshData();
+         // Force requestPhonePermission since we were missing the permission before this.
+        if (!hasPhonePermission()) {
+          requestPhonePermission();
+        }
+        if (mRefreshDataRequired) {
+          mAdapter.onResume();
+        }
       }
     }
   }
@@ -514,9 +549,8 @@ public class CallLogFragment extends Fragment
       return;
     }
 
-    if (!PermissionsUtil.hasPermission(activity, READ_CALL_LOG)) {
-      FragmentCompat.requestPermissions(
-          this, new String[] {READ_CALL_LOG}, READ_CALL_LOG_PERMISSION_REQUEST_CODE);
+    if (!hasPhonePermission()) {
+      requestPhonePermission();
     } else if (!mIsCallLogActivity) {
       // Show dialpad if we are not in the call log activity.
       ((HostInterface) activity).showDialpad();
@@ -526,8 +560,9 @@ public class CallLogFragment extends Fragment
   @Override
   public void onRequestPermissionsResult(
       int requestCode, String[] permissions, int[] grantResults) {
-    if (requestCode == READ_CALL_LOG_PERMISSION_REQUEST_CODE) {
-      if (grantResults.length >= 1 && PackageManager.PERMISSION_GRANTED == grantResults[0]) {
+    if (requestCode == PHONE_PERMISSION_REQUEST_CODE) {
+      if (grantResults.length >= 4 && PackageManager.PERMISSION_GRANTED == grantResults[1] &&
+          PackageManager.PERMISSION_GRANTED == grantResults[3]) {
         // Force a refresh of the data since we were missing the permission before this.
         mRefreshDataRequired = true;
       }
