@@ -157,7 +157,7 @@ public class PhoneNumberHelper {
       }
     }
 
-    String countryIso = telephonyManager.getNetworkCountryIso();
+    String countryIso = telephonyManager != null ? telephonyManager.getNetworkCountryIso() : "";
     if (TextUtils.isEmpty(countryIso)) {
       countryIso = locale.getCountry();
       LogUtil.i(
