@@ -426,6 +426,10 @@ public class QtiCallUtils {
            return false;
         }
         int videoState = call.getVideoState();
+        return isVideoTxOnly(videoState);
+    }
+
+    public static boolean isVideoTxOnly(int videoState) {
         return VideoProfile.isTransmissionEnabled(videoState) &&
                 !VideoProfile.isReceptionEnabled(videoState);
     }

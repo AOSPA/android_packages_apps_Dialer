@@ -26,6 +26,11 @@ import android.telecom.VideoProfile.CameraCapabilities;
 import com.android.dialer.common.LogUtil;
 import com.android.dialer.logging.DialerImpression;
 import com.android.dialer.logging.LoggingBindings;
+import com.android.incallui.PrimaryCallTracker;
+import com.android.incallui.BottomSheetHelper;
+import com.android.incallui.QtiCallUtils;
+import com.android.incallui.call.DialerCall;
+import com.android.incallui.call.DialerCall.CameraDirection;
 import com.android.incallui.videotech.VideoTech.VideoTechListener;
 import com.android.incallui.videotech.utils.SessionModificationState;
 
@@ -99,6 +104,29 @@ public class ImsVideoCallCallback extends VideoCall.Callback {
       if (status == VideoProvider.SESSION_MODIFY_REQUEST_SUCCESS) {
         // Telecom manages audio route for us
         listener.onUpgradedToVideo(false /* switchToSpeaker */);
+        // When call is modified to VT Tx,device is expected to open back camera
+        // Hence, resetting camera direction as -1 when modify call response to
+        // Vt-Tx only is received. Camera direction is set to a proper value
+        // based on the call type in VideoCallPresenter after call is modified.
+        if (requestedProfile != null
+               && QtiCallUtils.isVideoTxOnly(requestedProfile.getVideoState())
+               && responseProfile != null
+               && QtiCallUtils.isVideoTxOnly(responseProfile.getVideoState())) {
+            final PrimaryCallTracker primaryCallTracker =
+               BottomSheetHelper.getInstance().getPrimaryCallTracker();
+            if (primaryCallTracker != null) {
+                final DialerCall dialerCall = primaryCallTracker.getPrimaryCall();
+                if (dialerCall != null) {
+                   dialerCall.setCameraDir(CameraDirection.CAMERA_DIRECTION_UNKNOWN);
+                } else{
+                   LogUtil.e("ImsVideoCallCallback.onSessionModifyResponseReceived",
+                      "error setting cam dir Call is null");
+                }
+            } else {
+               LogUtil.e("ImsVideoCallCallback.onSessionModifyResponseReceived",
+               "error setting cam dir as primaryCallTracker is null: ");
+            }
+        }
       } else {
         // This will update the video UI to display the error message.
         videoTech.setSessionModificationState(newSessionModificationState);
