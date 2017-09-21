@@ -1061,6 +1061,20 @@ public class CallCardPresenter
     return mPrimary != null && mPrimary.getState() == DialerCall.State.ACTIVE;
   }
 
+  @Override
+  public void onSessionModificationStateChange(DialerCall call) {
+   //No-op
+  }
+
+  private String getConferenceString(DialerCall call) {
+    boolean isGenericConference = call.hasProperty(Details.PROPERTY_GENERIC_CONFERENCE);
+    LogUtil.v("CallCardPresenter.getConferenceString", "" + isGenericConference);
+
+    final int resId =
+        isGenericConference ? R.string.generic_conference_call_name : R.string.conference_call_name;
+    return mContext.getResources().getString(resId);
+  }
+
   private boolean shouldShowEndCallButton(DialerCall primary, int callState) {
     if (primary == null) {
       return false;

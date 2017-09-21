@@ -54,6 +54,7 @@ import com.android.incallui.answerproximitysensor.PseudoScreenState;
 import com.android.incallui.call.CallList;
 import com.android.incallui.call.DialerCall;
 import com.android.incallui.call.ExternalCallList;
+import com.android.incallui.call.InCallVideoCallCallbackNotifier;
 import com.android.incallui.call.TelecomAdapter;
 import com.android.incallui.disconnectdialog.DisconnectMessage;
 import com.android.incallui.latencyreport.LatencyReport;
@@ -189,6 +190,7 @@ public class InCallPresenter implements CallList.Listener {
   private boolean mBoundAndWaitingForOutgoingCall;
   /** Determines if the InCall UI is in fullscreen mode or not. */
   private boolean mIsFullScreen = false;
+  private boolean mIsShowErrorDialogOnActivityStart = true;
   private PowerManager mPowerManager;
   private PowerManager.WakeLock mWakeLock = null;
 
@@ -371,6 +373,7 @@ public class InCallPresenter implements CallList.Listener {
     mSpamCallListListener = new SpamCallListListener(context);
     mCallList.addListener(mSpamCallListListener);
 
+    InCallVideoCallCallbackNotifier.getInstance().setUp();
     InCallCsRedialHandler.getInstance().setUp(mContext);
     InCallUiStateNotifier.getInstance().setUp(context);
     VideoPauseController.getInstance().setUp(this);
@@ -406,6 +409,7 @@ public class InCallPresenter implements CallList.Listener {
         .listen(mPhoneStateListener, PhoneStateListener.LISTEN_NONE);
 
     attemptCleanup();
+    InCallVideoCallCallbackNotifier.getInstance().tearDown();
     VideoPauseController.getInstance().tearDown();
     InCallUiStateNotifier.getInstance().tearDown();
 
@@ -448,6 +452,8 @@ public class InCallPresenter implements CallList.Listener {
       return;
     }
     updateActivity(null);
+    // Reset this flag to true for next InCallActivity launch
+    mIsShowErrorDialogOnActivityStart = true;
   }
 
   /**
@@ -473,7 +479,8 @@ public class InCallPresenter implements CallList.Listener {
 
       // By the time the UI finally comes up, the call may already be disconnected.
       // If that's the case, we may need to show an error dialog.
-      if (mCallList != null && mCallList.getDisconnectedCall() != null) {
+      if (mCallList != null && mCallList.getDisconnectedCall() != null
+          && mIsShowErrorDialogOnActivityStart) {
         maybeShowErrorDialogOnDisconnect(mCallList.getDisconnectedCall());
       }
 
@@ -820,6 +827,7 @@ public class InCallPresenter implements CallList.Listener {
       // Re-evaluate which fragment is being shown.
       mInCallActivity.onPrimaryCallStateChanged();
     }
+    notifySessionModificationStateChange(call);
   }
 
   /**
@@ -828,7 +836,18 @@ public class InCallPresenter implements CallList.Listener {
    */
   @Override
   public void onDisconnect(DialerCall call) {
-    maybeShowErrorDialogOnDisconnect(call);
+    if (mCallList.getActiveOrBackgroundCall() == null) {
+      if (isActivityStarted()) {
+        // If InCallActivity already started then straight away show call disconnect error dialog
+        maybeShowErrorDialogOnDisconnect(call);
+      } else {
+        // Show call disconnect error dialog when activity starts
+        mIsShowErrorDialogOnActivityStart = true;
+      }
+    } else {
+      // Show call disconnect error dialog when background call InCallActivity onStart
+      mIsShowErrorDialogOnActivityStart = false;
+    }
 
     // We need to do the run the same code as onCallListChange.
     onCallListChange(mCallList);
@@ -1254,6 +1273,12 @@ public class InCallPresenter implements CallList.Listener {
    */
   public boolean isFullscreen() {
     return mIsFullScreen;
+  }
+
+  public void notifySessionModificationStateChange(DialerCall call) {
+   for (InCallEventListener listener : mInCallEventListeners) {
+     listener.onSessionModificationStateChange(call);
+   }
   }
 
   /**
@@ -1832,7 +1857,7 @@ public class InCallPresenter implements CallList.Listener {
    * UI. Used as a means of communicating between fragments that make up the UI.
    */
   public interface InCallEventListener {
-
+    void onSessionModificationStateChange(DialerCall call);
     void onFullscreenModeChanged(boolean isFullscreenMode);
     void onSendStaticImageStateChanged(boolean isEnabled);
   }

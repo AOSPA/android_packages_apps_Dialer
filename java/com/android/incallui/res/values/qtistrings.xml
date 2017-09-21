@@ -50,6 +50,7 @@
     <string name="qti_ims_onscreenAssuredTransfer">Assured Transfer</string>
     <!-- Text for the onscreen "consultative transfer" button -->
     <string name="qti_ims_onscreenConsultativeTransfer">Consultative Transfer</string>
+    <string name="dialpad_label">Show dialpad"</string>
 
     <string name="qti_ims_hideMeText_unselected">Hide Me</string>
     <string name="qti_ims_hideMeText_selected">Show Me</string>
@@ -70,6 +71,11 @@
         <item>Options to be shown on sheet</item>
         <item>Visibility</item>
      -->
+    <string-array name="show_dialpad">
+       <item>@string/dialpad_label</item>
+       <item>false</item>
+    </string-array>
+
     <string-array name="add_participant_option">
        <item>@string/add_participant_option_msg</item>
        <item>false</item>
@@ -122,6 +128,7 @@
 
     <!-- array of all the options to ensure mapping-->
     <array name="bottom_sheet_more_options">
+       <item>@array/show_dialpad</item>
        <item>@array/add_participant_option</item>
        <item>@array/manageConference</item>
        <item>@array/deflect</item>
@@ -166,18 +173,6 @@
 
     <!-- Displayed in the answer call screen for incoming video tx calls over Wi-F. -->
     <string name="incoming_wifi_video_tx_call">Wi-Fi video transmit call from</string>
-
-    <!-- Message indicating that Video Started flowing for IMS-VT calls -->
-    <string name="player_started">Player Started</string>
-    <!-- Message indicating that Video Stopped flowing for IMS-VT calls -->
-    <string name="player_stopped">Player Stopped</string>
-    <!-- Message indicating that camera failure has occurred for the selected camera and
-         as result camera is not ready -->
-    <string name="camera_not_ready">Camera not ready</string>
-    <!-- Message indicating that camera is ready/available -->
-    <string name="camera_ready">Camera ready</string>
-    <!-- Message indicating unknown call session event -->
-    <string name="unknown_call_session_event">"Unknown call session event"</string>
 
     <!-- Pop up menu options for picture mode -->
     <string name="video_call_picture_mode_menu_title">Choose Picture Mode</string>

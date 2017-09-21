@@ -66,7 +66,7 @@ public class PhoneAccountUtils {
   public static Drawable getAccountIcon(
       Context context, @Nullable PhoneAccountHandle phoneAccount) {
     PhoneAccount account = getAccountOrNull(context, phoneAccount);
-    if (account == null) {
+    if (account == null || account.getIcon() == null) {
       return null;
     }
     return account.getIcon().loadDrawable(context);

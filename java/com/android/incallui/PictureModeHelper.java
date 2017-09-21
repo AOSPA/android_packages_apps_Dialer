@@ -88,10 +88,6 @@ public class PictureModeHelper implements InCallDetailsListener,
 
     private VideoCallScreenDelegate mVideoCallScreenDelegate;
 
-    private TextureView mPreviewTextureView;
-
-    private ImageView mPreviewOffBlurredImageView;
-
     /**
      * Property set to specify the size of the preview surface provided by the user/operator.
      * We will also use this for the camera preview size when the picture mode is selected as
@@ -108,11 +104,6 @@ public class PictureModeHelper implements InCallDetailsListener,
         if (incallActivity == null) {
             return;
         }
-        mPreviewTextureView =
-            (TextureView) incallActivity.findViewById(R.id.videocall_video_preview);
-        mPreviewOffBlurredImageView =
-            (ImageView) incallActivity.findViewById(
-            R.id.videocall_preview_off_blurred_image_view);
         InCallPresenter.getInstance().addDetailsListener(this);
         InCallPresenter.getInstance().addListener(this);
         CallList.getInstance().addListener(this);
@@ -370,9 +361,18 @@ public class PictureModeHelper implements InCallDetailsListener,
         LogUtil.i("PictureModeHelper.maybeHideVideoViews",
             "canShowPreviewVideoView = %b canShowIncomingVideoView = %b",
             mShowPreviewVideoView, mShowIncomingVideoView);
-
-        mPreviewTextureView.setVisibility(mShowPreviewVideoView ? View.VISIBLE : View.GONE);
-        mPreviewOffBlurredImageView.setVisibility(mShowPreviewVideoView ?
+        TextureView previewTextureView =
+            (TextureView) incallActivity.findViewById(R.id.videocall_video_preview);
+        ImageView previewOffBlurredImageView =
+            (ImageView) incallActivity.findViewById(
+            R.id.videocall_preview_off_blurred_image_view);
+        if (previewTextureView == null || previewOffBlurredImageView ==null) {
+            LogUtil.e("PictureModeHelper.maybeHideVideoViews",
+                "previewTextureView/previewOffBlurredImageView is null");
+            return;
+        }
+        previewTextureView.setVisibility(mShowPreviewVideoView ? View.VISIBLE : View.GONE);
+        previewOffBlurredImageView.setVisibility(mShowPreviewVideoView ?
             View.VISIBLE : View.GONE);
 
         TextureView remoteTextureView =
@@ -387,28 +387,38 @@ public class PictureModeHelper implements InCallDetailsListener,
 
     public void setPreviewVideoLayoutParams() {
         InCallActivity incallActivity = InCallPresenter.getInstance().getActivity();
-        if (incallActivity == null || !mShowPreviewVideoView && mShowIncomingVideoView) {
+        if (incallActivity == null || (!mShowPreviewVideoView && mShowIncomingVideoView)) {
             LogUtil.e("PictureModeHelper.setPreviewVideoLayoutParams",
                 "Incallactivity is null or We are not in preview only mode");
             return;
         }
-
+        TextureView previewTextureView =
+            (TextureView) incallActivity.findViewById(R.id.videocall_video_preview);
+        ImageView previewOffBlurredImageView =
+            (ImageView) incallActivity.findViewById(
+            R.id.videocall_preview_off_blurred_image_view);
+        if (previewTextureView == null || previewOffBlurredImageView ==null) {
+            LogUtil.e("PictureModeHelper.setPreviewVideoLayoutParams",
+                "previewTextureView/previewOffBlurredImageView is null");
+            return;
+        }
         RelativeLayout.LayoutParams params = getLayoutParams();
-        mPreviewTextureView.setLayoutParams(params);
-        mPreviewOffBlurredImageView.setLayoutParams(params);
-        mPreviewTextureView.setOutlineProvider(
+        previewTextureView.setLayoutParams(params);
+        previewOffBlurredImageView.setLayoutParams(params);
+        previewTextureView.setOutlineProvider(
             mShowPreviewVideoView && mShowIncomingVideoView ?
             VideoCallFragment.circleOutlineProvider : null);
-        mPreviewOffBlurredImageView.setOutlineProvider(
+        previewOffBlurredImageView.setOutlineProvider(
             mShowPreviewVideoView && mShowIncomingVideoView ?
             VideoCallFragment.circleOutlineProvider : null);
-        mPreviewOffBlurredImageView.setClipToOutline(mShowPreviewVideoView
+        previewOffBlurredImageView.setClipToOutline(mShowPreviewVideoView
                 && mShowIncomingVideoView);
-        addOnGlobalLayoutListener();
+        addOnGlobalLayoutListener(previewTextureView, previewOffBlurredImageView);
     }
 
-    private void addOnGlobalLayoutListener() {
-        ViewTreeObserver observer = mPreviewTextureView.getViewTreeObserver();
+    private void addOnGlobalLayoutListener(TextureView previewTextureView,
+        ImageView previewOffBlurredImageView) {
+        ViewTreeObserver observer = previewTextureView.getViewTreeObserver();
             observer.addOnGlobalLayoutListener(
                 new ViewTreeObserver.OnGlobalLayoutListener() {
                     @Override
@@ -431,12 +441,12 @@ public class PictureModeHelper implements InCallDetailsListener,
                                 primaryCall.getVideoTech().getSessionModificationState());
                         }
                         updateBlurredImageView(
-                            mPreviewTextureView, mPreviewOffBlurredImageView,
+                            previewTextureView, previewOffBlurredImageView,
                             showOutgoing,
                             VideoCallFragment.BLUR_PREVIEW_RADIUS,
                             VideoCallFragment.BLUR_PREVIEW_SCALE_FACTOR);
                         // Remove the listener so we don't continually re-layout.
-                        ViewTreeObserver observer = mPreviewTextureView.getViewTreeObserver();
+                        ViewTreeObserver observer = previewTextureView.getViewTreeObserver();
                         if (observer.isAlive()) {
                             observer.removeOnGlobalLayoutListener(this);
                         }

@@ -370,8 +370,10 @@ public class CallLogQueryHandler extends NoNullCursorAsyncQueryHandler {
   private String getUnreadMissedCallsQuery() {
     StringBuilder where = new StringBuilder();
     where.append(Calls.IS_READ).append(" = 0 OR ").append(Calls.IS_READ).append(" IS NULL");
-    where.append(" AND ");
+    where.append(" AND (");
     where.append(Calls.TYPE).append(" = ").append(Calls.MISSED_TYPE);
+    where.append(" OR ");
+    where.append(Calls.TYPE).append(" = ").append(AppCompatConstants.MISSED_IMS_TYPE).append(")");
     return where.toString();
   }
 

@@ -572,12 +572,20 @@ public class StatusBarNotifier
 
     // If we aren't showing a notification right now or the notification type is changing,
     // definitely do an update.
-    if (mCurrentNotification != notificationType) {
+    boolean ignoreIncomming = mCurrentNotification == NOTIFICATION_INCOMING_CALL_QUIET
+        && notificationType == NOTIFICATION_INCOMING_CALL && !retval;
+    if (mCurrentNotification != notificationType && !ignoreIncomming) {
       if (mCurrentNotification == NOTIFICATION_NONE) {
         LogUtil.d(
             "StatusBarNotifier.checkForChangeAndSaveData", "showing notification for first time.");
       }
       retval = true;
+    }
+
+    if (ignoreIncomming) {
+      LogUtil.d(
+          "StatusBarNotifier.checkForChangeAndSaveData",
+          "ignore this notification due to be already treated as incoming quiet.");
     }
 
     mSavedIcon = icon;

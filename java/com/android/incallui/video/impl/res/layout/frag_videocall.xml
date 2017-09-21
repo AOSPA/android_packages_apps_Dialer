@@ -111,6 +111,17 @@
     android:layout_height="match_parent"/>
 
   <FrameLayout
+    android:id="@+id/videocall_dialpad_container"
+    style="@style/DialpadContainer"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_alignParentBottom="true"
+    android:clipChildren="false"
+    android:clipToPadding="false"
+    tools:background="@android:color/white"
+    tools:visibility="gone"/>
+
+  <FrameLayout
     android:id="@+id/videocall_on_hold_banner"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"

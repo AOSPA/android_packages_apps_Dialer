@@ -45,7 +45,9 @@ class ButtonChooserFactory {
       return newCdmaButtonChooser();
     }
 
-    if (phoneType == TelephonyManager.PHONE_TYPE_GSM) {
+    // Button layout for SIP call is similar to GSM
+    if (phoneType == TelephonyManager.PHONE_TYPE_GSM
+        || phoneType == TelephonyManager.PHONE_TYPE_SIP) {
       return newGsmButtonChooser();
     }
 
