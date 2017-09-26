@@ -166,4 +166,11 @@
     <string name="cancel_modify_call_title">取消更改通话类型?</string>
     <string name="cancel_upgrade">取消视频请求</string>
     <string name="not_cancel">不取消</string>
+    <string name="call_failed_due_to_validate_number">"无法发起视频通话，号码格式不正确"</string>
+    <string name="call_state_dialing">"正在拨号"</string>
+    <string name="call_state_holding">"保持"</string>
+    <string name="call_state_active">"正在通话"</string>
+    <string name="call_state_unknown">"未知"</string>
+    <string name="call_state_disconnecting">"正在挂断"</string>
+    <string name="call_state_disconnected">"通话结束"</string>
 </resources>

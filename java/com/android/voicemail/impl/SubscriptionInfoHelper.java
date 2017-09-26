@@ -34,6 +34,8 @@ import java.util.List;
 public class SubscriptionInfoHelper {
   public static final int NO_SUB_ID = -1;
 
+  public static final int INVALID_SIM_SLOT_INDEX = -1;
+
   // Extra on intent containing the id of a subscription.
   public static final String SUB_ID_EXTRA =
       "com.android.phone.settings.SubscriptionInfoHelper.SubscriptionId";
@@ -44,6 +46,7 @@ public class SubscriptionInfoHelper {
   private static Context mContext;
 
   private int mSubId = NO_SUB_ID;
+  private int mSlotIndex = INVALID_SIM_SLOT_INDEX;
   private String mSubLabel;
   private PhoneAccountHandle mPhoneAccountHandle;
 
@@ -58,6 +61,7 @@ public class SubscriptionInfoHelper {
         if (phoneAccountHandle.getId().startsWith(subInfo.getIccId())) {
           mSubId = subInfo.getSubscriptionId();
           mSubLabel = subInfo.getDisplayName().toString();
+          mSlotIndex = subInfo.getSimSlotIndex();
           break;
         }
       }
@@ -81,5 +85,9 @@ public class SubscriptionInfoHelper {
 
   public int getSubId() {
     return mSubId;
+  }
+
+  public int getSimSlotIndex() {
+    return mSlotIndex;
   }
 }

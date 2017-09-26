@@ -43,6 +43,7 @@ import com.android.incallui.call.TelecomAdapter;
 import com.android.incallui.incall.protocol.InCallButtonIds;
 import com.android.incallui.incall.protocol.InCallButtonUi;
 import com.android.incallui.incall.protocol.InCallButtonUiDelegate;
+import com.android.incallui.videotech.utils.SessionModificationState;
 import com.android.incallui.videotech.utils.VideoUtils;
 import org.codeaurora.ims.utils.QtiImsExtUtils;
 
@@ -439,15 +440,16 @@ public class CallButtonPresenter
     final boolean showSwap = call.can(android.telecom.Call.Details.CAPABILITY_SWAP_CONFERENCE);
     final boolean showHold =
         !showSwap
-            && (!call.hasSentVideoUpgradeRequest() || call.hasVideoUpgadeRequestFailed())
+            && !call.hasSentVideoUpgradeRequest()
             && call.can(android.telecom.Call.Details.CAPABILITY_SUPPORT_HOLD)
             && call.can(android.telecom.Call.Details.CAPABILITY_HOLD);
     final boolean isCallOnHold = call.getState() == DialerCall.State.ONHOLD;
 
     final boolean showAddCall =
         TelecomAdapter.getInstance().canAddCall() && UserManagerCompat.isUserUnlocked(mContext)
-            && (!call.hasSentVideoUpgradeRequest()|| call.hasVideoUpgadeRequestFailed());
-    final boolean showMerge = call.can(android.telecom.Call.Details.CAPABILITY_MERGE_CONFERENCE);
+            && !call.hasSentVideoUpgradeRequest();
+    final boolean showMerge = call.can(android.telecom.Call.Details.CAPABILITY_MERGE_CONFERENCE)
+        && !call.hasSentVideoUpgradeRequest();
     final boolean useExt = QtiCallUtils.useExt(mContext);
     final boolean showUpgradeToVideo = !isVideo && (hasVideoCallCapabilities(call)) && !useExt;
     final boolean showDowngradeToAudio = isVideo && isDowngradeToAudioSupported(call) && !useExt;
@@ -470,9 +472,9 @@ public class CallButtonPresenter
     mInCallButtonUi.showButton(InCallButtonIds.BUTTON_UPGRADE_TO_VIDEO, showUpgradeToVideo);
     mInCallButtonUi.showButton(InCallButtonIds.BUTTON_DOWNGRADE_TO_AUDIO, showDowngradeToAudio);
     mInCallButtonUi.showButton(
-        InCallButtonIds.BUTTON_SWITCH_CAMERA, isVideo && hasCameraPermission
-        && !BottomSheetHelper.getInstance().isHideMeSelected()
-        && !QtiCallUtils.hasVideoCrbtVoLteCall(call));
+      InCallButtonIds.BUTTON_SWITCH_CAMERA, VideoCallPresenter.isTransmissionEnabled(call)
+      && hasCameraPermission && !BottomSheetHelper.getInstance().isHideMeSelected()
+      && !QtiCallUtils.hasVideoCrbtVoLteCall(call));
     mInCallButtonUi.showButton(InCallButtonIds.BUTTON_PAUSE_VIDEO, showPauseVideo);
     if (isVideo) {
       mInCallButtonUi.setVideoPaused(!call.getVideoTech().isTransmitting() || !hasCameraPermission);
@@ -521,6 +523,17 @@ public class CallButtonPresenter
 
   @Override
   public void onFullscreenModeChanged(boolean isFullscreenMode) {
+  }
+
+  @Override
+  public void onSessionModificationStateChange(DialerCall call) {
+    if (mInCallButtonUi != null && call != null && call.equals(mCall)) {
+      int sessionModifyState = call.getVideoTech().getSessionModificationState();
+      if (sessionModifyState == SessionModificationState.WAITING_FOR_UPGRADE_TO_VIDEO_RESPONSE ||
+          sessionModifyState == SessionModificationState.NO_REQUEST) {
+        updateButtonsState(call);
+      }
+    }
   }
 
   @Override

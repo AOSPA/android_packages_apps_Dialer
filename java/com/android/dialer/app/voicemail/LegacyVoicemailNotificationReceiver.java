@@ -43,6 +43,10 @@ import com.android.voicemail.VoicemailComponent;
 public class LegacyVoicemailNotificationReceiver extends BroadcastReceiver {
 
   private static final String LEGACY_VOICEMAIL_COUNT = "legacy_voicemail_count";
+  // TS 23.040 9.2.3.24.2
+  // "The value 255 shall be taken to mean 255 or greater"
+  // If voice mail present indication is received CPHS only: count is unknown VoiceMailCount = 255
+  private static final int MAX_VOICEMAILS_COUNT = 0xff;
 
   /**
    * Hidden extra for {@link TelephonyManager#ACTION_SHOW_VOICEMAIL_NOTIFICATION} for whether the
@@ -73,7 +77,8 @@ public class LegacyVoicemailNotificationReceiver extends BroadcastReceiver {
         Assert.isNotNull(intent.getParcelableExtra(TelephonyManager.EXTRA_PHONE_ACCOUNT_HANDLE));
     int count = intent.getIntExtra(TelephonyManager.EXTRA_NOTIFICATION_COUNT, -1);
 
-    if (!hasVoicemailCountChanged(context, phoneAccountHandle, count)) {
+    if ((count != MAX_VOICEMAILS_COUNT)
+        && !hasVoicemailCountChanged(context, phoneAccountHandle, count)) {
       LogUtil.i(
           "LegacyVoicemailNotificationReceiver.onReceive",
           "voicemail count hasn't changed, ignoring");

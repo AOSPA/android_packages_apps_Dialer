@@ -33,7 +33,9 @@ import android.os.Bundle;
 import android.telecom.VideoProfile;
 import com.android.incallui.call.DialerCall;
 import com.android.incallui.InCallPresenter.InCallDetailsListener;
+import com.android.incallui.InCallPresenter.InCallEventListener;
 import com.android.incallui.InCallPresenter.InCallUiListener;
+import com.android.incallui.videotech.utils.SessionModificationState;
 import org.codeaurora.ims.QtiCallConstants;
 
 /**
@@ -43,8 +45,11 @@ import org.codeaurora.ims.QtiCallConstants;
  * on the activity to set the orientation mode for the device.
  *
  */
-public class OrientationModeHandler implements InCallDetailsListener, InCallUiListener,
-    PrimaryCallTracker.PrimaryCallChangeListener {
+public class OrientationModeHandler implements
+    InCallDetailsListener,
+    InCallUiListener,
+    PrimaryCallTracker.PrimaryCallChangeListener,
+    InCallEventListener {
 
     private static OrientationModeHandler sOrientationModeHandler;
 
@@ -79,6 +84,7 @@ public class OrientationModeHandler implements InCallDetailsListener, InCallUiLi
         InCallPresenter.getInstance().addListener(mPrimaryCallTracker);
         InCallPresenter.getInstance().addDetailsListener(this);
         InCallPresenter.getInstance().addInCallUiListener(this);
+        InCallPresenter.getInstance().addInCallEventListener(this);
         mPrimaryCallTracker.addListener(this);
     }
 
@@ -91,9 +97,12 @@ public class OrientationModeHandler implements InCallDetailsListener, InCallUiLi
         InCallPresenter.getInstance().removeListener(mPrimaryCallTracker);
         InCallPresenter.getInstance().removeDetailsListener(this);
         InCallPresenter.getInstance().removeInCallUiListener(this);
-        mPrimaryCallTracker.removeListener(this);
+        if (mPrimaryCallTracker != null) {
+            mPrimaryCallTracker.removeListener(this);
+            mPrimaryCallTracker = null;
+        }
+        InCallPresenter.getInstance().removeInCallEventListener(this);
         mOrientationMode = QtiCallConstants.ORIENTATION_MODE_UNSPECIFIED;
-        mPrimaryCallTracker = null;
     }
 
     /**
@@ -108,7 +117,7 @@ public class OrientationModeHandler implements InCallDetailsListener, InCallUiLi
           Log.e(this, "onDetailsChanged: details is null");
           return;
         }
-        if (!mPrimaryCallTracker.isPrimaryCall(call)) {
+        if (mPrimaryCallTracker != null && !mPrimaryCallTracker.isPrimaryCall(call)) {
           Log.e(this, "onDetailsChanged: call is non-primary call");
           return;
         }
@@ -122,6 +131,10 @@ public class OrientationModeHandler implements InCallDetailsListener, InCallUiLi
      */
     @Override
     public void onUiShowing(boolean showing) {
+       if (mPrimaryCallTracker == null) {
+           Log.e(this, "onUiShowing showing: " + showing + " PrimaryCallTracker is null");
+           return;
+       }
         DialerCall call = mPrimaryCallTracker.getPrimaryCall();
         Log.d(this, "onUiShowing showing: " + showing + " call = " + call);
 
@@ -166,7 +179,7 @@ public class OrientationModeHandler implements InCallDetailsListener, InCallUiLi
     private void onScreenOrientationChanged(DialerCall call, int orientation) {
         Log.d(this, "onScreenOrientationChanged: Call : " + call + " screen orientation = " +
                 orientation);
-        if (!mPrimaryCallTracker.isPrimaryCall(call)) {
+        if (mPrimaryCallTracker != null && !mPrimaryCallTracker.isPrimaryCall(call)) {
             Log.e(this, "Can't set requested orientation on a non-primary call");
             return;
         }
@@ -221,4 +234,29 @@ public class OrientationModeHandler implements InCallDetailsListener, InCallUiLi
         return (call != null && call.isVideoCall()
             && mOrientationMode == QtiCallConstants.ORIENTATION_MODE_DYNAMIC);
     }
+
+    @Override
+    public void onSessionModificationStateChange(DialerCall call) {
+       Log.v(this,"onSessionModificationStateChange");
+
+       if (call == null) {
+         Log.w(this,"Call is null");
+         return;
+       }
+
+       if (mPrimaryCallTracker != null && mPrimaryCallTracker.isPrimaryCall(call)){
+           if (call.getVideoTech().getSessionModificationState()
+                  == SessionModificationState.NO_REQUEST) {
+              onScreenOrientationChanged(call, getOrientation(call));
+          }
+       } else {
+           Log.w(this,"Primary Call Tracker is null or call is not a primary call");
+       }
+    }
+
+    @Override
+    public void onFullscreenModeChanged(boolean isFullscreenMode) {}
+
+    @Override
+    public void onSendStaticImageStateChanged(boolean isEnabled) {}
 }

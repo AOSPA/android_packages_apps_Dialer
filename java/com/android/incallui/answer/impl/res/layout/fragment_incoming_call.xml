@@ -180,7 +180,7 @@
       android:id="@+id/qti_dialer_incoming_botton_more"
       android:layout_width="wrap_content"
       android:layout_height="wrap_content"
-      android:layout_gravity="center|start"
+      android:layout_gravity="center|end"
       android:layout_margin="15dp"
       android:scaleType="center"
       style="@style/Incall.Button.VideoCall"

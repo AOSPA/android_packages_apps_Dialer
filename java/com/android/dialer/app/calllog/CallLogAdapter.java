@@ -71,6 +71,7 @@ import com.android.dialer.common.Assert;
 import com.android.dialer.common.LogUtil;
 import com.android.dialer.common.concurrent.AsyncTaskExecutor;
 import com.android.dialer.common.concurrent.AsyncTaskExecutors;
+import com.android.dialer.compat.AppCompatConstants;
 import com.android.dialer.configprovider.ConfigProviderBindings;
 import com.android.dialer.enrichedcall.EnrichedCallCapabilities;
 import com.android.dialer.enrichedcall.EnrichedCallComponent;
@@ -361,7 +362,8 @@ public class CallLogAdapter extends GroupingListAdapter
             mCurrentlyExpandedPosition = RecyclerView.NO_POSITION;
             mCurrentlyExpandedRowId = NO_EXPANDED_LIST_ITEM;
           } else {
-            if (viewHolder.callType == CallLog.Calls.MISSED_TYPE) {
+            if (viewHolder.callType == CallLog.Calls.MISSED_TYPE ||
+                viewHolder.callType == AppCompatConstants.MISSED_IMS_TYPE) {
               CallLogAsyncTaskUtil.markCallAsRead(mActivity, viewHolder.callIds);
               if (mActivityType == ACTIVITY_TYPE_DIALTACTS) {
                 ((DialtactsActivity) v.getContext()).updateTabUnreadCounts();
@@ -968,7 +970,8 @@ public class CallLogAdapter extends GroupingListAdapter
     views.numberPresentation = numberPresentation;
 
     if (details.callTypes[0] == CallLog.Calls.VOICEMAIL_TYPE
-        || details.callTypes[0] == CallLog.Calls.MISSED_TYPE) {
+        || details.callTypes[0] == CallLog.Calls.MISSED_TYPE
+        || details.callTypes[0] == AppCompatConstants.MISSED_IMS_TYPE) {
       details.isRead = cursor.getInt(CallLogQuery.IS_READ) == 1;
     }
     views.callType = cursor.getInt(CallLogQuery.CALL_TYPE);

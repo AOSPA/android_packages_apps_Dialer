@@ -31,6 +31,7 @@ import android.text.TextUtils;
 import com.android.dialer.common.LogUtil;
 import com.android.dialer.common.concurrent.AsyncTaskExecutor;
 import com.android.dialer.common.concurrent.AsyncTaskExecutors;
+import com.android.dialer.compat.AppCompatConstants;
 import com.android.dialer.util.PermissionsUtil;
 import com.android.voicemail.VoicemailClient;
 
@@ -125,7 +126,12 @@ public class CallLogAsyncTaskUtil {
           public Void doInBackground(Void... params) {
 
             StringBuilder where = new StringBuilder();
+            where.append("(");
             where.append(CallLog.Calls.TYPE).append(" = ").append(CallLog.Calls.MISSED_TYPE);
+            where.append(" OR ")
+                .append(CallLog.Calls.TYPE).append(" = ")
+                .append(AppCompatConstants.MISSED_IMS_TYPE)
+                .append(")");
             where.append(" AND ");
 
             Long[] callIdLongs = new Long[callIds.length];

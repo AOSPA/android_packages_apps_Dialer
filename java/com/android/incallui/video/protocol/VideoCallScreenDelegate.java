@@ -25,7 +25,7 @@ public interface VideoCallScreenDelegate {
 
   void initVideoCallScreenDelegate(Context context, VideoCallScreen videoCallScreen);
 
-  void onVideoCallScreenUiReady();
+  void onVideoCallScreenUiReady(VideoCallScreen videoCallScreen);
 
   void onVideoCallScreenUiUnready();
 
@@ -59,5 +59,4 @@ public interface VideoCallScreenDelegate {
 
   int getDeviceOrientation();
 
-  void onUiShowing(boolean showing);
 }

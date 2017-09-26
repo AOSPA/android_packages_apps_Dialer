@@ -75,6 +75,7 @@
         android:id="@+id/incall_location_holder"
         android:layout_width="match_parent"
         android:layout_height="match_parent"/>
+
     </LinearLayout>
 
     <com.android.dialer.widget.LockableViewPager
@@ -94,10 +95,10 @@
       android:visibility="gone"/>
     <!-- Volume boost and Volume enhancements in-call UI -->
     <ImageButton android:id="@+id/volumeBoost"
-      android:layout_above="@+id/incall_tab_dots"
-      android:layout_width="80dp"
-      android:layout_height="80dp"
+      android:layout_width="50dp"
+      android:layout_height="50dp"
       android:visibility="gone"
+      android:layout_alignParentTop="true"
       android:soundEffectsEnabled="false"
       android:background="@drawable/vb_normal"/>
 
