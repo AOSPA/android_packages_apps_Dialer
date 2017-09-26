@@ -50,6 +50,7 @@ import com.android.dialer.telecom.TelecomUtil;
 import com.android.dialer.util.PermissionsUtil;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.regex.Pattern;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -205,7 +206,7 @@ public class ContactInfoHelper {
 
   @Nullable
   public ContactInfo lookupNumber(String number, String countryIso) {
-    return lookupNumber(number, countryIso, -1);
+    return lookupNumber(number, null, countryIso, -1, false);
   }
 
   /**
@@ -222,7 +223,8 @@ public class ContactInfoHelper {
    */
   @Nullable
   @SuppressWarnings("ReferenceEquality")
-  public ContactInfo lookupNumber(String number, String countryIso, long directoryId) {
+  public ContactInfo lookupNumber(String number, String postDialString,
+      String countryIso, long directoryId, boolean isConfUrlCallLog) {
     if (TextUtils.isEmpty(number)) {
       LogUtil.d("ContactInfoHelper.lookupNumber", "number is empty");
       return null;
@@ -238,12 +240,14 @@ public class ContactInfoHelper {
         // If lookup failed, check if the "username" of the SIP address is a phone number.
         String username = PhoneNumberHelper.getUsernameFromUriNumber(number);
         if (PhoneNumberUtils.isGlobalPhoneNumber(username)) {
-          info = queryContactInfoForPhoneNumber(username, countryIso, directoryId);
+          info = queryContactInfoForPhoneNumber(username, null, countryIso, directoryId,
+          true, isConfUrlCallLog);
         }
       }
     } else {
       // Look for a contact that has the given phone number.
-      info = queryContactInfoForPhoneNumber(number, countryIso, directoryId);
+      info = queryContactInfoForPhoneNumber(number, postDialString, countryIso, directoryId,
+          false, isConfUrlCallLog);
     }
 
     final ContactInfo updatedInfo;
@@ -280,7 +284,8 @@ public class ContactInfoHelper {
     if (mCachedNumberLookupService != null) {
       List<Long> remoteDirectories = getRemoteDirectories(mContext);
       for (long directoryId : remoteDirectories) {
-        ContactInfo contactInfo = lookupNumber(number, countryIso, directoryId);
+        ContactInfo contactInfo = lookupNumber(number, null, countryIso, directoryId,
+        false);
         if (hasName(contactInfo)) {
           return contactInfo;
         }
@@ -414,7 +419,12 @@ public class ContactInfoHelper {
    */
   @SuppressWarnings("ReferenceEquality")
   private ContactInfo queryContactInfoForPhoneNumber(
-      String number, String countryIso, long directoryId) {
+      String number,
+      String postDialString,
+      String countryIso,
+      long directoryId,
+      boolean isSip,
+      boolean isConfUrlLog) {
     if (TextUtils.isEmpty(number)) {
       LogUtil.d("ContactInfoHelper.queryContactInfoForPhoneNumber", "number is empty");
       return null;
@@ -424,7 +434,39 @@ public class ContactInfoHelper {
     if (info == null) {
       LogUtil.d("ContactInfoHelper.queryContactInfoForPhoneNumber", "info looked up is null");
     }
+    if (isConfUrlLog) {
+      Pattern pattern = Pattern.compile("[,;]");
+      String[] nums = pattern.split(number);
+      if (nums != null && nums.length > 1) {
+        if (info == null || info == ContactInfo.EMPTY) {
+          info = new ContactInfo();
+          info.number = number;
+          info.formattedNumber = formatPhoneNumber(number, null, countryIso);
+          info.lookupUri = createTemporaryContactUri(info.formattedNumber);
+          info.normalizedNumber = PhoneNumberUtils.formatNumberToE164(number,
+              countryIso);
+        }
+        String combName = "";
+        for (String num : nums) {
+          ContactInfo singleCi = lookupContactFromUri(getContactInfoLookupUri(num, directoryId));
+          //If contact does not exist, need to avoid changing static empty-contact.
+          if (singleCi == ContactInfo.EMPTY) {
+              singleCi = new ContactInfo();
+          }
+          if (TextUtils.isEmpty(singleCi.name)) {
+            singleCi.name = formatPhoneNumber(num, null, countryIso);
+          }
+          combName += singleCi.name + ";";
+        }
+        if (!TextUtils.isEmpty(combName) && combName.length() > 1) {
+          info.name = combName.substring(0, combName.length() - 1);
+        }
+      }
+    }
     if (info != null && info != ContactInfo.EMPTY) {
+      if (!isConfUrlLog && TextUtils.isEmpty(postDialString)) {
+        number += postDialString;
+      }
       info.formattedNumber = formatPhoneNumber(number, null, countryIso);
       if (directoryId == -1) {
         // Contact found in the default directory
