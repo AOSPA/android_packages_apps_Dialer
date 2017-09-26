@@ -33,6 +33,7 @@ import android.telecom.TelecomManager;
 import android.telephony.TelephonyManager;
 import android.text.BidiFormatter;
 import android.text.TextDirectionHeuristics;
+import android.text.TextUtils;
 import android.view.View;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.Toast;
@@ -129,6 +130,14 @@ public class DialerUtils {
       Toast.makeText(context, "Cannot place call without Phone permission", Toast.LENGTH_SHORT)
           .show();
     }
+  }
+
+  /**
+   *@return true if calllog inserted earlier when dial a ConfURI call.
+   */
+  public static boolean isConferenceURICallLog(String number, String postDialDigits) {
+    return (number == null || number.contains(";") || number.contains(",")) &&
+        TextUtils.isEmpty(postDialDigits);
   }
 
   /**
