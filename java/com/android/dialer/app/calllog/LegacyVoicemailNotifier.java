@@ -36,6 +36,7 @@ import com.android.dialer.calllogutils.PhoneAccountUtils;
 import com.android.dialer.common.Assert;
 import com.android.dialer.common.LogUtil;
 import com.android.dialer.notification.NotificationChannelManager;
+import com.android.voicemail.impl.SubscriptionInfoHelper;
 
 /** Shows a notification in the status bar for legacy vociemail. */
 @TargetApi(VERSION_CODES.O)
@@ -77,9 +78,12 @@ public final class LegacyVoicemailNotifier {
             callVoicemailIntent,
             voicemailSettingsIntent,
             isRefresh);
+    SubscriptionInfoHelper subInfoHelper = new SubscriptionInfoHelper(context,
+       handle);
+    int subId = subInfoHelper.getSubId();
     context
         .getSystemService(NotificationManager.class)
-        .notify(NOTIFICATION_TAG, NOTIFICATION_ID, notification);
+        .notify(NOTIFICATION_TAG + subId, NOTIFICATION_ID, notification);
   }
 
   @NonNull
@@ -111,9 +115,20 @@ public final class LegacyVoicemailNotifier {
       contentIntent = voicemailSettingsIntent;
     }
 
+    SubscriptionInfoHelper subInfoHelper = new SubscriptionInfoHelper(context,
+        handle);
+    int resId = android.R.drawable.stat_notify_voicemail;
+
+    if (pinnedTelephonyManager.getPhoneCount() > 1) {
+      int mSlotId = subInfoHelper.getSimSlotIndex();
+      resId = (mSlotId == 0) ? R.drawable.stat_notify_voicemail_sub1
+          : (mSlotId == 1) ? R.drawable.stat_notify_voicemail_sub2
+          : android.R.drawable.stat_notify_voicemail;
+    }
+
     Notification.Builder builder =
         new Notification.Builder(context)
-            .setSmallIcon(android.R.drawable.stat_notify_voicemail)
+            .setSmallIcon(resId)
             .setColor(context.getColor(R.color.dialer_theme_color))
             .setWhen(System.currentTimeMillis())
             .setContentTitle(notificationTitle)
@@ -145,11 +160,15 @@ public final class LegacyVoicemailNotifier {
     }
   }
 
-  public static void cancelNotification(@NonNull Context context) {
+  public static void cancelNotification(@NonNull Context context,
+      PhoneAccountHandle phoneAccountHandle) {
     LogUtil.enterBlock("LegacyVoicemailNotifier.cancelNotification");
     Assert.checkArgument(BuildCompat.isAtLeastO());
+    Assert.isNotNull(phoneAccountHandle);
+    SubscriptionInfoHelper subInfoHelper = new SubscriptionInfoHelper(context,
+        phoneAccountHandle);
     NotificationManager notificationManager = context.getSystemService(NotificationManager.class);
-    notificationManager.cancel(NOTIFICATION_TAG, NOTIFICATION_ID);
+    notificationManager.cancel(NOTIFICATION_TAG + subInfoHelper.getSubId(), NOTIFICATION_ID);
   }
 
   private LegacyVoicemailNotifier() {}
