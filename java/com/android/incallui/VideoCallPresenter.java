@@ -969,11 +969,12 @@ public class VideoCallPresenter
   }
 
   private void checkForOrientationAllowedChange(@Nullable DialerCall call) {
-    LogUtil.d("VideoCallPresenter.checkForOrientationAllowedChange","call : "+ call);
     int orientation = OrientationModeHandler.getInstance().getOrientation(call);
-    if (orientation != mCurrentOrientationMode) {
+    LogUtil.d("VideoCallPresenter.checkForOrientationAllowedChange","call : "+ call +
+        " mCurrentOrientationMode : " + mCurrentOrientationMode + " orientation : " + orientation);
+    if (orientation != mCurrentOrientationMode &&
+        InCallPresenter.getInstance().setInCallAllowsOrientationChange(orientation)) {
       mCurrentOrientationMode = orientation;
-      InCallPresenter.getInstance().setInCallAllowsOrientationChange(mCurrentOrientationMode);
     }
   }
 
