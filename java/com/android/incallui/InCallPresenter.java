@@ -1595,20 +1595,21 @@ public class InCallPresenter implements CallList.Listener {
    *
    * @param orientation {@link ActivityInfo#screenOrientation} Actual orientation value to set
    */
-  public void setInCallAllowsOrientationChange(int orientation) {
+  public boolean setInCallAllowsOrientationChange(int orientation) {
     if (mInCallActivity == null) {
       Log.e(this, "InCallActivity is null. Can't set requested orientation.");
-      return;
+      return false;
     }
 
     if (QtiCallUtils.hasVideoCrbtVtCall(mContext) || QtiCallUtils.hasVideoCrbtVoLteCall()) {
       Log.d(this, "Unlike orientation change for color ring");
-      return;
+      return false;
     }
 
     mInCallActivity.setRequestedOrientation(orientation);
     mInCallActivity.enableInCallOrientationEventListener(
         orientation == InCallOrientationEventListener.ACTIVITY_PREFERENCE_ALLOW_ROTATION);
+    return true;
   }
 
   /* returns TRUE if screen is turned ON else false */
