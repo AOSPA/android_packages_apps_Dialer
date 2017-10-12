@@ -1493,6 +1493,7 @@ public class InCallPresenter implements CallList.Listener {
       LogUtil.i("InCallPresenter.attemptCleanup", "Cleaning up");
 
       cleanupSurfaces();
+      VideoCallPresenter.cleanUp();
 
       mIsActivityPreviouslyStarted = false;
       mIsChangingConfigurations = false;
