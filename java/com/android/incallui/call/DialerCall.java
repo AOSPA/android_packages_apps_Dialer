@@ -1134,13 +1134,12 @@ public class DialerCall implements VideoTechListener {
   }
 
   public String getCallbackNumber() {
+    // Show the emergency callback number if either:
+    // 1. This is an emergency call.
+    // 2. The phone is in Emergency Callback Mode, which means we should show the callback
+    //    number.
+    boolean showCallbackNumber = hasProperty(Details.PROPERTY_EMERGENCY_CALLBACK_MODE);
     if (callbackNumber == null) {
-      // Show the emergency callback number if either:
-      // 1. This is an emergency call.
-      // 2. The phone is in Emergency Callback Mode, which means we should show the callback
-      //    number.
-      boolean showCallbackNumber = hasProperty(Details.PROPERTY_EMERGENCY_CALLBACK_MODE);
-
       if (isEmergencyCall() || showCallbackNumber) {
         callbackNumber = getSubscriptionNumber();
       } else {
@@ -1164,6 +1163,8 @@ public class DialerCall implements VideoTechListener {
       if (callbackNumber == null) {
         callbackNumber = "";
       }
+    } else if (!showCallbackNumber) {
+        callbackNumber = "";
     }
     return callbackNumber;
   }
