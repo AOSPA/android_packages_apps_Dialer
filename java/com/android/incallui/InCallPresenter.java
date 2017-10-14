@@ -1417,7 +1417,8 @@ public class InCallPresenter implements CallList.Listener {
         extras.getParcelableArrayList(android.telecom.Call.AVAILABLE_PHONE_ACCOUNTS);
 
     if (phoneAccountHandles == null || phoneAccountHandles.isEmpty()) {
-      String scheme = call.getHandle().getScheme();
+      String scheme = call.getHandle() != null
+          ? call.getHandle().getScheme() : PhoneAccount.SCHEME_TEL;
       final String errorMsg =
           PhoneAccount.SCHEME_TEL.equals(scheme)
               ? mContext.getString(R.string.callFailed_simError)
