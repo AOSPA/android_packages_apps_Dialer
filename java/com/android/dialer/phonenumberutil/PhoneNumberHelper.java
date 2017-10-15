@@ -25,6 +25,8 @@ import android.telephony.TelephonyManager;
 import android.text.TextUtils;
 import com.android.dialer.common.LogUtil;
 import com.android.dialer.telecom.TelecomUtil;
+import com.android.incallui.call.CallList;
+import com.android.incallui.call.DialerCall;
 import com.google.i18n.phonenumbers.NumberParseException;
 import com.google.i18n.phonenumbers.PhoneNumberUtil;
 import com.google.i18n.phonenumbers.Phonenumber;
@@ -142,10 +144,20 @@ public class PhoneNumberHelper {
   public static String getCurrentCountryIso(Context context, Locale locale) {
     // Without framework function calls, this seems to be the most accurate location service
     // we can rely on.
-    final TelephonyManager telephonyManager =
+    TelephonyManager telephonyManager =
         (TelephonyManager) context.getSystemService(Context.TELEPHONY_SERVICE);
 
-    String countryIso = telephonyManager.getNetworkCountryIso();
+    DialerCall activeCall = CallList.getInstance().getFirstCall();
+    if (activeCall != null) {
+      PhoneAccountHandle phoneAccountHandle = activeCall.getAccountHandle();
+      if (phoneAccountHandle != null) {
+        telephonyManager = context
+            .getSystemService(TelephonyManager.class)
+            .createForPhoneAccountHandle(phoneAccountHandle);
+      }
+    }
+
+    String countryIso = telephonyManager != null ? telephonyManager.getNetworkCountryIso() : "";
     if (TextUtils.isEmpty(countryIso)) {
       countryIso = locale.getCountry();
       LogUtil.i(
