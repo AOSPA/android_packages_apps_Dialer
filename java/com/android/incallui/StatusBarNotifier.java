@@ -332,14 +332,10 @@ public class StatusBarNotifier
       notificationType = NOTIFICATION_IN_CALL;
     }
 
-    PhoneAccountHandle ph = call.getAccountHandle();
+    PhoneAccount account = call.getPhoneAccount();
     String accountLabel = null;
-    if (ph != null) {
-      PhoneAccount account = TelecomManagerCompat.getPhoneAccount(
-          mContext.getSystemService(TelecomManager.class), ph);
-      if (account != null && !TextUtils.isEmpty(account.getLabel())) {
-        accountLabel = account.getLabel().toString();
-      }
+    if (account != null && !TextUtils.isEmpty(account.getLabel())) {
+      accountLabel = account.getLabel().toString();
     }
     if (!TextUtils.isEmpty(accountLabel)) {
       content += " (" + accountLabel + ")";
