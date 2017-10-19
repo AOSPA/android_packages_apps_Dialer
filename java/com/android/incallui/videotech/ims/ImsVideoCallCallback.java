@@ -76,6 +76,7 @@ public class ImsVideoCallCallback extends VideoCall.Callback {
   /**
    * @param status Status of the session modify request. Valid values are {@link
    *     Connection.VideoProvider#SESSION_MODIFY_REQUEST_SUCCESS}, {@link
+
    *     Connection.VideoProvider#SESSION_MODIFY_REQUEST_FAIL}, {@link
    *     Connection.VideoProvider#SESSION_MODIFY_REQUEST_INVALID}
    * @param responseProfile The actual profile changes made by the peer device.
@@ -90,12 +91,11 @@ public class ImsVideoCallCallback extends VideoCall.Callback {
         requestedProfile,
         responseProfile,
         videoTech.getSessionModificationState());
-
+    final int newSessionModificationState = getSessionModificationStateFromTelecomStatus(status);
     if (videoTech.getSessionModificationState()
         == SessionModificationState.WAITING_FOR_UPGRADE_TO_VIDEO_RESPONSE) {
       handler.removeCallbacksAndMessages(null); // Clear everything
 
-      final int newSessionModificationState = getSessionModificationStateFromTelecomStatus(status);
       if (status == VideoProvider.SESSION_MODIFY_REQUEST_SUCCESS) {
         // Telecom manages audio route for us
         listener.onUpgradedToVideo(false /* switchToSpeaker */);
@@ -103,29 +103,11 @@ public class ImsVideoCallCallback extends VideoCall.Callback {
         // This will update the video UI to display the error message.
         videoTech.setSessionModificationState(newSessionModificationState);
       }
-
-      // Wait for 4 seconds and then clean the session modification state. This allows the video UI
-      // to stay up so that the user can read the error message.
-      //
-      // If the other person accepted the upgrade request then this will keep the video UI up until
-      // the call's video state change. Without this we would switch to the voice call and then
-      // switch back to video UI.
-      handler.postDelayed(
-          () -> {
-            if (videoTech.getSessionModificationState() == newSessionModificationState) {
-              LogUtil.i("ImsVideoCallCallback.onSessionModifyResponseReceived", "clearing state");
-              videoTech.setSessionModificationState(SessionModificationState.NO_REQUEST);
-            } else {
-              LogUtil.i(
-                  "ImsVideoCallCallback.onSessionModifyResponseReceived",
-                  "session modification state has changed, not clearing state");
-            }
-          },
-          CLEAR_FAILED_REQUEST_TIMEOUT_MILLIS);
     } else if (videoTech.getSessionModificationState()
         == SessionModificationState.RECEIVED_UPGRADE_TO_VIDEO_REQUEST) {
       requestedVideoState = VideoProfile.STATE_AUDIO_ONLY;
       videoTech.setSessionModificationState(SessionModificationState.NO_REQUEST);
+      return;
     } else if (videoTech.getSessionModificationState()
         == SessionModificationState.WAITING_FOR_RESPONSE) {
       videoTech.setSessionModificationState(getSessionModificationStateFromTelecomStatus(status));
@@ -133,7 +115,28 @@ public class ImsVideoCallCallback extends VideoCall.Callback {
       LogUtil.i(
           "ImsVideoCallCallback.onSessionModifyResponseReceived",
           "call is not waiting for response, doing nothing");
+      return;
     }
+
+
+    // Wait for 4 seconds and then clean the session modification state. This allows the video UI
+    // to stay up so that the user can read the error message.
+    //
+    // If the other person accepted the upgrade request then this will keep the video UI up until
+    // the call's video state change. Without this we would switch to the voice call and then
+    // switch back to video UI.
+    handler.postDelayed(
+      () -> {
+        if (videoTech.getSessionModificationState() == newSessionModificationState) {
+          LogUtil.i("ImsVideoCallCallback.onSessionModifyResponseReceived", "clearing state");
+          videoTech.setSessionModificationState(SessionModificationState.NO_REQUEST);
+        } else {
+          LogUtil.i(
+              "ImsVideoCallCallback.onSessionModifyResponseReceived",
+              "session modification state has changed, not clearing state");
+        }
+      },
+      CLEAR_FAILED_REQUEST_TIMEOUT_MILLIS);
   }
 
   @SessionModificationState
