@@ -46,9 +46,17 @@ public class ThemeColorManager {
    * determine the theme color for InCallUI.
    */
   @Nullable private PhoneAccountHandle pendingPhoneAccountHandle;
+  private PhoneAccountHandle mCurrentPhoneAccountHandle;
+  private int mHighlightColor = PhoneAccount.NO_HIGHLIGHT_COLOR;
+  private TelecomManager mTelecomManager;
 
   public ThemeColorManager(MaterialColorMapUtils colorMap) {
     this.colorMap = colorMap;
+  }
+
+  public ThemeColorManager(Context context, MaterialColorMapUtils colorMap) {
+    this.colorMap = colorMap;
+    mTelecomManager = context.getSystemService(TelecomManager.class);
   }
 
   public void setPendingPhoneAccountHandle(@Nullable PhoneAccountHandle pendingPhoneAccountHandle) {
@@ -95,11 +103,19 @@ public class ThemeColorManager {
   }
 
   @ColorInt
-  private static int getHighlightColor(Context context, @Nullable PhoneAccountHandle handle) {
+  private int getHighlightColor(Context context, @Nullable PhoneAccountHandle handle) {
     if (handle != null) {
-      PhoneAccount account = context.getSystemService(TelecomManager.class).getPhoneAccount(handle);
+      if (handle.equals(mCurrentPhoneAccountHandle)) {
+        return mHighlightColor;
+      }
+      mCurrentPhoneAccountHandle = handle;
+      if (mTelecomManager == null) {
+          mTelecomManager = context.getSystemService(TelecomManager.class);
+      }
+      PhoneAccount account = mTelecomManager.getPhoneAccount(handle);
       if (account != null) {
-        return account.getHighlightColor();
+        mHighlightColor = account.getHighlightColor();
+        return mHighlightColor;
       }
     }
     return PhoneAccount.NO_HIGHLIGHT_COLOR;
