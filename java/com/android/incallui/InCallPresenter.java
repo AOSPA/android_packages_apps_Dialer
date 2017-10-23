@@ -836,17 +836,9 @@ public class InCallPresenter implements CallList.Listener {
    */
   @Override
   public void onDisconnect(DialerCall call) {
-    if (mCallList.getActiveOrBackgroundCall() == null) {
-      if (isActivityStarted()) {
-        // If InCallActivity already started then straight away show call disconnect error dialog
-        maybeShowErrorDialogOnDisconnect(call);
-      } else {
-        // Show call disconnect error dialog when activity starts
-        mIsShowErrorDialogOnActivityStart = true;
-      }
-    } else {
-      // Show call disconnect error dialog when background call InCallActivity onStart
+    if (isActivityStarted()) {
       mIsShowErrorDialogOnActivityStart = false;
+      maybeShowErrorDialogOnDisconnect(call);
     }
 
     // We need to do the run the same code as onCallListChange.
