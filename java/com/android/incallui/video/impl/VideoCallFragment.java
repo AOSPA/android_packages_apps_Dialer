@@ -1218,6 +1218,12 @@ public class VideoCallFragment extends Fragment
   }
 
   private void updatePreviewVideoScaling() {
+    if (!isAdded()) {
+      LogUtil.i(
+         "VideoCallFragment.updatePreviewVideoScaling","fragment not attached");
+      return;
+    }
+
     if (previewTextureView.getWidth() == 0 || previewTextureView.getHeight() == 0) {
       LogUtil.i("VideoCallFragment.updatePreviewVideoScaling", "view layout hasn't finished yet");
       return;
