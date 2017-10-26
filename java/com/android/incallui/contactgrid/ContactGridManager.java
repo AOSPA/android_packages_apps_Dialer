@@ -367,6 +367,7 @@ public class ContactGridManager {
     }
 
     if (info.isTimerVisible) {
+      bottomTextSwitcher.setVisibility(View.VISIBLE);
       bottomTextSwitcher.setDisplayedChild(1);
       if (primaryCallState.connectTimeMillis > 0
           && previousConnectTimeMillis != primaryCallState.connectTimeMillis) {
@@ -379,6 +380,7 @@ public class ContactGridManager {
         bottomTimerView.start();
       }
     } else {
+      bottomTextSwitcher.setVisibility(View.GONE);
       bottomTextSwitcher.setDisplayedChild(0);
       bottomTimerView.stop();
       if (primaryCallState.state == DialerCall.State.DISCONNECTED) {
