@@ -760,7 +760,6 @@ public class VideoCallFragment extends Fragment
 
     videoCallScreenDelegate.getLocalVideoSurfaceTexture().attachToTextureView(previewTextureView);
     videoCallScreenDelegate.getRemoteVideoSurfaceTexture().attachToTextureView(remoteTextureView);
-    enableScreenTimeout(!(shouldShowPreview || shouldShowRemote));
 
     this.isRemotelyHeld = isRemotelyHeld;
     if (this.shouldShowRemote != shouldShowRemote) {
@@ -1566,23 +1565,5 @@ public class VideoCallFragment extends Fragment
     }
   }
 
-  private void enableScreenTimeout(boolean enable) {
-    LogUtil.v("VideoCallFragment.enableScreenTimeout","value=" + enable);
-    final Activity activity = getActivity();
-    if (activity == null) {
-      LogUtil.e("VideoCallFragment.enableScreenTimeout","Activity is null.");
-      return;
-    }
-    final Window window = activity.getWindow();
-    if (window == null) {
-      LogUtil.e("VideoCallFragment.enableScreenTimeout","window is null");
-      return;
-    }
-    if (enable) {
-      window.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
-    } else {
-      window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
-    }
-  }
 }
 // LINT.ThenChange(//depot/google3/third_party/java_src/android_app/dialer/java/com/android/incallui/video/impl/SurfaceViewVideoCallFragment.java)

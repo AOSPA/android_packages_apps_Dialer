@@ -1170,6 +1170,7 @@ public class VideoCallPresenter
         false /* isRemotelyHeld */);
     enableCamera(mVideoCall, false);
     InCallPresenter.getInstance().setFullScreen(false);
+    InCallPresenter.getInstance().enableScreenTimeout(true);
     checkForOrientationAllowedChange(mPrimaryCall);
 
     if (mPrimaryCall != null &&
@@ -1223,6 +1224,7 @@ public class VideoCallPresenter
     }
 
     updateFullscreenAndGreenScreenMode(callState, sessionModificationState);
+    InCallPresenter.getInstance().enableScreenTimeout(VideoProfile.isAudioOnly(videoState));
     if (BottomSheetHelper.getInstance().canDisablePipMode() && mPictureModeHelper != null) {
       mPictureModeHelper.maybeHideVideoViews();
     }
