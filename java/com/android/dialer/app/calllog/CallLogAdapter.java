@@ -87,10 +87,12 @@ import com.android.dialer.phonenumbercache.ContactInfo;
 import com.android.dialer.phonenumbercache.ContactInfoHelper;
 import com.android.dialer.phonenumberutil.PhoneNumberHelper;
 import com.android.dialer.spam.Spam;
+import com.android.dialer.util.DialerUtils;
 import com.android.dialer.util.PermissionsUtil;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.regex.Pattern;
 import java.util.Set;
 
 /** Adapter class to fill in data for the Call Log. */
@@ -823,6 +825,12 @@ public class CallLogAdapter extends GroupingListAdapter
       return false;
     }
 
+    final String phoneNumber = details.number.toString();
+    Pattern pattern = Pattern.compile("[,;]");
+    String[] num = pattern.split(phoneNumber);
+    final String postDialDigits = details.postDialDigits;
+    final String number = DialerUtils.isConferenceURICallLog(phoneNumber, postDialDigits) ?
+        phoneNumber : num.length > 0 ? num[0] : "";
     final PhoneAccountHandle accountHandle =
         PhoneAccountUtils.getAccount(details.accountComponentName, details.accountId);
 
@@ -838,15 +846,20 @@ public class CallLogAdapter extends GroupingListAdapter
       // Lookup contacts with this number
       // Only do remote lookup in first 5 rows.
       int position = views.getAdapterPosition();
+      boolean isConfCallLog = num != null && num.length > 1
+          && DialerUtils.isConferenceURICallLog(phoneNumber, postDialDigits);
+      String queryNumber = isConfCallLog ? phoneNumber : number;
       info =
           mContactInfoCache.getValue(
-              details.number + details.postDialDigits,
+              queryNumber,
+              postDialDigits,
               details.countryIso,
               details.cachedContactInfo,
               position
                   < Bindings.get(mActivity)
                       .getConfigProvider()
-                      .getLong("number_of_call_to_do_remote_lookup", 5L));
+                      .getLong("number_of_call_to_do_remote_lookup", 5L),
+              isConfCallLog);
     }
     CharSequence formattedNumber =
         info.formattedNumber == null
