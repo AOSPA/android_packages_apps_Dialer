@@ -493,9 +493,12 @@ public class DialerCall implements VideoTechListener {
         if (mPhoneAccount != null) {
           mIsCallSubjectSupported =
               mPhoneAccount.hasCapabilities(PhoneAccount.CAPABILITY_CALL_SUBJECT);
-          callProviderIcon = mPhoneAccount.getIcon().loadDrawable(mContext);
-          callProviderLabel = mPhoneAccount.getLabel().toString();
-          if (callProviderLabel == null) {
+          if (mPhoneAccount.getIcon() != null) {
+            callProviderIcon = mPhoneAccount.getIcon().loadDrawable(mContext);
+          }
+          if (mPhoneAccount.getLabel() != null) {
+            callProviderLabel = mPhoneAccount.getLabel().toString();
+          } else {
             callProviderLabel = "";
           }
         }
