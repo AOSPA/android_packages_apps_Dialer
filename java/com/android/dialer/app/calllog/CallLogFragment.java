@@ -18,7 +18,6 @@ package com.android.dialer.app.calllog;
 
 import static android.Manifest.permission.ADD_VOICEMAIL;
 import static android.Manifest.permission.CALL_PHONE;
-import static android.Manifest.permission.USE_SIP;
 import static android.Manifest.permission.READ_PHONE_STATE;
 import static android.Manifest.permission.READ_CALL_LOG;
 import static android.Manifest.permission.PROCESS_OUTGOING_CALLS;
@@ -339,7 +338,6 @@ public class CallLogFragment extends Fragment
         PermissionsUtil.hasPermission(getActivity(), READ_PHONE_STATE) &&
         PermissionsUtil.hasPermission(getActivity(), CALL_PHONE) &&
         PermissionsUtil.hasPermission(getActivity(), ADD_VOICEMAIL) &&
-        PermissionsUtil.hasPermission(getActivity(), USE_SIP) &&
         PermissionsUtil.hasPermission(getActivity(), PROCESS_OUTGOING_CALLS);
   }
 
@@ -483,7 +481,7 @@ public class CallLogFragment extends Fragment
   private void requestPhonePermission() {
     FragmentCompat.requestPermissions(
         this, new String[] {READ_PHONE_STATE, READ_CALL_LOG,
-        WRITE_CALL_LOG, CALL_PHONE, ADD_VOICEMAIL, USE_SIP,
+        WRITE_CALL_LOG, CALL_PHONE, ADD_VOICEMAIL,
         PROCESS_OUTGOING_CALLS}, PHONE_PERMISSION_REQUEST_CODE);
   }
 
