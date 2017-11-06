@@ -48,6 +48,7 @@ import com.android.contacts.common.compat.telecom.TelecomManagerCompat;
 import com.android.dialer.callintent.CallInitiationType;
 import com.android.dialer.callintent.CallIntentParser;
 import com.android.dialer.callintent.CallSpecificAppData;
+import com.android.dialer.calllogutils.PhoneAccountUtils;
 import com.android.dialer.common.Assert;
 import com.android.dialer.common.ConfigProviderBindings;
 import com.android.dialer.common.LogUtil;
@@ -493,10 +494,13 @@ public class DialerCall implements VideoTechListener {
         if (mPhoneAccount != null) {
           mIsCallSubjectSupported =
               mPhoneAccount.hasCapabilities(PhoneAccount.CAPABILITY_CALL_SUBJECT);
-          if (mPhoneAccount.getIcon() != null) {
+          final int simAccounts = PhoneAccountUtils.getSubscriptionPhoneAccounts(mContext).size();
+          if (mPhoneAccount.getIcon() != null && simAccounts > 1) {
             callProviderIcon = mPhoneAccount.getIcon().loadDrawable(mContext);
+          } else {
+            callProviderIcon = null;
           }
-          if (mPhoneAccount.getLabel() != null) {
+          if (mPhoneAccount.getLabel() != null && simAccounts > 1) {
             callProviderLabel = mPhoneAccount.getLabel().toString();
           } else {
             callProviderLabel = "";
@@ -1084,38 +1088,11 @@ public class DialerCall implements VideoTechListener {
 
   /** Return the string label to represent the call provider */
   public String getCallProviderLabel() {
-    if (callProviderLabel != null) {
-      return callProviderLabel;
-    }
-    PhoneAccount account = getPhoneAccount();
-    if (account != null && !TextUtils.isEmpty(account.getLabel())) {
-      List<PhoneAccountHandle> accounts =
-          mTelecomManager.getCallCapablePhoneAccounts();
-      if (accounts != null && accounts.size() > 1 &&
-          SubscriptionManager.from(mContext).getActiveSubscriptionInfoCount() > 1) {
-        callProviderLabel = account.getLabel().toString();
-      }
-    }
-    if (callProviderLabel == null) {
-      callProviderLabel = "";
-    }
     return callProviderLabel;
   }
 
   /** Return the Drawable Icon to represent the call provider */
   public Drawable getCallProviderIcon() {
-    if (callProviderIcon != null) {
-      return callProviderIcon;
-    }
-    PhoneAccount account = getPhoneAccount();
-    if (account != null && account.getIcon() != null) {
-      List<PhoneAccountHandle> accounts =
-          mTelecomManager.getCallCapablePhoneAccounts();
-      if (accounts != null && accounts.size() > 1 &&
-          SubscriptionManager.from(mContext).getActiveSubscriptionInfoCount() > 1) {
-        callProviderIcon = account.getIcon().loadDrawable(mContext);
-      }
-    }
     return callProviderIcon;
   }
 
