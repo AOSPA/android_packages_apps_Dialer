@@ -493,9 +493,12 @@ public class DialerCall implements VideoTechListener {
         if (mPhoneAccount != null) {
           mIsCallSubjectSupported =
               mPhoneAccount.hasCapabilities(PhoneAccount.CAPABILITY_CALL_SUBJECT);
-          callProviderIcon = mPhoneAccount.getIcon().loadDrawable(mContext);
-          callProviderLabel = mPhoneAccount.getLabel().toString();
-          if (callProviderLabel == null) {
+          if (mPhoneAccount.getIcon() != null) {
+            callProviderIcon = mPhoneAccount.getIcon().loadDrawable(mContext);
+          }
+          if (mPhoneAccount.getLabel() != null) {
+            callProviderLabel = mPhoneAccount.getLabel().toString();
+          } else {
             callProviderLabel = "";
           }
         }
@@ -1134,13 +1137,12 @@ public class DialerCall implements VideoTechListener {
   }
 
   public String getCallbackNumber() {
+    // Show the emergency callback number if either:
+    // 1. This is an emergency call.
+    // 2. The phone is in Emergency Callback Mode, which means we should show the callback
+    //    number.
+    boolean showCallbackNumber = hasProperty(Details.PROPERTY_EMERGENCY_CALLBACK_MODE);
     if (callbackNumber == null) {
-      // Show the emergency callback number if either:
-      // 1. This is an emergency call.
-      // 2. The phone is in Emergency Callback Mode, which means we should show the callback
-      //    number.
-      boolean showCallbackNumber = hasProperty(Details.PROPERTY_EMERGENCY_CALLBACK_MODE);
-
       if (isEmergencyCall() || showCallbackNumber) {
         callbackNumber = getSubscriptionNumber();
       } else {
@@ -1164,6 +1166,8 @@ public class DialerCall implements VideoTechListener {
       if (callbackNumber == null) {
         callbackNumber = "";
       }
+    } else if (!showCallbackNumber) {
+        callbackNumber = "";
     }
     return callbackNumber;
   }
