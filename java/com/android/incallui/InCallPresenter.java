@@ -352,7 +352,7 @@ public class InCallPresenter implements CallList.Listener {
     addListener(mProximitySensor);
 
     mThemeColorManager =
-        new ThemeColorManager(new InCallUIMaterialColorMapUtils(mContext.getResources()));
+        new ThemeColorManager(context, new InCallUIMaterialColorMapUtils(mContext.getResources()));
 
     mCallList = callList;
     mExternalCallList = externalCallList;

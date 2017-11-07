@@ -84,6 +84,7 @@ public class BottomSheetHelper implements InCallPresenter.InCallEventListener,
    private AlertDialog callTransferDialog;
    private AlertDialog modifyCallDialog;
    private AlertDialog mCancelModifyCallDialog;
+   private boolean mCanDisablePipMode;
    private static final int BLIND_TRANSFER = 0;
    private static final int ASSURED_TRANSFER = 1;
    private static final int CONSULTATIVE_TRANSFER = 2;
@@ -135,6 +136,8 @@ public class BottomSheetHelper implements InCallPresenter.InCallEventListener,
      InCallPresenter.getInstance().addIncomingCallListener(mPrimaryCallTracker);
      InCallPresenter.getInstance().addInCallEventListener(this);
      mPrimaryCallTracker.addListener(this);
+     mCanDisablePipMode = Settings.Global.getInt(mContext.getContentResolver(),
+         "disable_pip_mode", 0) != 0;
    }
 
    public void tearDown() {
@@ -842,8 +845,7 @@ public class BottomSheetHelper implements InCallPresenter.InCallEventListener,
     }
 
     public boolean canDisablePipMode() {
-      return (Settings.Global.getInt(
-          mContext.getContentResolver(), "disable_pip_mode", 0) != 0);
+      return mCanDisablePipMode;
     }
 
     public PrimaryCallTracker getPrimaryCallTracker() {
