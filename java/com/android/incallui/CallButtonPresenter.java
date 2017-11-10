@@ -196,7 +196,7 @@ public class CallButtonPresenter
     }
 
     int newRoute;
-    final String INVALID_CALL_PARAM = "-1";
+    String INVALID_CALL_PARAM = "-1";
     if (audioState.getRoute() == CallAudioState.ROUTE_SPEAKER) {
       newRoute = CallAudioState.ROUTE_WIRED_OR_EARPIECE;
       Logger.get(mContext)
