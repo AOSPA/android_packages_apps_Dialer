@@ -601,6 +601,11 @@ public class VideoCallPresenter
   @Override
   public void onCameraPermissionGranted() {
     LogUtil.i("VideoCallPresenter.onCameraPermissionGranted", "");
+    if (mPrimaryCall == null) {
+      LogUtil.w("VideoCallPresenter.onCameraPermissionGranted",
+          "Primary call is null. Not enabling camera");
+      return;
+    }
     VideoUtils.setCameraAllowedByUser(mContext);
     enableCamera(mPrimaryCall.getVideoCall(), isCameraRequired());
     showVideoUi(
@@ -968,11 +973,12 @@ public class VideoCallPresenter
   }
 
   private void checkForOrientationAllowedChange(@Nullable DialerCall call) {
-    LogUtil.d("VideoCallPresenter.checkForOrientationAllowedChange","call : "+ call);
     int orientation = OrientationModeHandler.getInstance().getOrientation(call);
-    if (orientation != mCurrentOrientationMode) {
+    LogUtil.d("VideoCallPresenter.checkForOrientationAllowedChange","call : "+ call +
+        " mCurrentOrientationMode : " + mCurrentOrientationMode + " orientation : " + orientation);
+    if (orientation != mCurrentOrientationMode &&
+        InCallPresenter.getInstance().setInCallAllowsOrientationChange(orientation)) {
       mCurrentOrientationMode = orientation;
-      InCallPresenter.getInstance().setInCallAllowsOrientationChange(mCurrentOrientationMode);
     }
   }
 

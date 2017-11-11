@@ -1200,6 +1200,12 @@ public class VideoCallFragment extends Fragment
   }
 
   private void updatePreviewVideoScaling() {
+    if (!isAdded()) {
+      LogUtil.i(
+         "VideoCallFragment.updatePreviewVideoScaling","fragment not attached");
+      return;
+    }
+
     if (previewTextureView.getWidth() == 0 || previewTextureView.getHeight() == 0) {
       LogUtil.i("VideoCallFragment.updatePreviewVideoScaling", "view layout hasn't finished yet");
       return;
@@ -1298,14 +1304,21 @@ public class VideoCallFragment extends Fragment
     params.addRule(RelativeLayout.ALIGN_PARENT_BOTTOM);
     previewTextureView.setLayoutParams(params);
     previewTextureView.setOutlineProvider(circleOutlineProvider);
-    updatePreviewVideoScaling();
-    updateOverlayBackground();
-    contactGridManager.setIsMiddleRowVisible(false);
-    updateMutePreviewOverlayVisibility();
+    previewTextureView.getViewTreeObserver().addOnGlobalLayoutListener(
+            new ViewTreeObserver.OnGlobalLayoutListener() {
+            @Override
+            public void onGlobalLayout() {
+              previewTextureView.getViewTreeObserver().removeGlobalOnLayoutListener(this);
+              updatePreviewVideoScaling();
+              updateOverlayBackground();
+              contactGridManager.setIsMiddleRowVisible(false);
+              updateMutePreviewOverlayVisibility();
 
-    previewOffBlurredImageView.setLayoutParams(params);
-    previewOffBlurredImageView.setOutlineProvider(circleOutlineProvider);
-    previewOffBlurredImageView.setClipToOutline(true);
+              previewOffBlurredImageView.setLayoutParams(params);
+              previewOffBlurredImageView.setOutlineProvider(circleOutlineProvider);
+              previewOffBlurredImageView.setClipToOutline(true);
+            }
+    });
   }
 
   private void updateVideoOffViews() {

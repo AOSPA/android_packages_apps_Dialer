@@ -16,10 +16,17 @@
 package com.android.dialer.app.list;
 
 import static android.Manifest.permission.CALL_PHONE;
+import static android.Manifest.permission.PROCESS_OUTGOING_CALLS;
+import static android.Manifest.permission.READ_PHONE_STATE;
+import static android.Manifest.permission.ADD_VOICEMAIL;
+import static android.Manifest.permission.READ_CALL_LOG;
+import static android.Manifest.permission.WRITE_CALL_LOG;
+import static android.Manifest.permission.USE_SIP;
 
 import android.app.Activity;
 import android.content.BroadcastReceiver;
 import android.content.Context;
+import android.content.pm.PackageManager;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.Loader;
@@ -122,9 +129,20 @@ public class SmartDialSearchFragment extends SearchFragment
     if (activity == null) {
       return;
     }
-
+   /**
+    * if the user disable the permission setting, and then click TURN ON to enbables the permission
+    * from Dialer, it only request CALL_PHONE permission that are missing other specified
+    * permissions so that it will result in many permission issues.Check if the Dialer app has all
+    * the specified permissions.if any permission is not granted, it will request all the specified
+    * permissions.
+    */
     FragmentCompat.requestPermissions(
-        this, new String[] {CALL_PHONE}, CALL_PHONE_PERMISSION_REQUEST_CODE);
+        this, new String[] {CALL_PHONE, READ_PHONE_STATE,
+            PROCESS_OUTGOING_CALLS,
+            READ_CALL_LOG,
+            WRITE_CALL_LOG,
+            ADD_VOICEMAIL,
+            USE_SIP}, CALL_PHONE_PERMISSION_REQUEST_CODE);
   }
 
   @Override

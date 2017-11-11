@@ -102,11 +102,15 @@ public class InCallFragment extends Fragment
   private boolean stateRestored;
   private ImageButton mVbButton;
   private AudioManager mAudioManager;
+  private TelephonyManager mTelephonyManager;
+  private int mTtyMode;
+  private boolean mVolumeBoostEnabled;
 
   private static final int TTY_MODE_OFF = 0;
   private static final int TTY_MODE_HCO = 2;
 
   private static final String VOLUME_BOOST = "volume_boost";
+  private static final String PREFERRED_TTY_MODE = "preferred_tty_mode";
 
   // Add animation to educate users. If a call has enriched calling attachments then we'll
   // initially show the attachment page. After a delay seconds we'll animate to the button grid.
@@ -150,6 +154,10 @@ public class InCallFragment extends Fragment
       stateRestored = true;
     }
     mAudioManager = (AudioManager) getActivity().getSystemService(Context.AUDIO_SERVICE);
+    mTelephonyManager = (TelephonyManager) getContext().getSystemService(Context.TELEPHONY_SERVICE);
+    mTtyMode = Settings.Secure.getInt(getContext().getContentResolver(),
+        PREFERRED_TTY_MODE, TTY_MODE_OFF);
+    mVolumeBoostEnabled = mAudioManager.getParameters(VOLUME_BOOST).contains("=on");
   }
 
   @Nullable
@@ -203,7 +211,7 @@ public class InCallFragment extends Fragment
 
       voiceNetworkType =
           VERSION.SDK_INT >= VERSION_CODES.N
-              ? getContext().getSystemService(TelephonyManager.class).getVoiceNetworkType()
+              ? mTelephonyManager.getVoiceNetworkType()
               : TelephonyManager.NETWORK_TYPE_UNKNOWN;
     }
     return view;
@@ -381,15 +389,13 @@ public class InCallFragment extends Fragment
     if (phoneType == TelephonyManager.PHONE_TYPE_NONE) {
       DialerCall activeCall = CallList.getInstance().getFirstCall();
       if (activeCall != null) {
-        TelephonyManager telephonyManager = (TelephonyManager)
-            getContext().getSystemService(Context.TELEPHONY_SERVICE);
         SubscriptionInfoHelper subInfoHelper = new SubscriptionInfoHelper(getContext(),
             activeCall.getAccountHandle());
         if (subInfoHelper != null) {
           int subId = subInfoHelper.getSubId();
           phoneType = (subId == SubscriptionInfoHelper.NO_SUB_ID) ?
               TelephonyManager.PHONE_TYPE_SIP :
-              telephonyManager.getCurrentPhoneType(subId);
+              mTelephonyManager.getCurrentPhoneType(subId);
         }
       }
     }
@@ -631,14 +637,9 @@ public class InCallFragment extends Fragment
 
   private boolean isVbAvailable() {
     int mode = AudioModeProvider.getInstance().getAudioState().getRoute();
-    final Context context = getContext();
-    final String PREFERRED_TTY_MODE = "preferred_tty_mode";
-    int settingsTtyMode = Settings.Secure.getInt(context.getContentResolver(),
-        PREFERRED_TTY_MODE,
-        TTY_MODE_OFF);
 
     return (mode == CallAudioState.ROUTE_EARPIECE || mode == CallAudioState.ROUTE_SPEAKER
-        || settingsTtyMode == TTY_MODE_HCO);
+        || mTtyMode == TTY_MODE_HCO);
   }
 
   private void updateVbButton() {
@@ -714,10 +715,11 @@ public class InCallFragment extends Fragment
     } else {
       mAudioManager.setParameters(VOLUME_BOOST + "=off");
     }
+    mVolumeBoostEnabled = on;
   }
 
   private boolean isVolumeBoostOn(){
 
-    return mAudioManager.getParameters(VOLUME_BOOST).contains("=on");
+    return mVolumeBoostEnabled;
   }
 }

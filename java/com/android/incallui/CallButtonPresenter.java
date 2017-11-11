@@ -196,20 +196,21 @@ public class CallButtonPresenter
     }
 
     int newRoute;
+    final String INVALID_CALL_PARAM = "-1";
     if (audioState.getRoute() == CallAudioState.ROUTE_SPEAKER) {
       newRoute = CallAudioState.ROUTE_WIRED_OR_EARPIECE;
       Logger.get(mContext)
           .logCallImpression(
               DialerImpression.Type.IN_CALL_SCREEN_TURN_ON_WIRED_OR_EARPIECE,
-              mCall.getUniqueCallId(),
-              mCall.getTimeAddedMs());
+              (mCall != null) ? mCall.getUniqueCallId() : INVALID_CALL_PARAM,
+              (mCall != null) ? mCall.getTimeAddedMs() : Long.parseLong(INVALID_CALL_PARAM));
     } else {
       newRoute = CallAudioState.ROUTE_SPEAKER;
       Logger.get(mContext)
           .logCallImpression(
               DialerImpression.Type.IN_CALL_SCREEN_TURN_ON_SPEAKERPHONE,
-              mCall.getUniqueCallId(),
-              mCall.getTimeAddedMs());
+              (mCall != null) ? mCall.getUniqueCallId() : INVALID_CALL_PARAM,
+              (mCall != null) ? mCall.getTimeAddedMs() : Long.parseLong(INVALID_CALL_PARAM));
     }
 
     setAudioRoute(newRoute);
@@ -217,13 +218,9 @@ public class CallButtonPresenter
 
   @Override
   public void muteClicked(boolean checked, boolean clickedByUser) {
-    if (mCall == null) {
-      return;
-    }
-
     LogUtil.i(
         "CallButtonPresenter", "turning on mute: %s, clicked by user: %s", checked, clickedByUser);
-    if (clickedByUser) {
+    if (clickedByUser && mCall != null) {
       Logger.get(mContext)
           .logCallImpression(
               checked
