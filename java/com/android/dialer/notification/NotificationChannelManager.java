@@ -264,7 +264,7 @@ public class NotificationChannelManager {
       NotificationChannelGroup group =
           new NotificationChannelGroup(
               phoneAccountHandle.getId(),
-              (account == null) ? phoneAccountHandle.getId() : account.getLabel().toString());
+              (account == null) ? phoneAccountHandle.getId() : account.getLabel());
       getNotificationManager(context)
           .createNotificationChannelGroup(group); // No-op if already exists
     } else if (!channelAllowsNullPhoneAccountHandle(channelName)) {
