@@ -226,14 +226,19 @@ public class DefaultVoicemailNotifier implements Worker<Void, Void> {
       int count,
       String voicemailNumber,
       PendingIntent callVoicemailIntent,
-      PendingIntent voicemailSettingIntent) {
+      PendingIntent voicemailSettingIntent,
+      int subId,
+      boolean isRefresh) {
     Assert.isNotNull(phoneAccountHandle);
     Assert.checkArgument(BuildCompat.isAtLeastO());
     TelephonyManager telephonyManager =
         context
             .getSystemService(TelephonyManager.class)
             .createForPhoneAccountHandle(phoneAccountHandle);
-    Assert.isNotNull(telephonyManager);
+    if (telephonyManager == null) {
+        return;
+    }
+
     LogUtil.i(TAG, "Creating legacy voicemail notification");
 
     PersistableBundle carrierConfig = telephonyManager.getCarrierConfig();
@@ -265,14 +270,12 @@ public class DefaultVoicemailNotifier implements Worker<Void, Void> {
       }
       pendingIntent = callVoicemailIntent;
     }
-    SubscriptionInfoHelper subInfoHelper = new SubscriptionInfoHelper(context,
-        phoneAccountHandle);
-    int subId = subInfoHelper.getSubId();
     int resId = android.R.drawable.stat_notify_voicemail;
-
     if (telephonyManager.getPhoneCount() > 1) {
+      SubscriptionInfoHelper subInfoHelper = new SubscriptionInfoHelper(context,
+          phoneAccountHandle);
       int mSlotId = subInfoHelper.getSimSlotIndex();
-      resId = (mSlotId == 0) ? R.drawable.stat_notify_voicemail_sub1
+      resId = mSlotId == 0 ? R.drawable.stat_notify_voicemail_sub1
           : (mSlotId == 1) ? R.drawable.stat_notify_voicemail_sub2
           : android.R.drawable.stat_notify_voicemail;
     }
@@ -285,6 +288,7 @@ public class DefaultVoicemailNotifier implements Worker<Void, Void> {
         .setContentTitle(notificationTitle)
         .setContentText(notificationText)
         .setContentIntent(pendingIntent)
+        .setOnlyAlertOnce(isRefresh)
         .setSound(telephonyManager.getVoicemailRingtoneUri(phoneAccountHandle))
         .setOngoing(
             carrierConfig.getBoolean(
@@ -302,13 +306,10 @@ public class DefaultVoicemailNotifier implements Worker<Void, Void> {
          LEGACY_VOICEMAIL_NOTIFICATION_ID, notification);
   }
 
-  public void cancelLegacyNotification(PhoneAccountHandle phoneAccountHandle) {
-    Assert.isNotNull(phoneAccountHandle);
+  public void cancelLegacyNotification(int subId) {
     LogUtil.i(TAG, "Clearing legacy voicemail notification");
-    SubscriptionInfoHelper subInfoHelper = new SubscriptionInfoHelper(context,
-        phoneAccountHandle);
     getNotificationManager()
-        .cancel(LEGACY_VOICEMAIL_NOTIFICATION_TAG + subInfoHelper.getSubId(),
+        .cancel(LEGACY_VOICEMAIL_NOTIFICATION_TAG + subId,
          LEGACY_VOICEMAIL_NOTIFICATION_ID);
   }
 

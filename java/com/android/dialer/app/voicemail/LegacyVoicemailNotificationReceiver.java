@@ -47,6 +47,18 @@ public class LegacyVoicemailNotificationReceiver extends BroadcastReceiver {
   // If voice mail present indication is received CPHS only: count is unknown VoiceMailCount = 255
   private static final int MAX_VOICEMAILS_COUNT = 0xff;
 
+  /**
+   * Hidden extra for {@link TelephonyManager#ACTION_SHOW_VOICEMAIL_NOTIFICATION} for whether the
+   * notification is just a refresh or for a new voicemail. The phone should not play a ringtone or
+   * vibrate during a refresh if the notification is already showing.
+   *
+   * <p>TODO(b/62202833): make public
+   */
+  private static final String EXTRA_IS_REFRESH = "is_refresh";
+
+  // Phone id for which voicemail notification update received
+  private static final String EXTRA_SUB_ID = "sub_id";
+
   @Override
   public void onReceive(Context context, Intent intent) {
     LogUtil.i(
@@ -57,8 +69,10 @@ public class LegacyVoicemailNotificationReceiver extends BroadcastReceiver {
         Assert.isNotNull(intent.getParcelableExtra(TelephonyManager.EXTRA_PHONE_ACCOUNT_HANDLE));
 
     int count = intent.getIntExtra(TelephonyManager.EXTRA_NOTIFICATION_COUNT, -1);
+    boolean isRefresh = intent.getBooleanExtra(EXTRA_IS_REFRESH, false);
+    int subId =  intent.getIntExtra(EXTRA_SUB_ID, -1);
 
-    if ((count != MAX_VOICEMAILS_COUNT)
+    if (!isRefresh && (count != MAX_VOICEMAILS_COUNT)
         && !hasVoicemailCountChanged(context, phoneAccountHandle, count)) {
       LogUtil.i(
           "LegacyVoicemailNotificationReceiver.onReceive",
@@ -75,7 +89,7 @@ public class LegacyVoicemailNotificationReceiver extends BroadcastReceiver {
 
     if (count == 0) {
       LogUtil.i("LegacyVoicemailNotificationReceiver.onReceive", "clearing notification");
-      new DefaultVoicemailNotifier(context).cancelLegacyNotification(phoneAccountHandle);
+      new DefaultVoicemailNotifier(context).cancelLegacyNotification(subId);
       return;
     }
 
@@ -102,7 +116,9 @@ public class LegacyVoicemailNotificationReceiver extends BroadcastReceiver {
             count,
             voicemailNumber,
             callVoicemailIntent,
-            voicemailSettingIntent);
+            voicemailSettingIntent,
+            subId,
+            isRefresh);
   }
 
   private static boolean hasVoicemailCountChanged(
