@@ -111,6 +111,7 @@ public class BottomSheetHelper implements InCallPresenter.InCallEventListener,
      public void receiveCancelModifyCallResponse(int phoneId, int result) {
           LogUtil.w("BottomSheetHelper.receiveCancelModifyCallResponse", "result: " + result);
           mHasSentCancelUpgradeRequest = false;
+          maybeUpdateCancelModifyCallInMap();
      }
    };
 
@@ -807,6 +808,7 @@ public class BottomSheetHelper implements InCallPresenter.InCallEventListener,
             "Sending cancel upgrade request with Phone id " + getPhoneId());
         new QtiImsExtManager(mContext).sendCancelModifyCall(getPhoneId(),imsInterfaceListener);
         mHasSentCancelUpgradeRequest = true;
+        maybeUpdateCancelModifyCallInMap();
       } catch (QtiImsException e) {
         LogUtil.e("BottomSheetHelper.cancelUpgradeClicked", "sendCancelModifyCall exception " + e);
       }
