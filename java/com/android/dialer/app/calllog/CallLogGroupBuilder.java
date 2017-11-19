@@ -28,7 +28,10 @@ import com.android.contacts.common.util.DateUtils;
 import com.android.dialer.compat.AppCompatConstants;
 import com.android.dialer.phonenumbercache.CallLogQuery;
 import com.android.dialer.phonenumberutil.PhoneNumberHelper;
+import com.android.dialer.util.DialerUtils;
 import java.util.Objects;
+import java.util.regex.Pattern;
+
 
 /**
  * Groups together calls in the call log. The primary grouping attempts to group together calls to
@@ -99,6 +102,8 @@ public class CallLogGroupBuilder {
     int groupCallType = cursor.getInt(CallLogQuery.CALL_TYPE);
     String groupAccountComponentName = cursor.getString(CallLogQuery.ACCOUNT_COMPONENT_NAME);
     String groupAccountId = cursor.getString(CallLogQuery.ACCOUNT_ID);
+    boolean isGroupConfCallLog = DialerUtils.isConferenceURICallLog(groupNumber,
+        groupPostDialDigits);
     int groupSize = 1;
 
     String number;
@@ -107,6 +112,7 @@ public class CallLogGroupBuilder {
     int callType;
     String accountComponentName;
     String accountId;
+    boolean isNumberConfCallLog = false;
 
     while (cursor.moveToNext()) {
       // Obtain the values for the current call to group.
@@ -120,8 +126,10 @@ public class CallLogGroupBuilder {
       callType = cursor.getInt(CallLogQuery.CALL_TYPE);
       accountComponentName = cursor.getString(CallLogQuery.ACCOUNT_COMPONENT_NAME);
       accountId = cursor.getString(CallLogQuery.ACCOUNT_ID);
+      isNumberConfCallLog = DialerUtils.isConferenceURICallLog(number, numberPostDialDigits);
 
-      final boolean isSameNumber = equalNumbers(groupNumber, number);
+      final boolean isSameNumber = equalNumbers(groupNumber, isGroupConfCallLog,
+          number, isNumberConfCallLog);
       final boolean isSamePostDialDigits = groupPostDialDigits.equals(numberPostDialDigits);
       final boolean isSameViaNumbers = groupViaNumbers.equals(numberViaNumbers);
       final boolean isSameAccount =
@@ -158,6 +166,8 @@ public class CallLogGroupBuilder {
         groupCallType = callType;
         groupAccountComponentName = accountComponentName;
         groupAccountId = accountId;
+        isGroupConfCallLog = DialerUtils.isConferenceURICallLog(groupNumber,
+            groupPostDialDigits);
       }
 
       // Save the day group associated with the current call.
@@ -171,9 +181,28 @@ public class CallLogGroupBuilder {
 
   @VisibleForTesting
   boolean equalNumbers(@Nullable String number1, @Nullable String number2) {
+    return equalNumbers(number1, false, number2, false);
+  }
+
+  boolean equalNumbers(String number1, boolean isConf1, String number2, boolean isConf2) {
     if (PhoneNumberHelper.isUriNumber(number1) || PhoneNumberHelper.isUriNumber(number2)) {
       return compareSipAddresses(number1, number2);
-    } else {
+    } else if (isConf1 && isConf2) {
+      Pattern pattern = Pattern.compile("[,;]");
+      String[] num1 = pattern.split(number1);
+      String[] num2 = pattern.split(number2);
+      if (num1 == null || num2 == null || num1.length != num2.length) {
+        return false;
+      }
+      for (int i = 0; i < num1.length; i++) {
+        if (!PhoneNumberUtils.compare(num1[i], num2[i])) {
+          return false;
+        }
+      }
+      return true;
+    } else if (isConf1 != isConf2) {
+      return false;
+    }else {
       return PhoneNumberUtils.compare(number1, number2);
     }
   }

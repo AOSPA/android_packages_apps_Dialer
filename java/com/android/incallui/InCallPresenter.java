@@ -352,7 +352,7 @@ public class InCallPresenter implements CallList.Listener {
     addListener(mProximitySensor);
 
     mThemeColorManager =
-        new ThemeColorManager(new InCallUIMaterialColorMapUtils(mContext.getResources()));
+        new ThemeColorManager(context, new InCallUIMaterialColorMapUtils(mContext.getResources()));
 
     mCallList = callList;
     mExternalCallList = externalCallList;
@@ -836,17 +836,9 @@ public class InCallPresenter implements CallList.Listener {
    */
   @Override
   public void onDisconnect(DialerCall call) {
-    if (mCallList.getActiveOrBackgroundCall() == null) {
-      if (isActivityStarted()) {
-        // If InCallActivity already started then straight away show call disconnect error dialog
-        maybeShowErrorDialogOnDisconnect(call);
-      } else {
-        // Show call disconnect error dialog when activity starts
-        mIsShowErrorDialogOnActivityStart = true;
-      }
-    } else {
-      // Show call disconnect error dialog when background call InCallActivity onStart
+    if (isActivityStarted()) {
       mIsShowErrorDialogOnActivityStart = false;
+      maybeShowErrorDialogOnDisconnect(call);
     }
 
     // We need to do the run the same code as onCallListChange.
@@ -1465,7 +1457,8 @@ public class InCallPresenter implements CallList.Listener {
         extras.getParcelableArrayList(android.telecom.Call.AVAILABLE_PHONE_ACCOUNTS);
 
     if (phoneAccountHandles == null || phoneAccountHandles.isEmpty()) {
-      String scheme = call.getHandle().getScheme();
+      String scheme = call.getHandle() != null
+          ? call.getHandle().getScheme() : PhoneAccount.SCHEME_TEL;
       final String errorMsg =
           PhoneAccount.SCHEME_TEL.equals(scheme)
               ? mContext.getString(R.string.callFailed_simError)
@@ -1645,22 +1638,23 @@ public class InCallPresenter implements CallList.Listener {
    *
    * @param orientation {@link ActivityInfo#screenOrientation} Actual orientation value to set
    */
-  public void setInCallAllowsOrientationChange(int orientation) {
+  public boolean setInCallAllowsOrientationChange(int orientation) {
     if (mInCallActivity == null) {
       LogUtil.e(
           "InCallPresenter.setInCallAllowsOrientationChange",
           "InCallActivity is null. Can't set requested orientation.");
-      return;
+      return false;
     }
 
     if (QtiCallUtils.hasVideoCrbtVtCall(mContext) || QtiCallUtils.hasVideoCrbtVoLteCall()) {
       Log.d(this, "Unlike orientation change for color ring");
-      return;
+      return false;
     }
 
     mInCallActivity.setRequestedOrientation(orientation);
     mInCallActivity.enableInCallOrientationEventListener(
         orientation == InCallOrientationEventListener.ACTIVITY_PREFERENCE_ALLOW_ROTATION);
+    return true;
   }
 
   /* returns TRUE if screen is turned ON else false */

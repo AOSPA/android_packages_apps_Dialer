@@ -32,7 +32,6 @@ import java.lang.ref.WeakReference;
 import java.util.Objects;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.PriorityBlockingQueue;
-
 /**
  * This is a cache of contact details for the phone numbers in the call log. The key is the phone
  * number with the country in which the call was placed or received. The content of the cache is
@@ -47,11 +46,13 @@ import java.util.concurrent.PriorityBlockingQueue;
  */
 public class ContactInfoCache {
 
+  private static final int CONTACT_INFO_CACHE_SIZE = 100;
   private static final int REDRAW = 1;
   private static final int START_THREAD = 2;
   private static final int START_PROCESSING_REQUESTS_DELAY_MS = 1000;
 
   private final ExpirableCache<NumberWithCountryIso, ContactInfo> mCache;
+  private ExpirableCache<NumberWithCountryIso, ContactInfo> mCacheFor4gConfCall;
   private final ContactInfoHelper mContactInfoHelper;
   private final OnContactInfoChangedListener mOnContactInfoChangedListener;
   private final BlockingQueue<ContactInfoRequest> mUpdateRequests;
@@ -91,6 +92,7 @@ public class ContactInfoCache {
       @NonNull ContactInfoHelper contactInfoHelper,
       @NonNull OnContactInfoChangedListener listener) {
     mCache = internalCache;
+    mCacheFor4gConfCall = ExpirableCache.create(CONTACT_INFO_CACHE_SIZE);
     mContactInfoHelper = contactInfoHelper;
     mOnContactInfoChangedListener = listener;
     mUpdateRequests = new PriorityBlockingQueue<>();
@@ -106,32 +108,55 @@ public class ContactInfoCache {
       String countryIso,
       ContactInfo callLogContactInfo,
       boolean remoteLookupIfNotFoundLocally) {
+     return getValue(number, null, countryIso, callLogContactInfo, false, false);
+  }
+
+  public ContactInfo getValue(
+      String number,
+      String postDialString,
+      String countryIso,
+      ContactInfo callLogContactInfo,
+      boolean remoteLookupIfNotFoundLocally,
+      boolean isConf) {
+    String phoneNumber = number;
+    if (!isConf && !TextUtils.isEmpty(postDialString)) {
+      phoneNumber += postDialString;
+    }
     NumberWithCountryIso numberCountryIso = new NumberWithCountryIso(number, countryIso);
-    ExpirableCache.CachedValue<ContactInfo> cachedInfo = mCache.getCachedValue(numberCountryIso);
+    ExpirableCache.CachedValue<ContactInfo> cachedInfo = null;
+    if (isConf) {
+      cachedInfo = mCacheFor4gConfCall.getCachedValue(numberCountryIso);
+    } else {
+      cachedInfo = mCache.getCachedValue(numberCountryIso);
+    }
     ContactInfo info = cachedInfo == null ? null : cachedInfo.getValue();
     int requestType =
         remoteLookupIfNotFoundLocally
             ? ContactInfoRequest.TYPE_LOCAL_AND_REMOTE
             : ContactInfoRequest.TYPE_LOCAL;
     if (cachedInfo == null) {
-      mCache.put(numberCountryIso, ContactInfo.EMPTY);
+      if (isConf) {
+        cachedInfo = mCacheFor4gConfCall.getCachedValue(numberCountryIso);
+      } else {
+        mCache.put(numberCountryIso, ContactInfo.EMPTY);
+      }
       // Use the cached contact info from the call log.
       info = callLogContactInfo;
       // The db request should happen on a non-UI thread.
       // Request the contact details immediately since they are currently missing.
-      enqueueRequest(number, countryIso, callLogContactInfo, /* immediate */ true, requestType);
+      enqueueRequest(number, postDialString, countryIso, callLogContactInfo, /* immediate */ true, requestType, isConf);
       // We will format the phone number when we make the background request.
     } else {
       if (cachedInfo.isExpired()) {
         // The contact info is no longer up to date, we should request it. However, we
         // do not need to request them immediately.
-        enqueueRequest(number, countryIso, callLogContactInfo, /* immediate */ false, requestType);
+        enqueueRequest(number,  postDialString, countryIso, callLogContactInfo, /* immediate */ false, requestType, isConf);
       } else if (!callLogInfoMatches(callLogContactInfo, info)) {
         // The call log information does not match the one we have, look it up again.
         // We could simply update the call log directly, but that needs to be done in a
         // background thread, so it is easier to simply request a new lookup, which will, as
         // a side-effect, update the call log.
-        enqueueRequest(number, countryIso, callLogContactInfo, /* immediate */ false, requestType);
+        enqueueRequest(number, postDialString, countryIso, callLogContactInfo, /* immediate */ false, requestType, isConf);
       }
 
       if (Objects.equals(info, ContactInfo.EMPTY)) {
@@ -150,6 +175,8 @@ public class ContactInfoCache {
    *
    * <p>The number might be either a SIP address or a phone number.
    *
+   * @param postDialString if required, append into number
+   * @param isConf determine whether it is a 4g conf call log
    * <p>It returns true if it updated the content of the cache and we should therefore tell the view
    * to update its content.
    */
@@ -161,7 +188,11 @@ public class ContactInfoCache {
         request.type);
     ContactInfo info;
     if (request.isLocalRequest()) {
-      info = mContactInfoHelper.lookupNumber(request.number, request.countryIso);
+      info = mContactInfoHelper.lookupNumber(request.number,
+          request.postDialString,
+          request.countryIso,
+          -1,
+          request.isConf);
       if (info != null && !info.contactExists) {
         // TODO: Maybe skip look up if it's already available in cached number lookup
         // service.
@@ -193,10 +224,18 @@ public class ContactInfoCache {
 
     // Check the existing entry in the cache: only if it has changed we should update the
     // view.
+    String phoneNumber = request.number;
+    if (!request.isConf && !TextUtils.isEmpty(request.postDialString)) {
+      phoneNumber += request.postDialString;
+    }
     NumberWithCountryIso numberCountryIso =
         new NumberWithCountryIso(request.number, request.countryIso);
-    ContactInfo existingInfo = mCache.getPossiblyExpired(numberCountryIso);
-
+    ContactInfo existingInfo = null;
+    if (request.isConf) {
+      existingInfo = mCacheFor4gConfCall.getPossiblyExpired(numberCountryIso);
+    } else {
+      existingInfo = mCache.getPossiblyExpired(numberCountryIso);
+    }
     final boolean isRemoteSource = info.sourceType != Type.UNKNOWN_SOURCE_TYPE;
 
     // Don't force redraw if existing info in the cache is equal to {@link ContactInfo#EMPTY}
@@ -210,12 +249,20 @@ public class ContactInfoCache {
 
     // Store the data in the cache so that the UI thread can use to display it. Store it
     // even if it has not changed so that it is marked as not expired.
-    mCache.put(numberCountryIso, info);
-
+    if (request.isConf) {
+      mCacheFor4gConfCall.put(numberCountryIso, info);
+    } else {
+      mCache.put(numberCountryIso, info);
+    }
     // Update the call log even if the cache it is up-to-date: it is possible that the cache
     // contains the value from a different call log entry.
-    mContactInfoHelper.updateCallLogContactInfo(
-        request.number, request.countryIso, info, request.callLogInfo);
+    if (request.isConf) {
+      mContactInfoHelper.updateCallLogContactInfo(request.number, request.countryIso,
+          info, request.callLogInfo);
+    } else {
+      mContactInfoHelper.updateCallLogContactInfo(
+          phoneNumber, request.countryIso, info, request.callLogInfo);
+    }
     if (!request.isLocalRequest()) {
       mContactInfoHelper.updateCachedNumberLookupService(info);
     }
@@ -265,6 +312,7 @@ public class ContactInfoCache {
 
   public void invalidate() {
     mCache.expireAll();
+    mCacheFor4gConfCall.expireAll();
     stopRequestProcessing();
   }
 
@@ -298,7 +346,32 @@ public class ContactInfoCache {
       ContactInfo callLogInfo,
       boolean immediate,
       @ContactInfoRequest.TYPE int type) {
-    ContactInfoRequest request = new ContactInfoRequest(number, countryIso, callLogInfo, type);
+    enqueueRequest(number, null, countryIso, callLogInfo, immediate, type, false);
+  }
+
+    /**
+     * Enqueues a request to look up the contact details for the given phone number.
+     * <p>
+     * It also provides the current contact info stored in the call log for this number.
+     * <p>
+     * If the {@code immediate} parameter is true, it will start immediately the thread that looks
+     * up the contact information (if it has not been already started). Otherwise, it will be
+     * started with a delay. See {@link #START_PROCESSING_REQUESTS_DELAY_MILLIS}.
+     * @param postDialString if required, append into number
+     * @param isConf indicate whether call log is for Conference Url call
+     */
+  protected void enqueueRequest(
+      String number,
+      String postDialString,
+      String countryIso,
+      ContactInfo callLogInfo,
+      boolean immediate,
+      int type,
+      boolean isConf) {
+
+    ContactInfoRequest request = new ContactInfoRequest(
+        number, postDialString, countryIso,
+        callLogInfo, type, isConf);
     if (!mUpdateRequests.contains(request)) {
       mUpdateRequests.offer(request);
     }
