@@ -54,6 +54,9 @@ public class TelephonyManagerCompat {
 
   private static final String SECRET_CODE_ACTION = "android.provider.Telephony.SECRET_CODE";
 
+  public static final String EXTRA_IS_REFRESH =
+      BuildCompat.isAtLeastOMR1() ? "android.telephony.extra.IS_REFRESH" : "is_refresh";
+
   /**
    * Returns the number of phones available. Returns 1 for Single standby mode (Single SIM
    * functionality) Returns 2 for Dual standby mode.(Dual SIM functionality)

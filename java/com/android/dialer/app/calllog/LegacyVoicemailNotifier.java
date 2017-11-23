@@ -56,7 +56,8 @@ public final class LegacyVoicemailNotifier {
       String voicemailNumber,
       PendingIntent callVoicemailIntent,
       PendingIntent voicemailSettingsIntent,
-      boolean isRefresh) {
+      boolean isRefresh,
+      int subId) {
     LogUtil.enterBlock("LegacyVoicemailNotifier.showNotification");
     Assert.isNotNull(handle);
     Assert.checkArgument(BuildCompat.isAtLeastO());
@@ -78,9 +79,6 @@ public final class LegacyVoicemailNotifier {
             callVoicemailIntent,
             voicemailSettingsIntent,
             isRefresh);
-    SubscriptionInfoHelper subInfoHelper = new SubscriptionInfoHelper(context,
-       handle);
-    int subId = subInfoHelper.getSubId();
     context
         .getSystemService(NotificationManager.class)
         .notify(NOTIFICATION_TAG + subId, NOTIFICATION_ID, notification);
@@ -115,11 +113,10 @@ public final class LegacyVoicemailNotifier {
       contentIntent = voicemailSettingsIntent;
     }
 
-    SubscriptionInfoHelper subInfoHelper = new SubscriptionInfoHelper(context,
-        handle);
     int resId = android.R.drawable.stat_notify_voicemail;
-
     if (pinnedTelephonyManager.getPhoneCount() > 1) {
+      SubscriptionInfoHelper subInfoHelper = new SubscriptionInfoHelper(context,
+          handle);
       int mSlotId = subInfoHelper.getSimSlotIndex();
       resId = (mSlotId == 0) ? R.drawable.stat_notify_voicemail_sub1
           : (mSlotId == 1) ? R.drawable.stat_notify_voicemail_sub2
@@ -161,14 +158,11 @@ public final class LegacyVoicemailNotifier {
   }
 
   public static void cancelNotification(@NonNull Context context,
-      PhoneAccountHandle phoneAccountHandle) {
+      int subId) {
     LogUtil.enterBlock("LegacyVoicemailNotifier.cancelNotification");
     Assert.checkArgument(BuildCompat.isAtLeastO());
-    Assert.isNotNull(phoneAccountHandle);
-    SubscriptionInfoHelper subInfoHelper = new SubscriptionInfoHelper(context,
-        phoneAccountHandle);
     NotificationManager notificationManager = context.getSystemService(NotificationManager.class);
-    notificationManager.cancel(NOTIFICATION_TAG + subInfoHelper.getSubId(), NOTIFICATION_ID);
+    notificationManager.cancel(NOTIFICATION_TAG + subId, NOTIFICATION_ID);
   }
 
   private LegacyVoicemailNotifier() {}
