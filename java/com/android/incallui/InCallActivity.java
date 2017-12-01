@@ -575,6 +575,7 @@ public class InCallActivity extends TransactionSafeFragmentActivity
     }
 
     if (didChangeInCall || didChangeVideo || didChangeAnswer) {
+      BottomSheetHelper.getInstance().dismissBottomSheet();
       transaction.commitNow();
       Logger.get(this).logScreenView(ScreenEvent.Type.INCALL, this);
     }

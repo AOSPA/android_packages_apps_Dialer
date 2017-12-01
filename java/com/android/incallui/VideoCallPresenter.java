@@ -511,7 +511,6 @@ public class VideoCallPresenter
       return;
     }
     onUiShowing(false);
-    BottomSheetHelper.getInstance().dismissBottomSheet();
     cancelAutoFullScreen();
 
     InCallPresenter.getInstance().removeListener(this);
