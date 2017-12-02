@@ -88,6 +88,7 @@ import com.android.dialer.app.settings.DialerSettingsActivity;
 import com.android.dialer.app.widget.ActionBarController;
 import com.android.dialer.app.widget.SearchEditTextLayout;
 import com.android.dialer.callcomposer.CallComposerActivity;
+import com.android.dialer.callintent.CallInitiationType;
 import com.android.dialer.callintent.CallIntentBuilder;
 import com.android.dialer.callintent.CallSpecificAppData;
 import com.android.dialer.common.Assert;
@@ -223,6 +224,9 @@ public class DialtactsActivity extends TransactionSafeActivity
   private FloatingActionButtonController mFloatingActionButtonController;
   private boolean mWasConfigurationChange;
   private long timeTabSelected;
+
+  private PhoneNumberInteraction mPhoneNumberInteraction;
+  private Uri mUri;
 
   private P13nLogger mP13nLogger;
   private P13nRanker mP13nRanker;
@@ -1342,8 +1346,9 @@ public class DialtactsActivity extends TransactionSafeActivity
   public void onPickDataUri(
       Uri dataUri, boolean isVideoCall, CallSpecificAppData callSpecificAppData) {
     mClearSearchOnPause = true;
-    PhoneNumberInteraction.startInteractionForPhoneCall(
-        DialtactsActivity.this, dataUri, isVideoCall, callSpecificAppData);
+    mUri = dataUri;
+    mPhoneNumberInteraction = PhoneNumberInteraction.startInteractionForPhoneCall(
+        DialtactsActivity.this, mUri, isVideoCall, callSpecificAppData);
   }
 
   @Override
@@ -1475,15 +1480,15 @@ public class DialtactsActivity extends TransactionSafeActivity
   @Override
   public void onRequestPermissionsResult(
       int requestCode, String[] permissions, int[] grantResults) {
-    // This should never happen; it should be impossible to start an interaction without the
-    // contacts permission from the Dialtacts activity.
-    Assert.fail(
-        String.format(
-            Locale.US,
-            "Permissions requested unexpectedly: %d/%s/%s",
-            requestCode,
-            Arrays.toString(permissions),
-            Arrays.toString(grantResults)));
+    //If request is cancelled, the result arrays are empty.
+    if ((requestCode == PhoneNumberInteraction.REQUEST_CALL_PHONE
+        || requestCode == PhoneNumberInteraction.REQUEST_READ_CONTACTS)
+        && grantResults.length > 0 && grantResults[0]
+        == PackageManager.PERMISSION_GRANTED)  {
+      if (mPhoneNumberInteraction != null && mUri != null) {
+        mPhoneNumberInteraction.startInteraction(mUri);
+      }
+    }
   }
 
   protected class OptionsPopupMenu extends PopupMenu {
