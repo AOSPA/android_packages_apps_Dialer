@@ -349,10 +349,10 @@ public class ContactGridManager {
     } else {
       forwardIconImageView.setVisibility(View.GONE);
       forwardedNumberView.setVisibility(View.GONE);
+      bottomTextSwitcher.setVisibility(View.VISIBLE);
     }
 
     if (info.isTimerVisible) {
-      bottomTextSwitcher.setVisibility(View.VISIBLE);
       bottomTextSwitcher.setDisplayedChild(1);
       if (primaryCallState.connectTimeMillis > 0
           && previousConnectTimeMillis != primaryCallState.connectTimeMillis) {
@@ -372,7 +372,6 @@ public class ContactGridManager {
         }
       }
     } else {
-      bottomTextSwitcher.setVisibility(View.GONE);
       bottomTextSwitcher.setDisplayedChild(0);
       bottomTimerView.stop();
       isTimerStarted = false;
