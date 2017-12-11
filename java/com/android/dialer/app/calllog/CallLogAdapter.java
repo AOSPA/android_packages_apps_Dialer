@@ -995,7 +995,8 @@ public class CallLogAdapter extends GroupingListAdapter
               .setDataUsage(cursor.getLong(CallLogQuery.DATA_USAGE))
               .setDate(cursor.getLong(CallLogQuery.DATE))
               .setDuration(cursor.getLong(CallLogQuery.DURATION))
-              .setFeatures(cursor.getInt(CallLogQuery.FEATURES));
+              .setFeatures(cursor.getInt(CallLogQuery.FEATURES))
+              .setAccountId(cursor.getString(CallLogQuery.ACCOUNT_ID));
       entries.addEntries(entry.build());
       cursor.moveToNext();
     }

@@ -17,7 +17,8 @@ message CallDetailsEntries {
     optional int64 date = 4;
     optional int64 duration = 5;
     optional int64 data_usage = 6;
-    repeated enrichedcall.historyquery.proto.HistoryResult history_results = 7;
+    optional string account_id = 7;
+    repeated enrichedcall.historyquery.proto.HistoryResult history_results = 8;
   }
 
   repeated CallDetailsEntry entries = 1;
