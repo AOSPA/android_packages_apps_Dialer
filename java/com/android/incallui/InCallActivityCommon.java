@@ -16,6 +16,7 @@
 
 package com.android.incallui;
 
+import android.app.Activity;
 import android.app.ActivityManager;
 import android.app.ActivityManager.AppTask;
 import android.app.ActivityManager.TaskDescription;
@@ -329,7 +330,12 @@ public class InCallActivityCommon {
   public void onStop() {
     enableInCallOrientationEventListener(false);
     InCallPresenter.getInstance().updateIsChangingConfigurations();
-    InCallPresenter.getInstance().onActivityStopped();
+    Activity activity = InCallPresenter.getInstance().getActivity();
+    if (activity == null || activity == inCallActivity) {
+      InCallPresenter.getInstance().onActivityStopped();
+    } else {
+      LogUtil.i("InCallActivityCommon.onStop", "Another activity already set.Ignore.");
+    }
   }
 
   public void onDestroy() {
