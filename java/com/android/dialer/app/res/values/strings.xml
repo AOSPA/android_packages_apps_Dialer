@@ -952,4 +952,31 @@
   <!-- If a user deletes a call that has attachments (photo, message, ect) bundled with it, they need
         to be told that they need to go to the SMS app to delete the attachments. [CHAR LIMIT=NONE] -->
   <string name="multiple_ec_data_deleted">Calls deleted. View and delete attachments shared during calls in Messages.</string>
+
+    <!--  for speed dial -->
+    <string name="speed_dial_settings">Speed dial settings</string>
+
+    <string name="speed_dial_not_set">(not set)</string>
+
+    <string name="speed_dial_replace">Replace</string>
+
+    <string name="speed_dial_delete">Delete</string>
+
+    <string name="speed_dial_unassigned_dialog_title">Key unassigned</string>
+
+    <string name="speed_dial_unassigned_dialog_message">No speed dial action is assigned to number key \'<xliff:g id="number">%s</xliff:g>\'. Do you want to assign an action now?</string>
+
+    <string name="dialog_speed_dial_airplane_mode_message">To use speed dial, please turn off airplane mode firstly.</string>
+    <!-- Speed Dial can not be set for the key used for Emergency number-->
+
+    <string name="yes">Yes</string>
+
+    <string name="no">No</string>
+
+    <string name="input_number">Input Number</string>
+
+    <string name="speed_dial_cancel">Cancel</string>
+
+    <string name="speed_dial_ok">OK</string>
+
 </resources>
