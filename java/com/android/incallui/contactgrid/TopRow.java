@@ -65,7 +65,7 @@ public class TopRow {
     Drawable icon = state.connectionIcon;
     boolean labelIsSingleLine = true;
 
-    if (state.isWifi && icon == null) {
+    if (state.isWifi) {
       icon = context.getDrawable(R.drawable.quantum_ic_network_wifi_vd_theme_24);
     }
 

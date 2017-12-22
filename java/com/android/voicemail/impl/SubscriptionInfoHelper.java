@@ -68,6 +68,23 @@ public class SubscriptionInfoHelper {
     }
   }
 
+  public SubscriptionInfoHelper(Context context, String accountId) {
+    mContext = context;
+    SubscriptionManager sm = SubscriptionManager.from(mContext);
+    List<SubscriptionInfo> subInfoList = sm.getActiveSubscriptionInfoList();
+    if (!TextUtils.isEmpty(accountId)
+        && subInfoList != null) {
+      for (SubscriptionInfo subInfo : subInfoList) {
+        if (accountId.startsWith(subInfo.getIccId())) {
+          mSubId = subInfo.getSubscriptionId();
+          mSubLabel = subInfo.getDisplayName().toString();
+          mSlotIndex = subInfo.getSimSlotIndex();
+          break;
+        }
+      }
+    }
+  }
+
   public Intent getConfiguringVoiceMailIntent() {
     Intent intent = new Intent(TelephonyManager.ACTION_CONFIGURE_VOICEMAIL);
     if (hasSubId()) {
