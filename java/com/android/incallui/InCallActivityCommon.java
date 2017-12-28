@@ -106,7 +106,6 @@ public class InCallActivityCommon {
   private Animation dialpadSlideOutAnimation;
   private boolean animateDialpadOnShow;
   private String dtmfTextToPreopulate;
-  private boolean didShowDialpadFragment;
   @DialpadRequestType private int showDialpadRequest = DIALPAD_REQUEST_NONE;
 
   private final SelectPhoneAccountListener selectAccountListener =
@@ -223,7 +222,6 @@ public class InCallActivityCommon {
       // populated with the previous DTMF text.  The dialpad is actually shown and populated
       // in onResume() to ensure the hosting fragment has been inflated and is ready to receive it.
       dtmfTextToPreopulate = icicle.getString(DIALPAD_TEXT_KEY);
-      didShowDialpadFragment = icicle.getBoolean(INTENT_EXTRA_SHOW_DIALPAD);
 
       SelectPhoneAccountDialogFragment dialogFragment =
           (SelectPhoneAccountDialogFragment)
@@ -245,10 +243,6 @@ public class InCallActivityCommon {
     }
 
     inCallOrientationEventListener = new InCallOrientationEventListener(inCallActivity);
-  }
-
-  public boolean didShowDialpadFragment() {
-     return didShowDialpadFragment;
   }
 
   public void onSaveInstanceState(Bundle out) {
@@ -700,7 +694,6 @@ public class InCallActivityCommon {
   public boolean showDialpadFragment(boolean show, boolean animate) {
     // If the dialpad is already visible, don't animate in. If it's gone, don't animate out.
     boolean isDialpadVisible = isDialpadVisible();
-    didShowDialpadFragment = show;
     LogUtil.i(
         "InCallActivityCommon.showDialpadFragment",
         "show: %b, animate: %b, " + "isDialpadVisible: %b",
@@ -752,6 +745,7 @@ public class InCallActivityCommon {
           inCallActivity.getDialpadContainerId(), new DialpadFragment(), TAG_DIALPAD_FRAGMENT);
     } else {
       transaction.show(dialpadFragment);
+      dialpadFragment.setUserVisibleHint(true);
     }
 
     transaction.commitAllowingStateLoss();
@@ -768,18 +762,19 @@ public class InCallActivityCommon {
       return;
     }
 
-    Fragment fragment = fragmentManager.findFragmentByTag(TAG_DIALPAD_FRAGMENT);
-    if (fragment != null) {
+    DialpadFragment dialpadFragment = getDialpadFragment();
+    if (dialpadFragment != null) {
       FragmentTransaction transaction = fragmentManager.beginTransaction();
-      transaction.hide(fragment);
+      transaction.hide(dialpadFragment);
       transaction.commitAllowingStateLoss();
       fragmentManager.executePendingTransactions();
+      dialpadFragment.setUserVisibleHint(false);
     }
   }
 
   public boolean isDialpadVisible() {
     DialpadFragment dialpadFragment = getDialpadFragment();
-    return dialpadFragment != null && dialpadFragment.isVisible();
+    return dialpadFragment != null && dialpadFragment.getUserVisibleHint();
   }
 
   /** Returns the {@link DialpadFragment} that's shown by this activity, or {@code null} */

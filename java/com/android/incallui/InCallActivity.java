@@ -579,7 +579,7 @@ public class InCallActivity extends TransactionSafeFragmentActivity
       transaction.commitNow();
       Logger.get(this).logScreenView(ScreenEvent.Type.INCALL, this);
     }
-    notifyDialpadVisibilityState(common.didShowDialpadFragment());
+    notifyDialpadVisibilityState(isDialpadVisible());
     isInShowMainInCallFragment = false;
   }
 
