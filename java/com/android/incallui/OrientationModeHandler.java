@@ -82,6 +82,7 @@ public class OrientationModeHandler implements
     public void setUp() {
         mPrimaryCallTracker = new PrimaryCallTracker();
         InCallPresenter.getInstance().addListener(mPrimaryCallTracker);
+        InCallPresenter.getInstance().addIncomingCallListener(mPrimaryCallTracker);
         InCallPresenter.getInstance().addDetailsListener(this);
         InCallPresenter.getInstance().addInCallUiListener(this);
         InCallPresenter.getInstance().addInCallEventListener(this);
@@ -95,6 +96,7 @@ public class OrientationModeHandler implements
      */
     public void tearDown() {
         InCallPresenter.getInstance().removeListener(mPrimaryCallTracker);
+        InCallPresenter.getInstance().removeIncomingCallListener(mPrimaryCallTracker);
         InCallPresenter.getInstance().removeDetailsListener(this);
         InCallPresenter.getInstance().removeInCallUiListener(this);
         if (mPrimaryCallTracker != null) {
@@ -222,8 +224,7 @@ public class OrientationModeHandler implements
             mOrientationMode = QtiCallConstants.ORIENTATION_MODE_UNSPECIFIED;
             return;
         }
-        mVideoState = call.getVideoState();
-        onScreenOrientationChanged(call, getOrientation(call));
+        mayBeUpdateOrientationMode(call, call.getExtras());
     }
 
     public boolean isOrientationDynamic() {
