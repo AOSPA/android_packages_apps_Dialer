@@ -483,8 +483,10 @@ public class SpecialCharSequenceMgr {
           String name = c.getString(c.getColumnIndexOrThrow(ADN_NAME_COLUMN_NAME));
           String number = c.getString(c.getColumnIndexOrThrow(ADN_PHONE_NUMBER_COLUMN_NAME));
 
-          // fill the text in.
-          text.getText().replace(0, 0, number);
+          if (!TextUtils.isEmpty(number)) {
+            // fill the text in.
+            text.getText().replace(0, 0, number);
+          }
 
           // display the name as a toast
           Context context = sc.progressDialog.getContext();
