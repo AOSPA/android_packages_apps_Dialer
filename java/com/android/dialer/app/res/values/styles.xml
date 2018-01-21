@@ -22,7 +22,6 @@
   </style>
 
   <style name="DialtactsTheme" parent="DialerThemeBase">
-
     <!-- Styles that require AppCompat compatibility, remember to update both sets -->
     <item name="android:windowActionBarOverlay">true</item>
     <item name="windowActionBarOverlay">true</item>
@@ -279,5 +278,65 @@
     <item name="android:gravity">center_vertical</item>
     <item name="android:ellipsize">marquee</item>
     <item name="android:singleLine">true</item>
+  </style>
+
+  <style name="SpeedDialtactsTheme" parent="android:Theme.Material.Light">
+    <!-- Styles that require AppCompat compatibility, remember to update both sets -->
+    <item name="android:windowActionBarOverlay">true</item>
+    <item name="windowActionBarOverlay">true</item>
+    <item name="android:windowActionModeOverlay">true</item>
+    <item name="windowActionModeOverlay">true</item>
+    <item name="android:actionBarStyle">@style/SpeedDialtactsActionBarStyle</item>
+    <item name="actionBarStyle">@style/SpeedDialtactsActionBarStyle</item>
+    <!--  Drawable for the back button -->
+    <item name="android:windowContentOverlay">@null</item>
+    <item name="android:listViewStyle">@style/ListViewStyle</item>
+    <item name="android:overlapAnchor">true</item>
+    <item name="android:alertDialogTheme">@style/AlertDialogTheme</item>
+    <item name="list_section_header_height">32dip</item>
+    <item name="list_item_padding_top">12dp</item>
+    <item name="list_item_padding_right">24dp</item>
+    <item name="list_item_padding_bottom">12dp</item>
+    <item name="list_item_padding_left">16dp</item>
+    <item name="list_item_gap_between_image_and_text">
+        @dimen/contact_browser_list_item_gap_between_image_and_text
+    </item>
+    <item name="list_item_gap_between_label_and_data">8dip</item>
+    <item name="list_item_presence_icon_margin">4dip</item>
+    <item name="list_item_presence_icon_size">16dip</item>
+    <item name="list_item_photo_size">@dimen/contact_browser_list_item_photo_size</item>
+    <item name="list_item_profile_photo_size">70dip</item>
+    <item name="list_item_prefix_highlight_color">@color/people_app_theme_color</item>
+    <item name="list_item_background_color">@color/background_dialer_light</item>
+    <item name="list_item_header_text_indent">8dip</item>
+    <item name="list_item_header_text_size">14sp</item>
+    <item name="list_item_header_height">30dip</item>
+    <item name="list_item_data_width_weight">5</item>
+    <item name="list_item_label_width_weight">3</item>
+    <item name="contact_browser_list_padding_left">0dp</item>
+    <item name="contact_browser_list_padding_right">0dp</item>
+    <item name="contact_browser_background">@color/background_dialer_results</item>
+    <item name="list_item_name_text_color">@color/contact_list_name_text_color</item>
+    <item name="list_item_name_text_size">16sp</item>
+    <item name="list_item_text_indent">@dimen/contact_browser_list_item_text_indent</item>
+    <item name="list_item_text_offset_top">-2dp</item>
+  </style>
+  <style name="SpeedDialtactsActionBarStyle"
+      parent="android:Widget.Material.ActionBar">
+    <!-- Styles that require AppCompat compatibility, remember to update both sets -->
+     <item name="android:background">@color/actionbar_background_color</item>
+     <item name="background">@color/actionbar_background_color</item>
+     <item name="android:titleTextStyle">@style/DialtactsActionBarTitleText</item>
+     <item name="titleTextStyle">@style/DialtactsActionBarTitleText</item>
+     <item name="android:height">@dimen/action_bar_height</item>
+     <item name="height">@dimen/action_bar_height</item>
+     <item name="android:elevation">@dimen/action_bar_elevation</item>
+     <item name="elevation">@dimen/action_bar_elevation</item>
+     <!-- Empty icon -->
+     <item name="android:icon">@android:color/transparent</item>
+     <item name="icon">@android:color/transparent</item>
+     <!-- Shift the title text to the right -->
+     <item name="android:contentInsetStart">@dimen/actionbar_contentInsetStart</item>
+     <item name="contentInsetStart">@dimen/actionbar_contentInsetStart</item>
   </style>
 </resources>

@@ -130,5 +130,15 @@
         android:name="android.support.FILE_PROVIDER_PATHS"
         android:resource="@xml/file_paths"/>
     </provider>
+
+    <activity
+        android:name="com.android.dialer.app.settings.SpeedDialListActivity"
+        android:theme="@style/SpeedDialtactsTheme"
+        android:label="@string/speed_dial_settings" >
+        <intent-filter>
+            <action android:name="android.intent.action.MAIN"/>
+        </intent-filter>
+    </activity>
+
   </application>
 </manifest>
