@@ -247,4 +247,17 @@
     <string name="view_conversation" msgid="7895904782094119702">"查看"</string>
     <string name="ec_data_deleted" msgid="4794880345545827107">"通话已删除。请前往“信息”应用查看和删除通过此通话分享的附件。"</string>
     <string name="multiple_ec_data_deleted" msgid="2971579891973176316">"通话已删除。请前往“信息”应用查看和删除通过通话分享的附件。"</string>
+    <!--  for speed dial -->
+    <string name="speed_dial_settings">快速拨号设置</string>
+    <string name="speed_dial_not_set">(未设置)</string>
+    <string name="speed_dial_replace">替换</string>
+    <string name="speed_dial_delete">删除</string>
+    <string name="speed_dial_unassigned_dialog_title">按键未分配</string>
+    <string name="speed_dial_unassigned_dialog_message">没有设置快速拨号,现在设置？</string>
+    <string name="dialog_speed_dial_airplane_mode_message">关飞行模式后使用快速拨号</string>
+    <string name="yes">是</string>
+    <string name="no">否</string>
+    <string name="input_number">"输入号码"</string>
+    <string name="speed_dial_cancel">"取消"</string>
+    <string name="speed_dial_ok">"确定"</string>
 </resources>

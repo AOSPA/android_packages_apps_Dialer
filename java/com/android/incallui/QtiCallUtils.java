@@ -198,7 +198,7 @@ public class QtiCallUtils {
     * @return boolean whether should show 4G conference dialer menu option.
     */
     public static boolean show4gConferenceDialerMenuOption(Context context) {
-        if (!PermissionsUtil.hasPhonePermissions(context)) {
+        if (!PermissionsUtil.hasPhonePermissions(context) || hasConferenceCall()) {
             return false;
         }
         int unregisteredSpecificImsPhoneCount = 0;
@@ -235,7 +235,7 @@ public class QtiCallUtils {
     * @return boolean whether should show add to 4G conference call menu option.
     */
     public static boolean showAddTo4gConferenceCallOption(Context context) {
-        if (!PermissionsUtil.hasPhonePermissions(context)) {
+        if (!PermissionsUtil.hasPhonePermissions(context) || hasConferenceCall()) {
             return false;
         }
         TelephonyManager telephonyManager =
@@ -566,5 +566,16 @@ public class QtiCallUtils {
                 context, "config_enable_video_crbt");
         return (call != null && call.getState() == DialerCall.State.DIALING
                 && isVideoBidirectional(call) && videoCrbtConfig);
+    }
+
+    //Checks if CallList has conference call
+    public static boolean hasConferenceCall() {
+        DialerCall activeCall = CallList.getInstance().getActiveCall();
+        boolean hasConfCall = activeCall != null ? activeCall.isConferenceCall() : false;
+        if (!hasConfCall) {
+            DialerCall bgCall = CallList.getInstance().getBackgroundCall();
+            hasConfCall = bgCall != null ? bgCall.isConferenceCall() : false;
+        }
+        return hasConfCall;
     }
 }

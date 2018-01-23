@@ -43,6 +43,7 @@
   <dimen name="call_log_list_item_height">56dp</dimen>
   <dimen name="call_log_list_item_info_margin_start">16dp</dimen>
   <dimen name="show_call_history_list_item_height">72dp</dimen>
+  <dimen name="call_log_secondary_text_size">14sp</dimen>
 
   <!-- Size of contact photos in the call log and call details. -->
   <dimen name="contact_photo_size">48dp</dimen>

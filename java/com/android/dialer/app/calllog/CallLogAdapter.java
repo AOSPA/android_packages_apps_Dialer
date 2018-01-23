@@ -986,6 +986,7 @@ public class CallLogAdapter extends GroupingListAdapter
   private static CallDetailsEntries createCallDetailsEntries(Cursor cursor, int count) {
     Assert.isMainThread();
     int position = cursor.getPosition();
+    String accountId = cursor.getString(CallLogQuery.ACCOUNT_ID);
     CallDetailsEntries.Builder entries = CallDetailsEntries.newBuilder();
     for (int i = 0; i < count; i++) {
       CallDetailsEntry.Builder entry =
@@ -996,7 +997,7 @@ public class CallLogAdapter extends GroupingListAdapter
               .setDate(cursor.getLong(CallLogQuery.DATE))
               .setDuration(cursor.getLong(CallLogQuery.DURATION))
               .setFeatures(cursor.getInt(CallLogQuery.FEATURES))
-              .setAccountId(cursor.getString(CallLogQuery.ACCOUNT_ID));
+              .setAccountId(accountId == null ? "" : accountId);
       entries.addEntries(entry.build());
       cursor.moveToNext();
     }
