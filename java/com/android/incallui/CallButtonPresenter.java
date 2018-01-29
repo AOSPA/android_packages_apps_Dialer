@@ -471,7 +471,7 @@ public class CallButtonPresenter
     mInCallButtonUi.showButton(
       InCallButtonIds.BUTTON_SWITCH_CAMERA, VideoCallPresenter.isTransmissionEnabled(call)
       && hasCameraPermission && !BottomSheetHelper.getInstance().isHideMeSelected()
-      && !QtiCallUtils.hasVideoCrbtVoLteCall(call));
+      && !QtiCallUtils.hasVideoCrbtVoLteCall(mContext, call));
     mInCallButtonUi.showButton(InCallButtonIds.BUTTON_PAUSE_VIDEO, showPauseVideo);
     if (isVideo) {
       mInCallButtonUi.setVideoPaused(!call.getVideoTech().isTransmitting() || !hasCameraPermission);
