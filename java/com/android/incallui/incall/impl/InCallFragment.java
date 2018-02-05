@@ -207,16 +207,8 @@ public class InCallFragment extends Fragment
           }
       });
       }
-    if (ContextCompat.checkSelfPermission(getContext(), permission.READ_PHONE_STATE)
-        != PackageManager.PERMISSION_GRANTED) {
-      voiceNetworkType = TelephonyManager.NETWORK_TYPE_UNKNOWN;
-    } else {
+      updateVoiceNetworkType();
 
-      voiceNetworkType =
-          VERSION.SDK_INT >= VERSION_CODES.N
-              ? mTelephonyManager.getVoiceNetworkType()
-              : TelephonyManager.NETWORK_TYPE_UNKNOWN;
-    }
     return view;
   }
 
@@ -379,6 +371,7 @@ public class InCallFragment extends Fragment
   public void setCallState(@NonNull PrimaryCallState primaryCallState) {
     LogUtil.i("InCallFragment.setCallState", primaryCallState.toString());
     setPhoneType();
+    updateVoiceNetworkType();
     contactGridManager.setCallState(primaryCallState);
     buttonChooser =
         ButtonChooserFactory.newButtonChooser(voiceNetworkType, primaryCallState.isWifi, phoneType);
@@ -402,6 +395,20 @@ public class InCallFragment extends Fragment
         }
       }
     }
+  }
+
+  private void updateVoiceNetworkType() {
+      if (ContextCompat.checkSelfPermission(getContext(), permission.READ_PHONE_STATE)
+              != PackageManager.PERMISSION_GRANTED) {
+          voiceNetworkType = TelephonyManager.NETWORK_TYPE_UNKNOWN;
+      } else {
+          voiceNetworkType =
+              VERSION.SDK_INT >= VERSION_CODES.N
+              ? mTelephonyManager.getVoiceNetworkType()
+              : TelephonyManager.NETWORK_TYPE_UNKNOWN;
+      }
+      LogUtil.v("InCallFragment.updateVoiceNetwork", "NetworkType: " +
+                                                        Integer.toString(voiceNetworkType));
   }
 
   @Override
