@@ -951,6 +951,8 @@ public class VideoCallFragment extends Fragment
       exitFullscreenMode();
     }
 
+    updateRemoteOffView();
+
     OnHoldFragment onHoldFragment =
         ((OnHoldFragment)
             getChildFragmentManager().findFragmentById(R.id.videocall_on_hold_banner));
