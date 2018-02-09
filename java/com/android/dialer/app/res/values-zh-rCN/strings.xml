@@ -121,7 +121,7 @@
     <string name="dialog_voicemail_not_ready_message" msgid="6437173108290752604">"要设置语音信箱，请转到“菜单”&gt;“设置”。"</string>
     <string name="dialog_voicemail_airplane_mode_message" msgid="1044988101597862159">"要呼叫语音信箱，请先关闭飞行模式。"</string>
     <string name="contact_list_loading" msgid="7919825236309749352">"正在加载..."</string>
-    <string name="imei" msgid="5214505934662768308">"移动通信国际识别码"</string>
+    <string name="imei" msgid="5214505934662768308">"IMEI"</string>
     <string name="meid" msgid="3333779521535224028">"MEID"</string>
     <string name="simContacts_emptyLoading" msgid="6205424276735652071">"正从 SIM 卡中加载..."</string>
     <string name="simContacts_title" msgid="7961069730386378887">"SIM卡联系人"</string>
