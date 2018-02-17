@@ -1645,7 +1645,7 @@ public class InCallPresenter implements CallList.Listener {
       return false;
     }
 
-    if (QtiCallUtils.hasVideoCrbtVtCall(mContext) || QtiCallUtils.hasVideoCrbtVoLteCall()) {
+    if (QtiCallUtils.hasVideoCrbtVtCall(mContext) || QtiCallUtils.hasVideoCrbtVoLteCall(mContext)) {
       Log.d(this, "Unlike orientation change for color ring");
       return false;
     }

@@ -29,6 +29,7 @@ import android.graphics.drawable.Animatable;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.SystemClock;
+import android.provider.Settings;
 import android.renderscript.Allocation;
 import android.renderscript.Element;
 import android.renderscript.RenderScript;
@@ -118,7 +119,9 @@ public class VideoCallFragment extends Fragment
   @VisibleForTesting public static final float BLUR_PREVIEW_SCALE_FACTOR = 1.0f;
   private static final float BLUR_REMOTE_RADIUS = 25.0f;
   private static final float BLUR_REMOTE_SCALE_FACTOR = 0.25f;
-  private static final float ASPECT_RATIO_MATCH_THRESHOLD = 0.2f;
+  private static final float ASPECT_RATIO_MATCH_THRESHOLD = 0.1f;
+  private static final String VT_ASPECT_RATIO_MATCH_THRESHOLD_SETTING =
+      "vt_aspect_ratio_match_threshold";
 
   private static final int CAMERA_PERMISSION_REQUEST_CODE = 1;
   private static final int PERMISSION_REQUEST_READ_EXTERNAL_STORAGE = 2;
@@ -173,6 +176,7 @@ public class VideoCallFragment extends Fragment
   private ContactGridManager contactGridManager;
   private SecondaryInfo savedSecondaryInfo;
   private PauseImageTask mPauseImageTask;
+  private float mAspectRatioMatchThreshold = ASPECT_RATIO_MATCH_THRESHOLD;
   private final Runnable cameraPermissionDialogRunnable =
       new Runnable() {
         @Override
@@ -203,6 +207,14 @@ public class VideoCallFragment extends Fragment
             .newInCallButtonUiDelegate();
     if (savedInstanceState != null) {
       inCallButtonUiDelegate.onRestoreInstanceState(savedInstanceState);
+    }
+
+    if (getContext() != null) {
+      mAspectRatioMatchThreshold = Settings.Global.getFloat(
+          getContext().getContentResolver(), VT_ASPECT_RATIO_MATCH_THRESHOLD_SETTING,
+              ASPECT_RATIO_MATCH_THRESHOLD);
+      LogUtil.i("VideoCallFragment.onCreate", "mAspectRatioMatchThreshold = " +
+        mAspectRatioMatchThreshold);
     }
   }
 
@@ -772,7 +784,7 @@ public class VideoCallFragment extends Fragment
     }
 
     maybeLoadPreConfiguredImageAsync();
-    if (QtiCallUtils.hasVideoCrbtVoLteCall() && !shouldShowPreview) {
+    if (QtiCallUtils.hasVideoCrbtVoLteCall(getContext()) && !shouldShowPreview) {
       previewTextureView.setVisibility(View.GONE);
     }
   }
@@ -938,6 +950,8 @@ public class VideoCallFragment extends Fragment
     } else {
       exitFullscreenMode();
     }
+
+    updateRemoteOffView();
 
     OnHoldFragment onHoldFragment =
         ((OnHoldFragment)
@@ -1269,7 +1283,7 @@ public class VideoCallFragment extends Fragment
         ((float) remoteTextureView.getWidth()) / remoteTextureView.getHeight();
     float delta = Math.abs(videoAspectRatio - displayAspectRatio);
     float sum = videoAspectRatio + displayAspectRatio;
-    if (delta / sum < ASPECT_RATIO_MATCH_THRESHOLD) {
+    if (delta / sum < mAspectRatioMatchThreshold) {
       VideoSurfaceBindings.scaleVideoAndFillView(remoteTextureView, videoSize.x, videoSize.y, 0);
     } else {
       VideoSurfaceBindings.scaleVideoMaintainingAspectRatio(
