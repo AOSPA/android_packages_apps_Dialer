@@ -492,7 +492,7 @@ public class CallCardPresenter
           .setCallState(
               new PrimaryCallState(
                   mPrimary.getState(),
-                  !QtiCallUtils.hasVideoCrbtVoLteCall(mPrimary) && mPrimary.isVideoCall(),
+                  !QtiCallUtils.hasVideoCrbtVoLteCall(mContext, mPrimary) && mPrimary.isVideoCall(),
                   mPrimary.getVideoTech().getSessionModificationState(),
                   mPrimary.getDisconnectCause(),
                   label,
