@@ -1612,7 +1612,7 @@ public class VideoCallPresenter
         VideoProfile.isTransmissionEnabled(call.getVideoState());
   }
 
-  private static boolean isIncomingVideoCall(DialerCall call) {
+  public static boolean isIncomingVideoCall(DialerCall call) {
     if (!isVideoCall(call)) {
       return false;
     }
@@ -1620,11 +1620,11 @@ public class VideoCallPresenter
     return (state == DialerCall.State.INCOMING) || (state == DialerCall.State.CALL_WAITING);
   }
 
-  private static boolean isActiveVideoCall(DialerCall call) {
+  public static boolean isActiveVideoCall(DialerCall call) {
     return isVideoCall(call) && call.getState() == DialerCall.State.ACTIVE;
   }
 
-  private static boolean isOutgoingVideoCall(DialerCall call) {
+  public static boolean isOutgoingVideoCall(DialerCall call) {
     if (!isVideoCall(call)) {
       return false;
     }
@@ -1642,11 +1642,11 @@ public class VideoCallPresenter
     return call != null && VideoProfile.isAudioOnly(call.getVideoState());
   }
 
-  private static boolean isVideoCall(@Nullable DialerCall call) {
+  public static boolean isVideoCall(@Nullable DialerCall call) {
     return call != null && call.isVideoCall();
   }
 
-  private static boolean isVideoCall(int videoState) {
+  public static boolean isVideoCall(int videoState) {
     return CompatUtils.isVideoCompatible()
         && (VideoProfile.isTransmissionEnabled(videoState)
             || VideoProfile.isReceptionEnabled(videoState));

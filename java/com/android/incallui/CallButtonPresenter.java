@@ -21,6 +21,7 @@ import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.support.v4.os.UserManagerCompat;
 import android.telecom.CallAudioState;
+import android.telecom.VideoProfile;
 import android.widget.Toast;
 import com.android.contacts.common.compat.CallCompat;
 import com.android.dialer.common.Assert;
@@ -307,7 +308,10 @@ public class CallButtonPresenter
             DialerImpression.Type.VIDEO_CALL_UPGRADE_REQUESTED,
             mCall.getUniqueCallId(),
             mCall.getTimeAddedMs());
-    mCall.getVideoTech().upgradeToVideo();
+
+    if (!InCallLowBatteryListener.getInstance().onChangeToVideoCall(mCall)) {
+        mCall.getVideoTech().upgradeToVideo();
+    }
   }
 
   @Override
@@ -363,23 +367,27 @@ public class CallButtonPresenter
   public void pauseVideoClicked(boolean pause) {
     LogUtil.i("CallButtonPresenter.pauseVideoClicked", "%s", pause ? "pause" : "unpause");
 
-    Logger.get(mContext)
-        .logCallImpression(
-            pause
-                ? DialerImpression.Type.IN_CALL_SCREEN_TURN_OFF_VIDEO
-                : DialerImpression.Type.IN_CALL_SCREEN_TURN_ON_VIDEO,
-            mCall.getUniqueCallId(),
-            mCall.getTimeAddedMs());
-
-    if (pause) {
-      mCall.getVideoTech().setCamera(null);
-      mCall.getVideoTech().stopTransmission();
+    if (QtiImsExtUtils.useCustomVideoUi(BottomSheetHelper.getInstance().getPhoneId(), mContext)) {
+        mCall.getVideoTech().upgradeToVideo(VideoProfile.STATE_AUDIO_ONLY);
     } else {
-      updateCamera(
-          InCallPresenter.getInstance().getInCallCameraManager().isUsingFrontFacingCamera());
-      mCall.getVideoTech().resumeTransmission();
-    }
+        Logger.get(mContext)
+            .logCallImpression(
+                pause
+                    ? DialerImpression.Type.IN_CALL_SCREEN_TURN_OFF_VIDEO
+                    : DialerImpression.Type.IN_CALL_SCREEN_TURN_ON_VIDEO,
+                mCall.getUniqueCallId(),
+                mCall.getTimeAddedMs());
 
+        if (pause) {
+            mCall.getVideoTech().setCamera(null);
+            mCall.getVideoTech().stopTransmission();
+        } else {
+            updateCamera(
+                    InCallPresenter.getInstance().getInCallCameraManager().
+                    isUsingFrontFacingCamera());
+            mCall.getVideoTech().resumeTransmission();
+        }
+    }
     mInCallButtonUi.setVideoPaused(pause);
     mInCallButtonUi.enableButton(InCallButtonIds.BUTTON_PAUSE_VIDEO, false);
   }

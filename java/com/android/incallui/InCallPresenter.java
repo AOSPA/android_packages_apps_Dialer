@@ -377,6 +377,7 @@ public class InCallPresenter implements CallList.Listener {
     InCallCsRedialHandler.getInstance().setUp(mContext);
     InCallUiStateNotifier.getInstance().setUp(context);
     VideoPauseController.getInstance().setUp(this);
+    InCallLowBatteryListener.getInstance().setUp(mContext);
 
     mFilteredQueryHandler = filteredNumberQueryHandler;
     mContext
@@ -412,6 +413,7 @@ public class InCallPresenter implements CallList.Listener {
     InCallVideoCallCallbackNotifier.getInstance().tearDown();
     VideoPauseController.getInstance().tearDown();
     InCallUiStateNotifier.getInstance().tearDown();
+    InCallLowBatteryListener.getInstance().tearDown();
 
     removeDetailsListener(CallSubstateNotifier.getInstance());
     CallList.getInstance().removeListener(CallSubstateNotifier.getInstance());

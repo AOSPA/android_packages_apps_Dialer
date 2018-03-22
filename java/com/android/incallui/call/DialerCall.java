@@ -425,7 +425,7 @@ public class DialerCall implements VideoTechListener, StateChangedListener, Capa
     }
   }
 
-  /* package-private */ Call getTelecomCall() {
+  public Call getTelecomCall() {
     return mTelecomCall;
   }
 

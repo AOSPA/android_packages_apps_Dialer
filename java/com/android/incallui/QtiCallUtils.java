@@ -399,7 +399,8 @@ public class QtiCallUtils {
         if (context == null) {
             Log.w(context, "Context is null...");
         }
-        return context != null && context.getResources().getBoolean(R.bool.video_call_use_ext);
+        int phoneId = BottomSheetHelper.getInstance().getPhoneId();
+        return QtiImsExtUtils.useExt(phoneId, context);
     }
 
     /**
