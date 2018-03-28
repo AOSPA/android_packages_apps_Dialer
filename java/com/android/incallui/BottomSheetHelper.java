@@ -176,6 +176,7 @@ public class BottomSheetHelper implements InCallPresenter.InCallEventListener,
        maybeUpdateModifyCallInMap();
        maybeUpdatePipModeInMap();
        maybeUpdateCancelModifyCallInMap();
+       maybeUpdateAudioConfCallToVideoInMap();
      }
    }
 
@@ -310,6 +311,8 @@ public class BottomSheetHelper implements InCallPresenter.InCallEventListener,
        VideoCallPresenter.showPipModeMenu();
      } else if (text.equals(mResources.getString(R.string.cancel_modify_call_label))) {
        displayCancelModifyCallOptions();
+     } else if (text.equals(mResources.getString(R.string.upgrade_audio_conf_to_video_label))) {
+       upgradeAudioConfCallToVideo();
      }
      moreOptionsSheet = null;
    }
@@ -384,9 +387,27 @@ public class BottomSheetHelper implements InCallPresenter.InCallEventListener,
     return showAddParticipant;
   }
 
+  /** used only in RJIL mode to show upgrade VT call button in volte active conf call. */
+  private boolean isUpdateAudioConfCallToVideo() {
+    boolean upgradetoVideoConfCall = mCall != null
+      && !QtiCallUtils.useExt(mContext)
+      && !mCall.isVideoCall()
+      && mCall.getVideoTech().isAvailable(mContext)
+      && !mCall.hasReceivedVideoUpgradeRequest()
+      && mCall.isConferenceCall()
+      && mCall.wasParentCall();
+
+    return upgradetoVideoConfCall;
+  }
+
   private void maybeUpdateAddParticipantInMap() {
     moreOptionsMap.put(mResources.getString(R.string.add_participant_option_msg),
         isAddParticipantSupported());
+  }
+
+  private void maybeUpdateAudioConfCallToVideoInMap() {
+    moreOptionsMap.put(mResources.getString(R.string.upgrade_audio_conf_to_video_label),
+        isUpdateAudioConfCallToVideo());
   }
 
   private void startAddParticipantActivity() {
@@ -682,6 +703,17 @@ public class BottomSheetHelper implements InCallPresenter.InCallEventListener,
        mCall.getVideoTech().acceptVideoRequest(videoState);
      } else {
        mCall.answer(videoState);
+     }
+   }
+
+   private void upgradeAudioConfCallToVideo() {
+     if (mCall == null) {
+       LogUtil.e("BottomSheetHelper.upgradeAudioConfCallToVideo", "Call is null");
+       return;
+     }
+
+     if (!InCallLowBatteryListener.getInstance().onChangeToVideoCall(mCall)) {
+       mCall.getVideoTech().upgradeToVideo();
      }
    }
 
