@@ -531,6 +531,12 @@ public class VideoCallPresenter
     if (mPrimaryCall != null) {
       maybeUnsetPauseImage();
       updateCameraSelection(mPrimaryCall);
+
+      // Enable screen time-out for audio calls and for held video calls
+      InCallPresenter.getInstance().enableScreenTimeout(!(isVideoCall(mPrimaryCall) &&
+              mPrimaryCall.getState() != DialerCall.State.ONHOLD));
+    } else {
+      InCallPresenter.getInstance().enableScreenTimeout(true);
     }
 
     mVideoCallScreen = null;
