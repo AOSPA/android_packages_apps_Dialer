@@ -319,9 +319,9 @@ public class StatusBarNotifier
         call.getVideoTech().getSessionModificationState()
             == SessionModificationState.RECEIVED_UPGRADE_TO_VIDEO_REQUEST;
     final int notificationType;
-    if (callState == DialerCall.State.INCOMING
+    if ((callState == DialerCall.State.INCOMING
         || callState == DialerCall.State.CALL_WAITING
-        || isVideoUpgradeRequest) {
+        || isVideoUpgradeRequest) && (!InCallPresenter.getInstance().isShowingInCallUi())) {
       if (ConfigProviderBindings.get(mContext)
           .getBoolean("quiet_incoming_call_if_ui_showing", true)) {
         notificationType =

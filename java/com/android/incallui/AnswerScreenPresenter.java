@@ -39,7 +39,7 @@ import com.android.incallui.InCallPresenter.InCallDetailsListener;
 /** Manages changes for an incoming call screen. */
 public class AnswerScreenPresenter
     implements AnswerScreenDelegate, DialerCall.CannedTextResponsesLoadedListener,
-    InCallDetailsListener { 
+    InCallDetailsListener {
   private static final int ACCEPT_REJECT_CALL_TIME_OUT_IN_MILLIS = 5000;
   @NonNull private final Context context;
   @NonNull private final AnswerScreen answerScreen;
@@ -107,13 +107,18 @@ public class AnswerScreenPresenter
                 DialerImpression.Type.VIDEO_CALL_REQUEST_ACCEPTED,
                 call.getUniqueCallId(),
                 call.getTimeAddedMs());
-        call.getVideoTech().acceptVideoRequest();
+        if (!InCallLowBatteryListener.getInstance().onChangeToVideoCall(call)) {
+            call.getVideoTech().acceptVideoRequest();
+        }
       }
     } else {
       if (answerVideoAsAudio) {
         call.answer(VideoProfile.STATE_AUDIO_ONLY);
       } else {
-        call.answer();
+        if (!InCallLowBatteryListener.getInstance().onAnswerIncomingCall(call,
+                call.getVideoState())) {
+            call.answer();
+        }
       }
     }
     addTimeoutCheck();
