@@ -160,8 +160,9 @@ import java.util.Set;
       @NonNull Context context, @NonNull PhoneAccountHandle handle) {
     PhoneAccount phoneAccount =
         context.getSystemService(TelecomManager.class).getPhoneAccount(handle);
+    CharSequence nameSuffix = (phoneAccount != null) ? phoneAccount.getLabel() : null;
     NotificationChannel channel =
-        newChannel(context, getChannelIdForAccount(handle), phoneAccount.getLabel());
+        newChannel(context, getChannelIdForAccount(handle), nameSuffix);
     migrateVoicemailSoundSettings(context, channel, handle);
     context.getSystemService(NotificationManager.class).createNotificationChannel(channel);
   }

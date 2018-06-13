@@ -425,7 +425,7 @@ public class DialerCall implements VideoTechListener, StateChangedListener, Capa
     }
   }
 
-  /* package-private */ Call getTelecomCall() {
+  public Call getTelecomCall() {
     return mTelecomCall;
   }
 
@@ -444,6 +444,10 @@ public class DialerCall implements VideoTechListener, StateChangedListener, Capa
     } else {
       mCameraDirection = CameraDirection.CAMERA_DIRECTION_UNKNOWN;
     }
+  }
+
+  public boolean wasParentCall() {
+    return mLogState.conferencedCalls != 0;
   }
 
   private void update() {

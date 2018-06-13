@@ -62,6 +62,7 @@
     <string name="notification_requesting_video_tx_call">"Incoming video tx request"</string>
     <string name="notification_requesting_video_rx_call">"Incoming video rx request"</string>
     <string name="cancel_modify_call_label">Cancel Modify Call</string>
+    <string name="upgrade_audio_conf_to_video_label">Upgrade to Video Call</string>
 
     <!-- Text for the PIP mode button -->
     <string name="pipModeLabel">PIP Mode</string>
@@ -126,6 +127,11 @@
        <item>false</item>
     </string-array>
 
+    <string-array name="upgrade_audio_conf_to_video">
+       <item>@string/upgrade_audio_conf_to_video_label</item>
+       <item>false</item>
+    </string-array>
+
     <!-- array of all the options to ensure mapping-->
     <array name="bottom_sheet_more_options">
        <item>@array/show_dialpad</item>
@@ -139,6 +145,7 @@
        <item>@array/modify_call</item>
        <item>@array/pipMode</item>
        <item>@array/cancel_modify_call</item>
+       <item>@array/upgrade_audio_conf_to_video</item>
     </array>
 
     <!-- In-call screen: Modify Call Options for IMS call -->
@@ -184,4 +191,17 @@
     <string name="select_your_4g_dialer_cancel_option">Cancel</string>
     <string name="conference_uri_dialer_option">1. Conference URI Dialer</string>
     <string name="conference_4g_dialer_option">2. 4G Conference Dialer</string>
+
+    <!-- Title for low battery alert dialogue -->
+    <string name="low_battery">Low Battery Warning</string>
+    <!-- Yes option of the low battery alert dialog -->
+    <string name="low_battery_yes">Yes</string>
+    <!-- No option of the low battery alert dialog for active video calls -->
+    <string name="low_battery_no">No</string>
+    <!-- Message text of the low battery alert dialog in cases video call doesn't have downgrade capabilities -->
+    <string name="low_battery_hangup_msg">Do you want to hangup the call?</string>
+    <!-- Message text of the low battery alert dialog for MO/MT video calls -->
+    <string name="low_battery_msg">Your battery level is below 15%. Do you want to continue with the video call or convert it to Voice call</string>
+    <!-- No option of the low battery alert dialog for MO/MT Video calls -->
+    <string name="low_battery_convert">Convert</string>
 </resources>

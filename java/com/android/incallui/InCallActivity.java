@@ -187,6 +187,7 @@ public class InCallActivity extends TransactionSafeFragmentActivity
   @Override
   protected void onDestroy() {
     LogUtil.i("InCallActivity.onDestroy", "");
+    InCallLowBatteryListener.getInstance().onDestroyInCallActivity();
     super.onDestroy();
     common.onDestroy();
   }
@@ -428,6 +429,7 @@ public class InCallActivity extends TransactionSafeFragmentActivity
           "InCallActivity.dismissPendingDialogs", "defer actions since activity is not visible");
       needDismissPendingDialogs = true;
     }
+    InCallLowBatteryListener.getInstance().dismissPendingDialogs();
   }
 
   public void enableInCallOrientationEventListener(boolean enable) {

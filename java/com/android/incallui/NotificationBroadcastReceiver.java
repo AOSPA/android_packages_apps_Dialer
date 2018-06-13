@@ -78,6 +78,7 @@ public class NotificationBroadcastReceiver extends BroadcastReceiver {
       hangUpOngoingCall(context);
     } else if (action.equals(ACTION_ACCEPT_VIDEO_UPGRADE_REQUEST)) {
       acceptUpgradeRequest(context);
+      InCallPresenter.getInstance().bringToForeground(false);
     } else if (action.equals(ACTION_DECLINE_VIDEO_UPGRADE_REQUEST)) {
       declineUpgradeRequest(context);
     } else if (action.equals(ACTION_PULL_EXTERNAL_CALL)) {
@@ -94,7 +95,7 @@ public class NotificationBroadcastReceiver extends BroadcastReceiver {
       LogUtil.e("NotificationBroadcastReceiver.acceptUpgradeRequest", "call list is empty");
     } else {
       DialerCall call = callList.getVideoUpgradeRequestCall();
-      if (call != null) {
+      if (call != null && !InCallLowBatteryListener.getInstance().onChangeToVideoCall(call)) {
         call.getVideoTech().acceptVideoRequest();
       }
     }
@@ -138,11 +139,13 @@ public class NotificationBroadcastReceiver extends BroadcastReceiver {
       LogUtil.e("NotificationBroadcastReceiver.answerIncomingCall", "call list is empty");
     } else {
       DialerCall call = callList.getIncomingCall();
-      if (call != null) {
+      if (call != null && !InCallLowBatteryListener.getInstance().
+              onAnswerIncomingCall(call, videoState)) {
         call.answer(videoState);
-        InCallPresenter.getInstance()
-            .showInCall(false /* showDialpad */, false /* newOutgoingCall */);
       }
+
+      InCallPresenter.getInstance()
+                    .showInCall(false /* showDialpad */, false /* newOutgoingCall */);
     }
   }
 
