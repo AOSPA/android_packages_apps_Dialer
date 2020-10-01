@@ -1,3 +1,4 @@
+Nice project improve docs for get better results
 apply plugin: 'com.android.library'
 
 android {
